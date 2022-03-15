@@ -1,0 +1,318 @@
+{
+  "version": "3.1.23",
+  "name": "rum-app",
+  "productName": "Rum",
+  "description": "Rum Desktop App",
+  "main": "main.js",
+  "scripts": {
+    "build": "yarn build:renderer",
+    "build:staging": "cross-env BUILD_ENV=staging yarn build:renderer",
+    "build:renderer": "rimraf ./src/dist && cross-env NODE_ENV=production webpack --config ./.erb/configs/webpack.config.prod.js",
+    "build:quorum": "git submodule update --init && git submodule foreach git pull origin main && ./scripts/build_quorum.sh",
+    "build:browser": "rimraf ./src/dist && cross-env NODE_ENV=production WEBPACK_BROWSER=true webpack --config ./.erb/configs/webpack.config.prod.js",
+    "a": "rimraf ./src/dist && node --max-old-space-size=4096 node_modules/webpack/bin/webpack.js --config ./.erb/configs/webpack.config.analyze.js",
+    "rebuild": "electron-rebuild --parallel --types prod,dev,optional --module-dir src",
+    "lint": "cross-env NODE_ENV=development eslint ./src --cache --ext .js,.jsx,.ts,.tsx",
+    "test": "cross-env TEST_ENV=dev TS_NODE_PROJECT=\"./tsconfig-test.json\" node -r ts-node/register/transpile-only ./src/tests/index.ts",
+    "test:prod": "cross-env TEST_ENV=prod TS_NODE_PROJECT=\"./tsconfig-test.json\" node -r ts-node/register/transpile-only ./src/tests/index.ts",
+    "package": "yarn build && yarn package:all",
+    "package:staging:all": "yarn build:staging && yarn package:all",
+    "package:all": "yarn package:mac && yarn package:win && yarn package:linux && node ./scripts/clear_after_build.js",
+    "package:mac": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder build --mac --publish never",
+    "package:win": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder build --win --ia32 --publish never",
+    "package:linux": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder build --linux --publish never",
+    "package:release": "yarn build && yarn package:release:all",
+    "package:release:all": "rm -rf release && yarn package:release:mac && yarn package:release:win && node ./scripts/clear_after_build.js",
+    "package:release:mac": "env-cmd electron-builder build --mac --publish never",
+    "package:release:win": "env-cmd electron-builder build --win --ia32 --publish never",
+    "package:release:linux": "env-cmd electron-builder build --linux --publish never",
+    "package:release:win64": "env-cmd electron-builder build --win --publish never",
+    "postinstall": "rimraf ./node_modules/.cache/",
+    "_postinstall": "yarn build && electron-builder install-app-deps && opencollective-postinstall && yarn-deduplicate yarn.lock",
+    "start": "node ./.erb/scripts/CheckPortInUse.js && concurrently \"yarn start:main\" \"cross-env yarn start:renderer\"",
+    "start:main": "cross-env NODE_ENV=development electron .",
+    "start:renderer": "rimraf .erb/dev_dist && cross-env NODE_ENV=development node --max-old-space-size=8192 ./.erb/configs/dev-server.js",
+    "start:browser": "rimraf .erb/dev_dist && cross-env NODE_ENV=development WEBPACK_BROWSER=true node --max-old-space-size=8192 ./.erb/configs/dev-server.js"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "cross-env NODE_ENV=development eslint --cache"
+    ],
+    "{*.json,.{babelrc,eslintrc,prettierrc}}": [
+      "prettier --ignore-path .eslintignore --parser json --write"
+    ],
+    "*.{css,scss}": [
+      "prettier --ignore-path .eslintignore --single-quote --write"
+    ],
+    "*.{html,md,yml}": [
+      "prettier --ignore-path .eslintignore --single-quote --write"
+    ]
+  },
+  "build": {
+    "productName": "Rum",
+    "appId": "one.press.atm",
+    "artifactName": "RUM-${version}-${platform}.${ext}",
+    "releaseInfo": {
+      "releaseNotes": "1. 优化网络性能; 2. 优化一些功能细节，体验更流畅"
+    },
+    "files": [
+      "dist/",
+      "main/",
+      "index.html",
+      "main.js",
+      "menu.js",
+      "updater.js",
+      "quorum.js",
+      "package.json"
+    ],
+    "afterSign": "electron-builder-notarize",
+    "mac": {
+      "artifactName": "RUM-${version}.${ext}",
+      "target": [
+        "zip",
+        "dmg"
+      ],
+      "type": "distribution",
+      "hardenedRuntime": true,
+      "entitlements": "assets/entitlements.mac.plist",
+      "entitlementsInherit": "assets/entitlements.mac.plist",
+      "gatekeeperAssess": false,
+      "extraResources": [
+        "./quorum_bin/quorum_darwin"
+      ]
+    },
+    "dmg": {
+      "sign": false,
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    },
+    "win": {
+      "artifactName": "RUM-${version}.${ext}",
+      "verifyUpdateCodeSignature": false,
+      "target": "nsis",
+      "extraResources": [
+        "./quorum_bin/quorum_win.exe"
+      ]
+    },
+    "linux": {
+      "artifactName": "RUM-${version}.linux.${ext}",
+      "target": [
+        "zip"
+      ],
+      "category": "Development",
+      "extraResources": [
+        "./quorum_bin/quorum_linux"
+      ]
+    },
+    "directories": {
+      "app": "src",
+      "buildResources": "assets",
+      "output": "release"
+    },
+    "extraResources": [
+      "./assets/**"
+    ],
+    "publish": {
+      "provider": "generic",
+      "url": "https://static-assets.xue.cn/rum-testing"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rumsystem/rum-app.git"
+  },
+  "author": {
+    "name": "press.one",
+    "email": "junhong@press.one"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/rumsystem/rum-app/issues"
+  },
+  "homepage": "https://github.com/rumsystem/rum-app#readme",
+  "devDependencies": {
+    "@babel/core": "^7.17.5",
+    "@babel/preset-env": "^7.16.11",
+    "@babel/preset-react": "^7.16.7",
+    "@babel/preset-typescript": "^7.16.7",
+    "@babel/register": "^7.17.0",
+    "@noe132/eslint-config-react": "^0.1.4",
+    "@pmmmwh/react-refresh-webpack-plugin": "^0.5.4",
+    "@svgr/webpack": "^6.2.1",
+    "@teamsupercell/typings-for-css-modules-loader": "^2.4.0",
+    "@testing-library/react": "^12.1.3",
+    "@types/classnames": "^2.2.11",
+    "@types/dompurify": "^2.3.3",
+    "@types/history": "5.0.0",
+    "@types/lodash": "^4.14.179",
+    "@types/markdown-it": "^12.2.3",
+    "@types/md5": "^2.3.2",
+    "@types/mkdirp": "^1.0.2",
+    "@types/module-alias": "^2.0.1",
+    "@types/node": "17.0.21",
+    "@types/node-forge": "^0.10.10",
+    "@types/puppeteer": "^5.4.5",
+    "@types/react": "^17.0.39",
+    "@types/react-dom": "^17.0.13",
+    "@types/react-test-renderer": "^17.0.1",
+    "@types/rimraf": "^3.0.2",
+    "@types/webpack-env": "^1.16.3",
+    "autoprefixer": "^10.4.2",
+    "babel-loader": "^8.2.3",
+    "chalk": "^4.1.2",
+    "concurrently": "^7.0.0",
+    "core-js": "^3.21.1",
+    "cross-env": "^7.0.2",
+    "css-loader": "^6.7.0",
+    "cssnano": "^5.1.0",
+    "cssnano-preset-lite": "^2.1.1",
+    "detect-port": "^1.3.0",
+    "duplicate-package-checker-webpack-plugin": "^3.0.0",
+    "electron": "16.0.8",
+    "electron-builder": "^22.14.13",
+    "electron-builder-notarize": "^1.4.0",
+    "electron-devtools-installer": "^3.1.1",
+    "electron-log": "^4.4.6",
+    "electron-rebuild": "^3.2.7",
+    "electron-store": "^8.0.1",
+    "electron-updater": "^4.6.5",
+    "eslint": "^8.10.0",
+    "expect-puppeteer": "^6.1.0",
+    "file-loader": "^6.0.0",
+    "fork-ts-checker-webpack-plugin": "^6.5.0",
+    "history": "^5.3.0",
+    "html-webpack-plugin": "^5.5.0",
+    "husky": "^7.0.4",
+    "identity-obj-proxy": "^3.0.0",
+    "lint-staged": "^12.3.5",
+    "module-alias": "^2.2.2",
+    "opencollective-postinstall": "^2.0.3",
+    "postcss": "^8.4.8",
+    "postcss-loader": "^6.2.1",
+    "postcss-preset-env": "^7.4.2",
+    "prettier": "^2.5.1",
+    "puppeteer-core": "^13.5.0",
+    "react-test-renderer": "^17.0.1",
+    "regenerator-runtime": "^0.13.9",
+    "rimraf": "^3.0.0",
+    "sass": "^1.49.9",
+    "sass-loader": "^12.6.0",
+    "source-map-support": "^0.5.21",
+    "speed-measure-webpack-plugin": "^1.5.0",
+    "stats-webpack-plugin": "^0.7.0",
+    "style-loader": "^3.3.1",
+    "styled-jsx": "^5.0.0",
+    "tailwindcss": "^3.0.23",
+    "thread-loader": "^3.0.4",
+    "ts-loader": "^9.2.7",
+    "ts-node": "^10.7.0",
+    "tsconfig-paths-webpack-plugin": "^3.5.2",
+    "typescript": "^4.6.2",
+    "url-loader": "^4.1.0",
+    "webpack": "^5.70.0",
+    "webpack-bundle-analyzer": "^4.5.0",
+    "webpack-chain": "^6.5.1",
+    "webpack-cli": "^4.9.2",
+    "webpack-dev-server": "^4.7.4",
+    "webpack-merge": "^5.4.0",
+    "yarn-deduplicate": "^3.1.0"
+  },
+  "dependencies": {
+    "@dnd-kit/core": "^5.0.1",
+    "@dnd-kit/sortable": "^6.0.0",
+    "@dnd-kit/utilities": "^3.1.0",
+    "@electron/remote": "^2.0.5",
+    "@material-ui/core": "^4.12.3",
+    "@material-ui/icons": "^4.11.2",
+    "@material-ui/lab": "^4.0.0-alpha.60",
+    "@rpldy/upload-button": "^0.15.0",
+    "@rpldy/upload-drop-zone": "^0.15.0",
+    "@rpldy/upload-paste": "^0.15.0",
+    "@rpldy/upload-preview": "^0.15.0",
+    "@rpldy/uploady": "^0.15.0",
+    "@types/photoswipe": "^4.1.2",
+    "@types/react-avatar-editor": "^10.3.6",
+    "@types/styled-components": "^5.1.24",
+    "@types/uuid": "^8.3.4",
+    "boxicons": "^2.1.2",
+    "classnames": "^2.2.6",
+    "copy-to-clipboard": "^3.3.1",
+    "date-fns": "^2.28.0",
+    "dexie": "^3.2.1",
+    "dexie-export-import": "^1.0.3",
+    "dompurify": "^2.3.6",
+    "easymde": "^2.16.1",
+    "echarts": "^5.3.1",
+    "electron-dl": "^3.3.0",
+    "env-cmd": "^10.1.0",
+    "epubjs": "^0.3.93",
+    "escape-string-regexp": "^5.0.0",
+    "fs-extra": "^10.0.1",
+    "get-port": "^5.1.1",
+    "highlight.js": "^11.4.0",
+    "https-proxy-agent": "^5.0.0",
+    "lodash-es": "^4.17.21",
+    "markdown-it": "^12.3.2",
+    "markdown-it-anchor": "^8.4.1",
+    "markdown-it-task-lists": "^2.1.1",
+    "md5": "^2.3.0",
+    "mkdirp": "^1.0.4",
+    "mobx": "^6.4.2",
+    "mobx-react-lite": "^3.3.0",
+    "node-forge": "^0.10.0",
+    "node-watch": "^0.7.2",
+    "octokit": "^1.7.1",
+    "path-browserify": "^1.0.1",
+    "photoswipe": "^4.1.3",
+    "query-string": "^7.0.1",
+    "react": "^17.0.1",
+    "react-avatar-editor": "^12.0.0",
+    "react-dom": "^17.0.1",
+    "react-icons": "^4.3.1",
+    "react-infinite-scroll-hook": "^4.0.1",
+    "react-refresh": "^0.11.0",
+    "react-textarea-autosize": "^8.3.2",
+    "scroll-into-view-if-needed": "^2.2.29",
+    "toml": "^3.0.0",
+    "uuid": "^8.3.2",
+    "yauzl": "^2.10.0"
+  },
+  "devEngines": {
+    "node": ">=12.13.x",
+    "npm": ">=6.x",
+    "yarn": ">=1.21.3"
+  },
+  "prettier": {
+    "overrides": [
+      {
+        "files": [
+          ".prettierrc",
+          ".babelrc",
+          ".eslintrc"
+        ],
+        "options": {
+          "parser": "json"
+        }
+      }
+    ],
+    "singleQuote": true
+  },
+  "renovate": {
+    "extends": [
+      "bliss"
+    ],
+    "baseBranches": [
+      "next"
+    ]
+  }
+}
