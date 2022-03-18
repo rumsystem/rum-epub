@@ -97,7 +97,7 @@ module.exports = {
     'import/no-unassigned-import': 'off',
     // 'no-empty-function': ['off', { 'allow': ['arrowFunctions'] }],
     'implicit-arrow-linebreak': 'off',
-    'no-console': 'off',
+    'no-console': ['warn', { allow: ['warn', 'error'] }],
     'no-restricted-syntax': 'off',
     'no-underscore-dangle': 'off',
     'jsx-a11y/anchor-is-valid': 'off',

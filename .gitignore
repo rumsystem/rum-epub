@@ -58,4 +58,4 @@ quorum_data
 /src/tests/userdata/
 
 # dev output
-/.erb/dev_dist/
+/build/dev_dist/

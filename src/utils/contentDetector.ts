@@ -1,5 +1,5 @@
-import { OBJECT_STATUS_DELETED_LABEL } from 'utils/constant';
-import { IContentItem, INoteItem, ILikeItem, ContentTypeUrl, LikeType } from 'apis/content';
+import { OBJECT_STATUS_DELETED_LABEL } from '~/utils/constant';
+import { IContentItem, INoteItem, ILikeItem, ContentTypeUrl, LikeType } from '~/apis/content';
 
 export default {
   isUpdateAction(item: IContentItem) {

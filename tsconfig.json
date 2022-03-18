@@ -21,10 +21,11 @@
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "allowJs": true,
-    "baseUrl": "src",
+    "baseUrl": "./",
     "paths": {
-      "assets/*": ["../assets/*"],
-      "quorum_bin/*": ["../quorum_bin/*"]
+      "~/*": ["./src/*"],
+      "~/assets/*": ["../assets/*"],
+      "~/quorum_bin/*": ["../quorum_bin/*"]
     }
   },
   "include": [
@@ -35,7 +36,6 @@
     "release",
     "src/main.prod.js",
     "src/renderer.prod.js",
-    "src/dist",
-    ".erb/dll"
+    "src/dist"
   ]
 }

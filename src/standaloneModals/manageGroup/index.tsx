@@ -4,19 +4,19 @@ import classNames from 'classnames';
 import { action, runInAction } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import { MdEdit } from 'react-icons/md';
-import { FormControl, InputLabel, OutlinedInput } from '@material-ui/core';
-import Dialog from 'components/Dialog';
-import Button from 'components/Button';
-import { lang } from 'utils/lang';
-import { ThemeRoot } from 'utils/theme';
-import { StoreProvider, useStore } from 'store';
-import GroupApi from 'apis/group';
-import { GROUP_CONFIG_KEY } from 'utils/constant';
-import { getGroupConfig } from 'hooks/usePolling/usePollingGroupConfig';
-import Loading from 'components/Loading';
-import ImageEditor from 'components/ImageEditor';
-import sleep from 'utils/sleep';
-import GroupIcon from 'components/GroupIcon';
+import { FormControl, InputLabel, OutlinedInput } from '@mui/material';
+import Dialog from '~/components/Dialog';
+import Button from '~/components/Button';
+import { lang } from '~/utils/lang';
+import { ThemeRoot } from '~/utils/theme';
+import { StoreProvider, useStore } from '~/store';
+import GroupApi from '~/apis/group';
+import { GROUP_CONFIG_KEY } from '~/utils/constant';
+import { getGroupConfig } from '~/hooks/usePolling/usePollingGroupConfig';
+import Loading from '~/components/Loading';
+import ImageEditor from '~/components/ImageEditor';
+import sleep from '~/utils/sleep';
+import GroupIcon from '~/components/GroupIcon';
 
 export const manageGroup = async (groudId: string, init = false) => new Promise<void>((rs) => {
   const div = document.createElement('div');
@@ -145,9 +145,6 @@ const ManageGroup = observer((props: Props) => {
   return (<Dialog
     open={state.open}
     onClose={handleClose}
-    transitionDuration={{
-      enter: 300,
-    }}
   >
     <div className="bg-white rounded-0 p-6 w-[550px]">
       <div className="pt-4 px-6 pb-5">

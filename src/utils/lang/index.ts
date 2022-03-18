@@ -1,4 +1,4 @@
-import { i18n } from 'store/i18n';
+import { i18n } from '~/service/i18n';
 import * as cn from './cn';
 import * as en from './en';
 

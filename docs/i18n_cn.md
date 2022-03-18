@@ -12,7 +12,7 @@
 
 ```ts
 // lang/index.ts
-import { i18n } from 'store/i18n';
+import { i18n } from '~/store/i18n';
 import * as cn from './cn';
 import * as en from './en';
 
@@ -65,7 +65,7 @@ const component = observer(() => (
 
 ## 切换语言
 ```ts
-import { i18n } from 'store/i18n';
+import { i18n } from '~/store/i18n';
 
 i18n.switchLang('en');
 ```

@@ -1,6 +1,6 @@
 import request from '../request';
-import getBase from 'utils/getBase';
-import { qwasm } from 'utils/quorum-wasm/load-quorum';
+import getBase from '~/utils/getBase';
+import { qwasm } from '~/utils/quorum-wasm/load-quorum';
 
 export interface BackupData {
   config: string
@@ -8,21 +8,20 @@ export interface BackupData {
   seeds: string
 }
 
-export default {
-  backup() {
-    if (!process.env.IS_ELECTRON) {
-      return qwasm.KeystoreBackupRaw('password');
-    }
-    return request('/api/v1/backup', {
-      method: 'GET',
-      base: getBase(),
-      jwt: true,
-    }) as Promise<BackupData>;
-  },
-  restoreKeyBrowser(key: string) {
-    if (!process.env.IS_ELECTRON) {
-      return qwasm.KeystoreRestoreRaw('password', key);
-    }
-    return null;
-  },
+export const backup = () => {
+  if (!process.env.IS_ELECTRON) {
+    return qwasm.KeystoreBackupRaw('password');
+  }
+  return request('/api/v1/backup', {
+    method: 'GET',
+    base: getBase(),
+    jwt: true,
+  }) as Promise<BackupData>;
+};
+
+export const restoreKeyBrowser = (key: string) => {
+  if (!process.env.IS_ELECTRON) {
+    return qwasm.KeystoreRestoreRaw('password', key);
+  }
+  return null;
 };

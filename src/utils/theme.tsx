@@ -1,5 +1,7 @@
 import React from 'react';
-import { createTheme, StylesProvider, ThemeProvider } from '@material-ui/core';
+import { CacheProvider } from '@emotion/react';
+import createCache from '@emotion/cache';
+import { createTheme, ThemeProvider } from '@mui/material';
 
 const theme = createTheme({
   palette: {
@@ -11,29 +13,53 @@ const theme = createTheme({
       main: '#1880b8',
     },
   },
-  overrides: {
-    MuiTypography: {
-      body1: {
-        fontFamily: 'inherit',
+  components: {
+    MuiButton: {
+      defaultProps: {
+        color: 'primary',
+        variant: 'contained',
+        disableElevation: true,
       },
     },
-    MuiInputLabel: {
-      outlined: {
-        fontSize: '14px',
-      },
-    },
-    MuiInputBase: {
-      input: {
-        fontSize: '14px',
+    MuiTooltip: {
+      styleOverrides: {
+        tooltip: {
+          fontSize: '12px',
+        },
       },
     },
   },
+  // overrides: {
+  //   MuiTypography: {
+  //     body1: {
+  //       fontFamily: 'inherit',
+  //     },
+  //   },
+  //   MuiInputLabel: {
+  //     outlined: {
+  //       fontSize: '14px',
+  //     },
+  //   },
+  //   MuiInputBase: {
+  //     input: {
+  //       fontSize: '14px',
+  //     },
+  //   },
+  // },
+});
+
+const cache = createCache({
+  key: 'css',
+  insertionPoint: Array.from(document.head.childNodes)
+    .filter((v) => v.nodeType === 8)
+    .find((v) => v.textContent?.includes('mui-insertion-point')) as any,
 });
 
 export const ThemeRoot = (props: { children: React.ReactNode }) => (
-  <StylesProvider injectFirst>
+  // replacement for StyledEngineProvider
+  <CacheProvider value={cache}>
     <ThemeProvider theme={theme}>
       {props.children}
     </ThemeProvider>
-  </StylesProvider>
+  </CacheProvider>
 );

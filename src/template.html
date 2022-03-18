@@ -3,8 +3,24 @@
   <head>
     <meta charset="utf-8" />
     <title>Rum</title>
+    <!-- preflight-injection-point -->
+    <!-- mui-insertion-point -->
   </head>
   <body>
+    <div id="preflight-injection-point" style="display: none;"></div>
+    <script>
+      // style-loader insert hack
+      (function() {
+        var preflightPoint = Array.from(document.head.childNodes).filter(function(v) {
+          return v.nodeType === 8;
+        }).find(function(v) {
+          return v.textContent.includes('preflight-injection-point');
+        })
+        document.getElementById('preflight-injection-point').appendChild = function(element) {
+          document.head.insertBefore(element, preflightPoint);
+        }
+      })();
+    </script>
     <div id="root">
       <div class="title-bar">
         <div class="app-logo"></div>

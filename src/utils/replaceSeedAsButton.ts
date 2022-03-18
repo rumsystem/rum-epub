@@ -1,5 +1,5 @@
 import SeedIcon from 'assets/seed.svg';
-import { shareSeed } from 'standaloneModals/shareGroup';
+import { shareSeed } from '~/standaloneModals/shareGroup';
 import BFSReplace from './BFSReplace';
 
 export const replaceSeedAsButton = (box: HTMLElement) => {

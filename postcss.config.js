@@ -1,6 +1,6 @@
 module.exports = (api) => {
   const cssnano = api.mode === 'production' && !api.file.endsWith('.min.css');
-  const tailwindcss = api.file.endsWith('tailwind.sass');
+  const tailwindcss = api.file.endsWith('tailwind.sass') || api.file.endsWith('tailwind-base.sass');
 
   return {
     hideNothingWarning: true,

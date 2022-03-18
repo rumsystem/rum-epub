@@ -10,9 +10,9 @@ import {
   RiCloseCircleFill,
 } from 'react-icons/ri';
 import { observer, useLocalObservable } from 'mobx-react-lite';
-import { Popover } from '@material-ui/core';
-import { lang } from 'utils/lang';
-import Button from 'components/Button';
+import { Popover } from '@mui/material';
+import { lang } from '~/utils/lang';
+import Button from '~/components/Button';
 import FilterIcon from 'assets/iconFilter.svg';
 
 interface Props {

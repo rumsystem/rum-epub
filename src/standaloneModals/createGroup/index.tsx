@@ -1,7 +1,7 @@
 import React from 'react';
 import { unmountComponentAtNode, render } from 'react-dom';
 import classNames from 'classnames';
-import { action, reaction, runInAction } from 'mobx';
+import { action, reaction } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import {
   Fade,
@@ -9,21 +9,19 @@ import {
   InputLabel,
   OutlinedInput,
   Radio,
-} from '@material-ui/core';
+} from '@mui/material';
 
-import GroupApi from 'apis/group';
-import Button from 'components/Button';
-import sleep from 'utils/sleep';
-import { GROUP_TEMPLATE_TYPE } from 'utils/constant';
-import { ThemeRoot } from 'utils/theme';
-import { StoreProvider, useStore } from 'store';
-import useFetchGroups from 'hooks/useFetchGroups';
-import TimelineIcon from 'assets/template/template_icon_timeline.svg?react';
-import PostIcon from 'assets/template/template_icon_post.svg?react';
+import Button from '~/components/Button';
+
 import NotebookIcon from 'assets/template/template_icon_notebook.svg?react';
-import { lang } from 'utils/lang';
-import { manageGroup } from 'standaloneModals/manageGroup';
-import { initProfile } from 'standaloneModals/initProfile';
+
+import { nodeService } from '~/service/node';
+import { tooltipService } from '~/service/tooltip';
+
+import { lang } from '~/utils/lang';
+import { runLoading } from '~/utils';
+import { GROUP_TEMPLATE_TYPE } from '~/utils/constant';
+import { ThemeRoot } from '~/utils/theme';
 
 export const createGroup = async () => new Promise<void>((rs) => {
   const div = document.createElement('div');
@@ -35,14 +33,12 @@ export const createGroup = async () => new Promise<void>((rs) => {
   render(
     (
       <ThemeRoot>
-        <StoreProvider>
-          <CreateGroup
-            rs={() => {
-              rs();
-              setTimeout(unmount, 3000);
-            }}
-          />
-        </StoreProvider>
+        <CreateGroup
+          rs={() => {
+            rs();
+            setTimeout(unmount, 3000);
+          }}
+        />
       </ThemeRoot>
     ),
     div,
@@ -58,7 +54,7 @@ const CreateGroup = observer((props: Props) => {
     open: false,
     step: 0,
 
-    type: GROUP_TEMPLATE_TYPE.TIMELINE,
+    type: GROUP_TEMPLATE_TYPE.EPUB,
     name: '',
     desc: '',
     consensusType: 'poa',
@@ -66,21 +62,16 @@ const CreateGroup = observer((props: Props) => {
 
     creating: false,
   }));
-  const {
-    snackbarStore,
-    activeGroupStore,
-  } = useStore();
-  const fetchGroups = useFetchGroups();
   const scrollBox = React.useRef<HTMLDivElement>(null);
 
   const handleTypeChange = action((type: GROUP_TEMPLATE_TYPE) => {
     state.type = type;
   });
 
-  const handleConfirm = async () => {
+  const handleConfirm = () => {
     if (!state.name) {
-      snackbarStore.show({
-        message: lang.require(lang.groupName),
+      tooltipService.show({
+        content: lang.require(lang.groupName),
         type: 'error',
       });
       return;
@@ -90,39 +81,31 @@ const CreateGroup = observer((props: Props) => {
       return;
     }
 
-    runInAction(() => { state.creating = true; });
-
-    try {
-      const group = await GroupApi.createGroup({
-        group_name: state.name,
-        consensus_type: state.consensusType,
-        encryption_type: state.type === GROUP_TEMPLATE_TYPE.NOTE ? 'private' : state.encryptionType,
-        app_key: state.type,
-      });
-      await sleep(300);
-      await fetchGroups();
-      await sleep(300);
-      await initProfile(group.group_id);
-      await sleep(300);
-      activeGroupStore.setId(group.group_id);
-      await sleep(200);
-      snackbarStore.show({
-        message: lang.created,
-        duration: 1000,
-      });
-      handleClose();
-      sleep(1200).then(async () => {
-        runInAction(() => { state.creating = false; });
-        await manageGroup(group.group_id, true);
-      });
-    } catch (err) {
-      console.error(err);
-      runInAction(() => { state.creating = false; });
-      snackbarStore.show({
-        message: lang.somethingWrong,
-        type: 'error',
-      });
-    }
+    runLoading(
+      (l) => { state.creating = l; },
+      async () => {
+        try {
+          const group = await nodeService.createGroup({
+            group_name: state.name,
+            consensus_type: state.consensusType,
+            encryption_type: state.encryptionType,
+            app_key: state.type,
+          });
+          tooltipService.show({
+            content: lang.created,
+            timeout: 1000,
+          });
+          nodeService.changeActiveGroup(group);
+          handleClose();
+        } catch (e) {
+          console.error(e);
+          tooltipService.show({
+            content: lang.somethingWrong,
+            type: 'error',
+          });
+        }
+      },
+    );
   };
 
   const handleClose = action(() => {
@@ -175,9 +158,6 @@ const CreateGroup = observer((props: Props) => {
 
               <div className="flex justify-center gap-x-20 mt-16 mb-6">
                 {([
-                  [lang.sns, GROUP_TEMPLATE_TYPE.TIMELINE, TimelineIcon],
-                  [lang.forum, GROUP_TEMPLATE_TYPE.POST, PostIcon],
-                  [lang.notebook, GROUP_TEMPLATE_TYPE.NOTE, NotebookIcon],
                   // TODO:
                   ['epub', GROUP_TEMPLATE_TYPE.EPUB, NotebookIcon],
                 ] as const).map(([name, type, GroupIcon], i) => (
@@ -217,7 +197,7 @@ const CreateGroup = observer((props: Props) => {
               </div>
 
               <div className="text-14 px-5">
-                {state.type === GROUP_TEMPLATE_TYPE.TIMELINE && (
+                {/* {state.type === GROUP_TEMPLATE_TYPE.TIMELINE && (
                   <div className="animate-fade-in text-center">
                     {lang.snsDesc}
                   </div>
@@ -230,6 +210,11 @@ const CreateGroup = observer((props: Props) => {
                 {state.type === GROUP_TEMPLATE_TYPE.NOTE && (
                   <div className="animate-fade-in text-center">
                     {lang.noteDesc}
+                  </div>
+                )} */}
+                {state.type === GROUP_TEMPLATE_TYPE.EPUB && (
+                  <div className="animate-fade-in text-center">
+                    epub desc
                   </div>
                 )}
               </div>

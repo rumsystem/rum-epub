@@ -1,20 +1,14 @@
 import React from 'react';
-import { observer, useLocalObservable } from 'mobx-react-lite';
-import Dialog from 'components/Dialog';
-import ago from 'utils/ago';
-import { GroupStatus, IGroup } from 'apis/group';
-import { Tooltip } from '@material-ui/core';
-import { i18n } from 'store/i18n';
-import { lang } from 'utils/lang';
-import { ThemeRoot } from 'utils/theme';
-import { StoreProvider, useStore } from 'store';
-import { render, unmountComponentAtNode } from 'react-dom';
 import { action } from 'mobx';
-import { IUser } from 'hooks/useDatabase/models/person';
-import * as PersonModel from 'hooks/useDatabase/models/person';
-import { ObjectsFilterType } from 'store/activeGroup';
-import useDatabase from 'hooks/useDatabase';
-import sleep from 'utils/sleep';
+import { observer, useLocalObservable } from 'mobx-react-lite';
+import { GroupStatus, IGroup } from '~/apis';
+import { Tooltip, Dialog } from '@mui/material';
+
+import ago from '~/utils/ago';
+import { i18n } from '~/service/i18n';
+import { lang } from '~/utils/lang';
+import { ThemeRoot } from '~/utils/theme';
+import { render, unmountComponentAtNode } from 'react-dom';
 
 export const groupInfo = async (group: IGroup) => new Promise<void>((rs) => {
   const div = document.createElement('div');
@@ -26,15 +20,13 @@ export const groupInfo = async (group: IGroup) => new Promise<void>((rs) => {
   render(
     (
       <ThemeRoot>
-        <StoreProvider>
-          <GroupInfo
-            group={group}
-            rs={() => {
-              rs();
-              setTimeout(unmount, 3000);
-            }}
-          />
-        </StoreProvider>
+        <GroupInfo
+          group={group}
+          rs={() => {
+            rs();
+            setTimeout(unmount, 3000);
+          }}
+        />
       </ThemeRoot>
     ),
     div,
@@ -51,10 +43,11 @@ const GroupInfo = observer((props: Props) => {
   const state = useLocalObservable(() => ({
     loading: true,
     open: true,
-    owner: {} as IUser,
+    owner: {} as any,
   }));
-  const database = useDatabase();
-  const { activeGroupStore } = useStore();
+
+  // const database = useDatabase();
+  // const { activeGroupStore } = useStore();
 
   const handleClose = action(() => {
     state.open = false;
@@ -68,34 +61,31 @@ const GroupInfo = observer((props: Props) => {
   };
   const width = i18n.state.lang === 'cn' ? 'w-20' : 'w-32';
 
-  React.useEffect(() => {
-    (async () => {
-      const db = database;
-      const user = await PersonModel.getUser(db, {
-        GroupId: props.group.group_id,
-        Publisher: props.group.owner_pubkey,
-      });
-      state.owner = user;
-      state.loading = false;
-    })();
-  }, []);
+  // React.useEffect(() => {
+  //   (async () => {
+  //     const db = database;
+  //     const user = await PersonModel.getUser(db, {
+  //       GroupId: props.group.group_id,
+  //       Publisher: props.group.owner_pubkey,
+  //     });
+  //     state.owner = user;
+  //     state.loading = false;
+  //   })();
+  // }, []);
 
-  const goToUserPage = async (publisher: string) => {
-    handleClose();
-    await sleep(300);
-    activeGroupStore.setObjectsFilter({
-      type: ObjectsFilterType.SOMEONE,
-      publisher,
-    });
-  };
+  // const goToUserPage = async (publisher: string) => {
+  //   handleClose();
+  //   await sleep(300);
+  //   activeGroupStore.setObjectsFilter({
+  //     type: ObjectsFilterType.SOMEONE,
+  //     publisher,
+  //   });
+  // };
 
   return (
     <Dialog
       open={state.open}
       onClose={handleClose}
-      transitionDuration={{
-        enter: 300,
-      }}
     >
       <div className="bg-white rounded-0 p-8">
         <div className="pt-2 px-6 pb-5">
@@ -121,7 +111,7 @@ const GroupInfo = observer((props: Props) => {
                 {props.group.highest_block_id}
               </span>
             </div>
-            <div className="mt-4 flex items-center">
+            {/* <div className="mt-4 flex items-center">
               <span className={width}>{lang.owner}：</span>
               {!state.loading && (
                 <div
@@ -133,7 +123,7 @@ const GroupInfo = observer((props: Props) => {
                   {state.owner.profile.name}
                 </div>
               )}
-            </div>
+            </div> */}
             <div className="mt-4 flex items-center">
               <span className={width}>{lang.highestHeight}：</span>
               <span className="text-gray-4a opacity-90">

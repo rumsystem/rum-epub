@@ -1,20 +1,21 @@
 import React from 'react';
 import { unmountComponentAtNode, render } from 'react-dom';
 import fs from 'fs-extra';
-import { action, runInAction } from 'mobx';
+import { action } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import { dialog } from '@electron/remote';
-import { OutlinedInput } from '@material-ui/core';
+import { OutlinedInput } from '@mui/material';
 import { IoMdCopy } from 'react-icons/io';
-import Dialog from 'components/Dialog';
-import Button from 'components/Button';
-import sleep from 'utils/sleep';
-import { ThemeRoot } from 'utils/theme';
-import { StoreProvider, useStore } from 'store';
-import { lang } from 'utils/lang';
-import { setClipboard } from 'utils/setClipboard';
-import { useJoinGroup } from 'hooks/useJoinGroup';
-import GroupApi from 'apis/group';
+import Dialog from '~/components/Dialog';
+import Button from '~/components/Button';
+import sleep from '~/utils/sleep';
+import { ThemeRoot } from '~/utils/theme';
+import { lang } from '~/utils/lang';
+import { setClipboard } from '~/utils/setClipboard';
+import { fetchSeed } from '~/apis';
+import { nodeService } from '~/service/node';
+import { tooltipService } from '~/service/tooltip';
+import { runLoading } from '~/utils';
 
 export const shareGroup = async (groupId: string) => new Promise<void>((rs) => {
   const div = document.createElement('div');
@@ -26,15 +27,13 @@ export const shareGroup = async (groupId: string) => new Promise<void>((rs) => {
   render(
     (
       <ThemeRoot>
-        <StoreProvider>
-          <ShareGroup
-            groupId={groupId}
-            rs={() => {
-              rs();
-              setTimeout(unmount, 3000);
-            }}
-          />
-        </StoreProvider>
+        <ShareGroup
+          groupId={groupId}
+          rs={() => {
+            rs();
+            setTimeout(unmount, 3000);
+          }}
+        />
       </ThemeRoot>
     ),
     div,
@@ -51,15 +50,13 @@ export const shareSeed = async (seed: string) => new Promise<void>((rs) => {
   render(
     (
       <ThemeRoot>
-        <StoreProvider>
-          <ShareGroup
-            seed={seed}
-            rs={() => {
-              rs();
-              setTimeout(unmount, 3000);
-            }}
-          />
-        </StoreProvider>
+        <ShareGroup
+          seed={seed}
+          rs={() => {
+            rs();
+            setTimeout(unmount, 3000);
+          }}
+        />
       </ThemeRoot>
     ),
     div,
@@ -69,23 +66,18 @@ export const shareSeed = async (seed: string) => new Promise<void>((rs) => {
 type Props = { rs: () => unknown } & ({ groupId: string } | { seed: string });
 
 const ShareGroup = observer((props: Props) => {
-  const {
-    snackbarStore,
-    groupStore,
-    activeGroupStore,
-  } = useStore();
   const state = useLocalObservable(() => ({
     open: true,
-    done: false,
     loading: false,
-    seed: null as any,
+    seed: null as null | Record<string, any>,
     groupName: '',
     get inGroup() {
-      return groupStore.hasGroup(state.seed?.group_id) && !state.loading;
+      return nodeService.state.groups.some((v) => v.group_id === state.seed?.group_id);
+    },
+    get isActiveGroupSeed() {
+      return nodeService.state.activeGroupId && state.seed?.group_id === nodeService.state.activeGroupId;
     },
   }));
-  const joinGroupProcess = useJoinGroup();
-  const isActiveGroupSeed = activeGroupStore.id === state.seed?.group_id;
 
   const handleDownloadSeed = async () => {
     try {
@@ -117,9 +109,8 @@ const ShareGroup = observer((props: Props) => {
       }
       await sleep(400);
       handleClose();
-      snackbarStore.show({
-        message: lang.downloadedThenShare,
-        duration: 2500,
+      tooltipService.show({
+        content: lang.downloadedThenShare,
       });
     } catch (err) {
       console.error(err);
@@ -128,8 +119,8 @@ const ShareGroup = observer((props: Props) => {
 
   const handleCopy = () => {
     setClipboard(JSON.stringify(state.seed, null, 2));
-    snackbarStore.show({
-      message: lang.copied,
+    tooltipService.show({
+      content: lang.copied,
     });
   };
 
@@ -141,44 +132,36 @@ const ShareGroup = observer((props: Props) => {
   const handleJoinOrOpen = async () => {
     const groupId = state.seed?.group_id;
     if (state.inGroup) {
-      if (activeGroupStore.switchLoading) {
-        return;
-      }
+      nodeService.changeActiveGroup(groupId);
       handleClose();
-      await sleep(400);
-      if (activeGroupStore.id !== groupId) {
-        activeGroupStore.setSwitchLoading(true);
-        activeGroupStore.setId(groupId);
-      }
       return;
     }
     if (state.loading) {
       return;
     }
-    runInAction(() => {
-      state.loading = true;
-      state.done = false;
-    });
-    try {
-      await joinGroupProcess(state.seed, handleClose);
-    } catch (err: any) {
-      console.error(err);
-      if (err.message.includes('existed')) {
-        snackbarStore.show({
-          message: lang.existMember,
-          type: 'error',
-        });
-        return;
-      }
-      snackbarStore.show({
-        message: lang.somethingWrong,
-        type: 'error',
-      });
-    } finally {
-      runInAction(() => {
-        state.loading = false;
-      });
-    }
+
+    await runLoading(
+      (l) => { state.loading = l; },
+      async () => {
+        try {
+          const group = await nodeService.joinGroup(state.seed as any);
+          nodeService.changeActiveGroup(group);
+        } catch (err: any) {
+          console.error(err);
+          if (err.message.includes('existed')) {
+            tooltipService.show({
+              content: lang.existMember,
+              type: 'error',
+            });
+            return;
+          }
+          tooltipService.show({
+            content: lang.somethingWrong,
+            type: 'error',
+          });
+        }
+      },
+    );
   };
 
   React.useEffect(action(() => {
@@ -186,10 +169,10 @@ const ShareGroup = observer((props: Props) => {
       (async () => {
         try {
           if (props.groupId) {
-            const seed = await GroupApi.fetchSeed(props.groupId);
+            const seed = await fetchSeed(props.groupId);
             state.seed = seed;
             state.open = true;
-            const group = groupStore.map[props.groupId];
+            const group = nodeService.state.groups.find((v) => v.group_id === props.groupId);
             if (group) {
               state.groupName = group.group_name;
             }
@@ -211,12 +194,10 @@ const ShareGroup = observer((props: Props) => {
       open={state.open}
       maxWidth={false}
       onClose={handleClose}
-      transitionDuration={300}
     >
       <div className="bg-white rounded-0 text-center py-8 px-10 max-w-[500px]">
         <div className="text-18 font-medium text-gray-4a break-all">
-          {isActiveGroupSeed ? lang.shareSeed : lang.seedNet}
-          {/* {!!state.groupName && `: ${state.groupName}`} */}
+          {state.isActiveGroupSeed ? lang.shareSeed : lang.seedNet}
         </div>
         <div className="px-3">
           <OutlinedInput
@@ -252,14 +233,13 @@ const ShareGroup = observer((props: Props) => {
           >
             {lang.downloadSeed}
           </Button>
-          {!isActiveGroupSeed && (
+          {!state.isActiveGroupSeed && (
             <Button
               className="rounded-full !text-16"
               size="large"
               onClick={handleJoinOrOpen}
               outline
               isDoing={state.loading}
-              isDone={state.done}
             >
               {state.inGroup ? lang.openSeedGroup : lang.joinSeedGroup}
             </Button>

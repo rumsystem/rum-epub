@@ -1,8 +1,8 @@
 /** 群组模板类型(用于[group.app_key]) */
 export enum GROUP_TEMPLATE_TYPE {
-  TIMELINE = 'group_timeline',
-  POST = 'group_post',
-  NOTE = 'group_note',
+  // TIMELINE = 'group_timeline',
+  // POST = 'group_post',
+  // NOTE = 'group_note',
   EPUB = 'group_epub',
 }
 

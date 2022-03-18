@@ -1,4 +1,4 @@
-import sleep from 'utils/sleep';
+import sleep from '~/utils/sleep';
 
 interface RequestOption extends Omit<RequestInit, 'body'> {
   base: string
@@ -20,14 +20,6 @@ export default async (url: string, options: Partial<RequestOption> = {}) => {
     options.credentials = 'include';
   }
 
-  const store = (window as any).store;
-
-  if (store.nodeStore.mode === 'EXTERNAL' && options.jwt) {
-    options.headers = {
-      ...options.headers,
-      Authorization: `Bearer ${store.nodeStore.apiConfig.jwt}`,
-    };
-  }
   const result = await Promise.all([
     fetch(new Request((options.base || '') + url), options as RequestInit),
     sleep(options.minPendingDuration ? options.minPendingDuration : 0),

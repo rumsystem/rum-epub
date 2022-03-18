@@ -1,5 +1,5 @@
 import { format } from 'date-fns';
-import { lang } from 'utils/lang';
+import { lang } from '~/utils/lang';
 
 export default (blockTimeStamp: number, options: { trimmed?: boolean } = {}) => {
   const time = new Date(blockTimeStamp / 1000000);

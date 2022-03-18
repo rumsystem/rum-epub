@@ -4,7 +4,7 @@ import { unmountComponentAtNode, render } from 'react-dom';
 import { action } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import { format } from 'date-fns';
-import { Fade, TextField } from '@material-ui/core';
+import { Fade, TextField } from '@mui/material';
 import { IoSearch } from 'react-icons/io5';
 import {
   RiCheckboxBlankLine,
@@ -13,22 +13,22 @@ import {
   RiCheckboxBlankFill,
 } from 'react-icons/ri';
 
-import { IGroup } from 'apis/group';
-import { StoreProvider, useStore } from 'store';
-import { joinGroup } from 'standaloneModals/joinGroup';
-import { createGroup } from 'standaloneModals/createGroup';
+import { IGroup } from 'quorum-sdk-electron-renderer';
+import { StoreProvider, useStore } from '~/store';
+import { joinGroup } from '~/standaloneModals/joinGroup';
+import { createGroup } from '~/standaloneModals/createGroup';
 
-import { GROUP_TEMPLATE_TYPE } from 'utils/constant';
-import { ThemeRoot } from 'utils/theme';
-import { lang } from 'utils/lang';
-import { getGroupIcon } from 'utils/getGroupIcon';
+import { GROUP_TEMPLATE_TYPE } from '~/utils/constant';
+import { ThemeRoot } from '~/utils/theme';
+import { lang } from '~/utils/lang';
+import { getGroupIcon } from '~/utils/getGroupIcon';
 
-import ProfileSelector from 'components/profileSelector';
-import MixinUIDSelector from 'components/mixinUIDSelector';
-import GroupIcon from 'components/GroupIcon';
-import BackToTop from 'components/BackToTop';
-import { useLeaveGroup } from 'hooks/useLeaveGroup';
-import Help from 'layouts/Main/Help';
+import ProfileSelector from '~/components/profileSelector';
+import MixinUIDSelector from '~/components/mixinUIDSelector';
+import GroupIcon from '~/components/GroupIcon';
+import BackToTop from '~/components/BackToTop';
+import { useLeaveGroup } from '~/hooks/useLeaveGroup';
+import Help from '~/views/Main/Help';
 
 import ReturnIcon from 'assets/iconReturn.svg';
 import JoinSeedIcon from 'assets/joinSeed.svg';

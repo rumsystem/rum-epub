@@ -4,17 +4,16 @@ import fs from 'fs-extra';
 import { dialog, getCurrentWindow, shell } from '@electron/remote';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import { action, runInAction } from 'mobx';
-import { TextField, Tooltip } from '@material-ui/core';
+import { TextField, Tooltip } from '@mui/material';
 import { GoChevronRight } from 'react-icons/go';
 
-import Dialog from 'components/Dialog';
-import Button from 'components/Button';
-import sleep from 'utils/sleep';
-import { ThemeRoot } from 'utils/theme';
-import { StoreProvider, useStore } from 'store';
-import { ICreateGroupsResult } from 'apis/group';
-import { lang } from 'utils/lang';
-import { useJoinGroup } from 'hooks/useJoinGroup';
+import Dialog from '~/components/Dialog';
+import Button from '~/components/Button';
+import { ICreateGroupsResult } from '~/apis';
+import sleep from '~/utils/sleep';
+import { ThemeRoot } from '~/utils/theme';
+import { lang } from '~/utils/lang';
+// import { useJoinGroup } from '~/hooks/useJoinGroup';
 
 export const joinGroup = async () => new Promise<void>((rs) => {
   const div = document.createElement('div');
@@ -26,14 +25,12 @@ export const joinGroup = async () => new Promise<void>((rs) => {
   render(
     (
       <ThemeRoot>
-        <StoreProvider>
-          <JoinGroup
-            rs={() => {
-              rs();
-              setTimeout(unmount, 3000);
-            }}
-          />
-        </StoreProvider>
+        <JoinGroup
+          rs={() => {
+            rs();
+            setTimeout(unmount, 3000);
+          }}
+        />
       </ThemeRoot>
     ),
     div,
@@ -53,12 +50,7 @@ const JoinGroup = observer((props: Props) => {
     // seed: null as any,
     seedString: '',
   }));
-  const {
-    activeGroupStore,
-    snackbarStore,
-    groupStore,
-  } = useStore();
-  const joinGroupProcess = useJoinGroup();
+  // const joinGroupProcess = useJoinGroup();
 
   const submit = async () => {
     if (state.loading) {
@@ -82,7 +74,7 @@ const JoinGroup = observer((props: Props) => {
     });
 
     try {
-      await joinGroupProcess(seed);
+      // await joinGroupProcess(seed);
       runInAction(() => {
         state.done = true;
       });
@@ -167,9 +159,6 @@ const JoinGroup = observer((props: Props) => {
     <Dialog
       open={state.open}
       onClose={handleClose}
-      transitionDuration={{
-        enter: 300,
-      }}
     >
       <div className="bg-white rounded-0 text-center p-8 pb-4">
         <div className="w-72">
