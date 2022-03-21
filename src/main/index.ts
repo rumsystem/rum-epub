@@ -1,22 +1,25 @@
 import './processLock';
-import { join } from 'path';
-import { app, BrowserWindow, ipcMain, Menu, Tray } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import ElectronStore from 'electron-store';
 import { initialize, enable } from '@electron/remote/main';
 
 import { sleep } from './utils';
-import MenuBuilder from './menu';
+import { MenuBuilder } from './menu';
 import { initQuorum, state as quorumState } from './quorum';
+import { createTray } from './tray';
 
 initialize();
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 // const isProduction = !isDevelopment;
 
-// const store = new ElectronStore();
+const store = new ElectronStore();
 
 const main = () => {
-  let win: BrowserWindow;
+  const state = {
+    win: null as null | BrowserWindow,
+    canQuit: false,
+  };
   ElectronStore.initRenderer();
   const createWindow = async () => {
     if (isDevelopment) {
@@ -25,7 +28,7 @@ const main = () => {
       await sleep(3000);
     }
 
-    win = new BrowserWindow({
+    state.win = new BrowserWindow({
       width: 1600,
       height: 900,
       minWidth: 768,
@@ -34,124 +37,62 @@ const main = () => {
         contextIsolation: false,
         // enableRemoteModule: true,
         nodeIntegration: true,
-        webSecurity: !isDevelopment && !process.env.TEST_ENV,
+        webSecurity: !isDevelopment,
         webviewTag: true,
       },
     });
 
-    enable(win.webContents);
+    enable(state.win.webContents);
 
-    if (process.env.TEST_ENV === 'prod') {
-      win.loadFile('src/dist/index.html');
-    } else if (isDevelopment || process.env.TEST_ENV === 'dev') {
-      win.loadURL('http://localhost:1212/dist/index.html');
+    if (isDevelopment) {
+      state.win.loadURL('http://localhost:1212/dist/index.html');
     } else {
-      win.loadFile('dist/index.html');
+      state.win.loadFile('dist/index.html');
     }
 
-    const menuBuilder = new MenuBuilder(win);
+    const menuBuilder = new MenuBuilder(state.win);
     menuBuilder.buildMenu();
 
-    // win.on('close', async (e) => {
-    //   if (app.quitting) {
-    //     win = null;
-    //   } else {
-    //     e.preventDefault();
-    //     win.hide();
-    //     if (process.platform === 'win32') {
-    //       const notice = !store.get('not-notice-when-close');
-    //       if (notice) {
-    //         try {
-    //           const res = await dialog.showMessageBox({
-    //             type: 'info',
-    //             buttons: ['确定'],
-    //             title: '窗口最小化',
-    //             message: 'RUM将继续在后台运行, 可通过系统状态栏重新打开界面',
-    //             checkboxLabel: '不再提示',
-    //           });
-    //           if (res?.checkboxChecked) {
-    //             store.set('not-notice-when-close', true);
-    //           }
-    //         } catch {}
-    //       }
-    //     }
-    //   }
-    // });
-
-    // if (isProduction) {
-    //   sleep(3000).then(() => {
-    //     handleUpdate(win);
-    //   });
-    // }
+    state.win.on('close', async (e) => {
+      if (state.canQuit) {
+        return;
+      }
+      e.preventDefault();
+      state.win?.hide();
+      if (process.platform === 'win32') {
+        const notice = !store.get('not-notice-when-close');
+        if (!notice) {
+          return;
+        }
+        try {
+          const res = await dialog.showMessageBox({
+            type: 'info',
+            buttons: ['确定'],
+            title: '窗口最小化',
+            message: 'RUM Epub App将继续在后台运行, 可通过系统状态栏重新打开界面',
+            checkboxLabel: '不再提示',
+          });
+          if (res?.checkboxChecked) {
+            store.set('not-notice-when-close', true);
+          }
+        } catch {}
+      }
+    });
   };
 
-  let tray;
-  function createTray() {
-    const iconMap = {
-      other: '../../assets/icons/pc_bar_icon.png',
-      win32: '../../assets/icon.ico',
-    };
-    const platform = process.platform === 'win32'
-      ? 'win32'
-      : 'other';
-    const icon = join(__dirname, iconMap[platform]);
+  app.on('before-quit', (e) => {
+    if (!state.canQuit) {
+      e.preventDefault();
+    }
+  });
 
-    tray = new Tray(icon);
-    const showApp = () => {
-      if (win) {
-        win.show();
-      }
-    };
-    const contextMenu = Menu.buildFromTemplate([
-      {
-        label: '显示主界面',
-        click: showApp,
-      },
-      {
-        label: '退出',
-        click: () => {
-          app.quit();
-        },
-      },
-    ]);
-    tray.on('click', showApp);
-    tray.on('double-click', showApp);
-    tray.setToolTip('Rum');
-    tray.setContextMenu(contextMenu);
-  }
-
-  // ipcMain.on('app-quit-prompt', () => {
-  //   app.quitPrompt = true;
-  // });
-
-  // ipcMain.on('disable-app-quit-prompt', () => {
-  //   app.quitPrompt = false;
-  // });
-
-  // app.on('render-process-gone', () => {
-  //   app.quitPrompt = false;
-  // });
-
-  // app.on('before-quit', (e) => {
-  //   if (app.quitPrompt) {
-  //     e.preventDefault();
-  //     win.webContents.send('app-before-quit');
-  //   } else {
-  //     app.quitting = true;
-  //   }
-  // });
-
-  // ipcMain.on('app-quit', () => {
-  //   app.quit();
-  // });
-
-  // app.on('window-all-closed', () => {});
+  app.on('window-all-closed', () => {});
 
   app.on('second-instance', () => {
-    if (win) {
-      if (!win.isVisible()) win.show();
-      if (win.isMinimized()) win.restore();
-      win.focus();
+    if (state.win) {
+      if (!state.win.isVisible()) state.win.show();
+      if (state.win.isMinimized()) state.win.restore();
+      state.win.focus();
     }
   });
 
@@ -159,7 +100,7 @@ const main = () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
     } else {
-      win.show();
+      state.win?.show();
     }
   });
 
@@ -186,7 +127,7 @@ const main = () => {
   }
 
   ipcMain.on('inspect-picker', () => {
-    const w = win as any;
+    const w = state.win as any;
     if (!w || !isDevelopment) {
       return;
     }
@@ -206,7 +147,13 @@ const main = () => {
     }
     createWindow();
     if (process.platform !== 'darwin') {
-      createTray();
+      createTray({
+        getWin: () => state.win,
+        quit: () => {
+          state.canQuit = true;
+          app.quit();
+        },
+      });
     }
   });
 };

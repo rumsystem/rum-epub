@@ -67,7 +67,7 @@ export const TitleBarItem = observer((props: Props) => {
             {v.children.filter((v) => !v.hidden).map((v, i) => (
               <MenuItem
                 className={classNames(
-                  'hover:bg-gray-4a duration-0 relative',
+                  'hover:bg-gray-4a duration-0 relative text-14',
                   v.classNames || '',
                 )}
                 onClick={() => {

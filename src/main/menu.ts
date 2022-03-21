@@ -1,15 +1,16 @@
-const { download } = require('electron-dl');
-const {
+import {
+  BrowserWindow,
   app,
   Menu,
-  electron,
   ipcMain,
-} = require('electron');
-const { format } = require('date-fns');
+  clipboard,
+} from 'electron';
+import { download } from 'electron-dl';
+import { format } from 'date-fns';
 
-class MenuBuilder {
-  language = 'cn';
-  cn = {
+export class MenuBuilder {
+  public language = 'cn' as 'cn' | 'en';
+  public cn = {
     service: '服务',
     hide: '隐藏',
     hideOther: '隐藏其他',
@@ -37,7 +38,8 @@ class MenuBuilder {
     debug: '调试',
     exportLogs: '导出调试包',
   };
-  en = {
+
+  public en = {
     service: 'Service',
     hide: 'Hide',
     hideOther: 'Hide Other',
@@ -72,9 +74,7 @@ class MenuBuilder {
     return this[this.language];
   }
 
-  constructor(mainWindow) {
-    this.mainWindow = mainWindow;
-
+  constructor(public mainWindow: BrowserWindow) {
     ipcMain.on('change-language', (_, lang) => {
       this.language = lang;
       this.rebuildMenu();
@@ -87,7 +87,7 @@ class MenuBuilder {
     if (process.platform === 'darwin') {
       const template = this.buildDarwinTemplate();
 
-      const menu = Menu.buildFromTemplate(template);
+      const menu = Menu.buildFromTemplate(template as any);
       Menu.setApplicationMenu(menu);
     } else {
       Menu.setApplicationMenu(null);
@@ -98,7 +98,7 @@ class MenuBuilder {
     if (process.platform === 'darwin') {
       const template = this.buildDarwinTemplate();
 
-      const menu = Menu.buildFromTemplate(template);
+      const menu = Menu.buildFromTemplate(template as any);
       Menu.setApplicationMenu(menu);
     } else {
       Menu.setApplicationMenu(null);
@@ -106,7 +106,7 @@ class MenuBuilder {
   }
 
   setupContextMenu() {
-    this.mainWindow.webContents.on('context-menu', (event, props) => {
+    this.mainWindow.webContents.on('context-menu', (_event, props) => {
       const hasText = props.selectionText.trim().length > 0;
 
       const menuTemplate = [
@@ -114,9 +114,9 @@ class MenuBuilder {
           id: 'inspect',
           label: 'I&nspect Element',
           click: () => {
-            this.mainWindow.inspectElement(props.x, props.y);
+            (this.mainWindow as any).inspectElement(props.x, props.y);
             if (this.mainWindow.webContents.isDevToolsOpened()) {
-              this.mainWindow.webContents.devToolsWebContents.focus();
+              (this.mainWindow as any).webContents.devToolsWebContents.focus();
             }
           },
         },
@@ -126,13 +126,13 @@ class MenuBuilder {
           accelerator: 'CommandOrControl+X',
           enabled: props.editFlags.canCut,
           visible: props.isEditable,
-          click: (menuItem) => {
+          click: (menuItem: any) => {
             const target = this.mainWindow.webContents;
             if (!menuItem.transform && target) {
               target.cut();
             } else {
               props.selectionText = menuItem.transform ? menuItem.transform(props.selectionText) : props.selectionText;
-              electron.clipboard.writeText(props.selectionText);
+              clipboard.writeText(props.selectionText);
             }
           },
         },
@@ -142,14 +142,14 @@ class MenuBuilder {
           accelerator: 'CommandOrControl+C',
           enabled: props.editFlags.canCopy,
           visible: props.isEditable || hasText,
-          click: (menuItem) => {
+          click: (menuItem: any) => {
             const target = this.mainWindow.webContents;
 
             if (!menuItem.transform && target) {
               target.copy();
             } else {
               props.selectionText = menuItem.transform ? menuItem.transform(props.selectionText) : props.selectionText;
-              electron.clipboard.writeText(props.selectionText);
+              clipboard.writeText(props.selectionText);
             }
           },
         },
@@ -159,11 +159,11 @@ class MenuBuilder {
           accelerator: 'CommandOrControl+V',
           enabled: props.editFlags.canPaste,
           visible: props.isEditable,
-          click: (menuItem) => {
+          click: (menuItem: any) => {
             const target = this.mainWindow.webContents;
 
             if (menuItem.transform) {
-              let clipboardContent = electron.clipboard.readText(props.selectionText);
+              let clipboardContent = clipboard.readText('clipboard');
               clipboardContent = menuItem.transform ? menuItem.transform(clipboardContent) : clipboardContent;
               target.insertText(clipboardContent);
             } else {
@@ -188,7 +188,7 @@ class MenuBuilder {
         },
       ].filter(Boolean);
 
-      Menu.buildFromTemplate(menuTemplate).popup({ window: this.mainWindow });
+      Menu.buildFromTemplate(menuTemplate as any).popup({ window: this.mainWindow });
     });
   }
 
@@ -287,6 +287,3 @@ class MenuBuilder {
     return [];
   }
 }
-
-
-module.exports = MenuBuilder;

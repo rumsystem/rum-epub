@@ -5,4 +5,4 @@ require('ts-node').register({
   project: path.join(__dirname, 'src/main/tsconfig.json'),
 });
 
-require('./src/main');
+require('./src/main/index');

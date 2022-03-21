@@ -58,3 +58,4 @@ src/utils/quorum-wasm/wasm_exec.js
 src/tests/userData/**/*
 
 /old
+/src/main_dist

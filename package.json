@@ -1,11 +1,25 @@
 {
-  "version": "3.1.23",
+  "version": "0.0.1",
   "name": "rum-epub-app",
   "productName": "Rum Epub",
   "description": "Rum Epub Desktop App",
   "main": "main.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rumsystem/rum-app.git"
+  },
+  "author": {
+    "name": "rumsystem.net",
+    "email": "dev@press.one"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/rumsystem/rum-app#readme",
+  "bugs": {
+    "url": "https://github.com/rumsystem/rum-app/issues"
+  },
   "scripts": {
-    "build": "yarn build:renderer",
+    "build": "yarn build:main && yarn build:renderer",
+    "build:main": "rimraf ./src/main_dist && tsc --project src/main/tsconfig.json",
     "build:staging": "cross-env BUILD_ENV=staging yarn build:renderer",
     "build:renderer": "rimraf ./src/dist && cross-env NODE_ENV=production webpack --config ./build/webpack.config.prod.js",
     "build:quorum": "git submodule update --init && git submodule foreach git pull origin main && ./scripts/build_quorum.sh",
@@ -13,8 +27,6 @@
     "a": "rimraf ./src/dist && node --max-old-space-size=4096 node_modules/webpack/bin/webpack.js --config ./build/webpack.config.analyze.js",
     "rebuild": "electron-rebuild --parallel --types prod,dev,optional --module-dir src",
     "lint": "cross-env NODE_ENV=development eslint ./src --cache --ext .js,.jsx,.ts,.tsx",
-    "test": "cross-env TEST_ENV=dev TS_NODE_PROJECT=\"./tsconfig-test.json\" node -r ts-node/register/transpile-only ./src/tests/index.ts",
-    "test:prod": "cross-env TEST_ENV=prod TS_NODE_PROJECT=\"./tsconfig-test.json\" node -r ts-node/register/transpile-only ./src/tests/index.ts",
     "package": "yarn build && yarn package:all",
     "package:staging:all": "yarn build:staging && yarn package:all",
     "package:all": "yarn package:mac && yarn package:win && yarn package:linux && node ./scripts/clear_after_build.js",
@@ -36,24 +48,16 @@
   },
   "build": {
     "productName": "Rum Epub",
-    "appId": "one.press.atm",
-    "artifactName": "RUM-${version}-${platform}.${ext}",
-    "releaseInfo": {
-      "releaseNotes": "1. 优化网络性能; 2. 优化一些功能细节，体验更流畅"
-    },
+    "appId": "net.rumsystem.epub-app",
+    "artifactName": "RUM-epub-${version}-${platform}.${ext}",
     "files": [
       "dist/",
-      "main/",
-      "index.html",
-      "main.js",
-      "menu.js",
-      "updater.js",
-      "quorum.js",
-      "package.json"
+      "main_dist/",
+      "main.js"
     ],
     "afterSign": "electron-builder-notarize",
     "mac": {
-      "artifactName": "RUM-${version}.${ext}",
+      "artifactName": "RUM-epub-${version}.${ext}",
       "target": [
         "zip",
         "dmg"
@@ -83,7 +87,7 @@
       ]
     },
     "win": {
-      "artifactName": "RUM-${version}.${ext}",
+      "artifactName": "RUM-epub-${version}.${ext}",
       "verifyUpdateCodeSignature": false,
       "target": "nsis",
       "extraResources": [
@@ -91,7 +95,7 @@
       ]
     },
     "linux": {
-      "artifactName": "RUM-${version}.linux.${ext}",
+      "artifactName": "RUM-epub-${version}.linux.${ext}",
       "target": [
         "zip"
       ],
@@ -107,25 +111,8 @@
     },
     "extraResources": [
       "./assets/**"
-    ],
-    "publish": {
-      "provider": "generic",
-      "url": "https://static-assets.xue.cn/rum-testing"
-    }
+    ]
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/rumsystem/rum-app.git"
-  },
-  "author": {
-    "name": "press.one",
-    "email": "junhong@press.one"
-  },
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/rumsystem/rum-app/issues"
-  },
-  "homepage": "https://github.com/rumsystem/rum-app#readme",
   "devDependencies": {
     "@babel/core": "^7.17.8",
     "@babel/preset-env": "^7.16.11",
@@ -147,6 +134,7 @@
     "@types/react-dom": "^17.0.14",
     "@types/rimraf": "^3.0.2",
     "@types/webpack-env": "^1.16.3",
+    "@types/yauzl": "^2.9.2",
     "autoprefixer": "^10.4.4",
     "babel-loader": "^8.2.3",
     "chalk": "^4.1.2",
@@ -261,28 +249,5 @@
     "node": ">=12.13.x",
     "npm": ">=6.x",
     "yarn": ">=1.21.3"
-  },
-  "prettier": {
-    "overrides": [
-      {
-        "files": [
-          ".prettierrc",
-          ".babelrc",
-          ".eslintrc"
-        ],
-        "options": {
-          "parser": "json"
-        }
-      }
-    ],
-    "singleQuote": true
-  },
-  "renovate": {
-    "extends": [
-      "bliss"
-    ],
-    "baseBranches": [
-      "next"
-    ]
   }
 }

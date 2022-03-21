@@ -74,25 +74,25 @@ export const TitleBar = observer((props: Props) => {
             getCurrentWindow().webContents.toggleDevTools();
           },
         },
-        {
-          text: lang.exportLogs,
-          action: () => {
-            if (!process.env.IS_ELECTRON) {
-              // TODO:
-              // eslint-disable-next-line no-alert
-              alert('TODO');
-              return;
-            }
-            getCurrentWindow().webContents.send('export-logs');
-          },
-        },
-        {
-          text: lang.clearCache,
-          action: () => {
-            // TODO:
-            // cleanLocalData();
-          },
-        },
+        // {
+        //   text: lang.exportLogs,
+        //   action: () => {
+        //     if (!process.env.IS_ELECTRON) {
+        //       // TODO:
+        //       // eslint-disable-next-line no-alert
+        //       alert('TODO');
+        //       return;
+        //     }
+        //     getCurrentWindow().webContents.send('export-logs');
+        //   },
+        // },
+        // {
+        //   text: lang.clearCache,
+        //   action: () => {
+        //     // TODO:
+        //     // cleanLocalData();
+        //   },
+        // },
         {
           text: lang.relaunch,
           action: () => {
