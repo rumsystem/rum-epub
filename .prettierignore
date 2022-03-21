@@ -1,9 +1,0 @@
-**/*.md
-**/*.svg
-**/*.ejs
-**/*.html
-**/*.js
-**/*.jsx
-**/*.ts
-**/*.tsx
-package.json
