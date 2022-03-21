@@ -16,6 +16,7 @@ import Dialog from '~/components/Dialog';
 import { epubService } from '~/service/epub';
 import { nodeService } from '~/service/node';
 import { tooltipService } from '~/service/tooltip';
+import { dialogService } from '~/service/dialog';
 
 interface Props {
   className?: string
@@ -91,7 +92,33 @@ export const EpubUploadButton = observer((props: Props) => {
   const setFile = async (fileName: string, buffer: Buffer) => {
     try {
       await epubService.selectFile(nodeService.state.activeGroupId, fileName, buffer);
+      const book = state.item?.epub;
+      if (book) {
+        const allBooks = epubService.state.bookMap.get(nodeService.state.activeGroupId) ?? [];
+        if (allBooks.some((v) => v.sha256 === book.sha256)) {
+          const result = await dialogService.open({
+            content: (
+              <div>
+                <p>
+                  当前种子网络已经上传过
+                </p>
+                <p className="my-1">
+                  {book.title}
+                </p>
+                <p>
+                  这本书了，还需要重新上传一遍吗？
+                </p>
+              </div>
+            ),
+          });
+
+          if (result === 'cancel') {
+            handleCancelFileSelect();
+          }
+        }
+      }
     } catch (e) {
+      console.error(e);
       tooltipService.show({
         content: '文件读取错误',
         type: 'error',

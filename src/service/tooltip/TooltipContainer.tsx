@@ -9,7 +9,12 @@ export const TooltipContainer = observer(() => {
     return null;
   }
   return (
-    <div className="fixed inset-0 z-50 select-none pointer-events-none">
+    <div
+      className="fixed inset-0 select-none pointer-events-none"
+      style={{
+        zIndex: 2000,
+      }}
+    >
       {tooltipService.state.items.map((v) => (
         <div
           className={classNames(

@@ -28,8 +28,8 @@ export const verifyEpub = async (fileName: string, fileBuffer: Buffer): Promise<
   if (!containerEntry) {
     throw new Error('cant find META-INF/container.xml');
   }
-  const mimetype = (await readEntryFromZip(zipResult, mimetypeEntry)).toString();
-  const xmlContent = (await readEntryFromZip(zipResult, containerEntry)).toString();
+  const mimetype = (await readEntryFromZip(zipResult, mimetypeEntry)).toString().replace(/^\uFEFF/, '');
+  const xmlContent = (await readEntryFromZip(zipResult, containerEntry)).toString().replace(/^\uFEFF/, '');
 
   const containerDom = parseXML(xmlContent);
   const fullPath = containerDom.querySelector('container > rootfiles > rootfile')?.getAttribute('full-path');
@@ -40,7 +40,7 @@ export const verifyEpub = async (fileName: string, fileBuffer: Buffer): Promise<
   if (!contentEntry) {
     throw new Error('cant find content');
   }
-  const container = (await readEntryFromZip(zipResult, contentEntry)).toString();
+  const container = (await readEntryFromZip(zipResult, contentEntry)).toString().replace(/^\uFEFF/, '');
 
   const contentDom = parseXML(container);
   const title = contentDom.querySelector('metadata > title')?.textContent;
