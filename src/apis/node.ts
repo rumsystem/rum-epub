@@ -1,5 +1,4 @@
 import request from '../request';
-import getBase from '~/utils/getBase';
 import { qwasm } from '~/utils/quorum-wasm/load-quorum';
 
 export interface INodeInfo {
@@ -16,7 +15,7 @@ export const fetchMyNodeInfo = () => {
   }
   return request('/api/v1/node', {
     method: 'GET',
-    base: getBase(),
+    quorum: true,
     jwt: true,
   }) as Promise<INodeInfo>;
 };

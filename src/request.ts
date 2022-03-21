@@ -1,7 +1,9 @@
 import sleep from '~/utils/sleep';
+import getBase from './utils/getBase';
 
 interface RequestOption extends Omit<RequestInit, 'body'> {
   base: string
+  quorum?: boolean
   isTextResponse: boolean
   minPendingDuration: number
   body: unknown
@@ -16,6 +18,11 @@ export default async (url: string, options: Partial<RequestOption> = {}) => {
     options.headers = { 'Content-Type': 'application/json' };
     options.body = JSON.stringify(options.body);
   }
+
+  if (options.quorum) {
+    options.base = getBase();
+  }
+
   if (!options.base) {
     options.credentials = 'include';
   }

@@ -1,6 +1,5 @@
 import request from '../request';
 import qs from 'query-string';
-import getBase from '~/utils/getBase';
 import { qwasm } from '~/utils/quorum-wasm/load-quorum';
 
 export enum ContentTypeUrl {
@@ -131,7 +130,7 @@ export const fetchContents = (
     `/app/api/v1/group/${groupId}/content?${qs.stringify(options)}`,
     {
       method: 'POST',
-      base: getBase(),
+      quorum: true,
       body: { senders: [] },
       jwt: true,
     },
@@ -144,7 +143,7 @@ export const postNote = (content: INotePayload) => {
   }
   return request('/api/v1/group/content', {
     method: 'POST',
-    base: getBase(),
+    quorum: true,
     body: content,
     jwt: true,
   }) as Promise<IPostContentResult>;
@@ -156,7 +155,7 @@ export const like = (likeContent: ILikePayload) => {
   }
   return request('/api/v1/group/content', {
     method: 'POST',
-    base: getBase(),
+    quorum: true,
     body: likeContent,
     jwt: true,
   }) as Promise<IPostContentResult>;
@@ -168,7 +167,7 @@ export const updateProfile = (profile: IProfilePayload) => {
   }
   return request('/api/v1/group/profile', {
     method: 'POST',
-    base: getBase(),
+    quorum: true,
     body: profile,
     jwt: true,
   }) as Promise<IPostContentResult>;

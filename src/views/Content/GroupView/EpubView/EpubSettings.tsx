@@ -59,10 +59,6 @@ export const EpubSettings = observer((props: Props) => {
   });
 
   const handleChangeTheme = action((_: React.ChangeEvent, v: string) => {
-    const rendition = props.book?.rendition;
-    if (!rendition) {
-      return;
-    }
     readerSettingsService.state.theme = v as ReaderThemes;
     if (props.book?.rendition) {
       readerSettingsService.injectCSS(props.book.rendition);
@@ -70,10 +66,6 @@ export const EpubSettings = observer((props: Props) => {
   });
 
   const handleChangeFont = action((_: React.ChangeEvent, v: string) => {
-    const rendition = props.book?.rendition;
-    if (!rendition) {
-      return;
-    }
     readerSettingsService.state.font = v;
     if (props.book?.rendition) {
       readerSettingsService.updateOverrides(props.book.rendition);
@@ -81,10 +73,6 @@ export const EpubSettings = observer((props: Props) => {
   });
 
   const handleChangeCustomFont = action((v: string) => {
-    const rendition = props.book?.rendition;
-    if (!rendition) {
-      return;
-    }
     readerSettingsService.state.customFont = v;
     if (props.book?.rendition) {
       readerSettingsService.updateOverrides(props.book.rendition);
@@ -180,7 +168,7 @@ export const EpubSettings = observer((props: Props) => {
             value={readerSettingsService.state.fontSize}
             onChange={(_, v) => handleChangeFontSize(v as number, false)}
             onChangeCommitted={(_, v) => handleChangeFontSize(v as number, true)}
-            step={1}
+            step={2}
             marks
             min={14}
             max={24}

@@ -4,13 +4,17 @@ import { observer, useLocalObservable } from 'mobx-react-lite';
 import { FiMoreHorizontal, FiDelete } from 'react-icons/fi';
 import { MdInfoOutline } from 'react-icons/md';
 import { Menu, MenuItem } from '@mui/material';
+
+import { IGroup } from '~/apis';
+import { manageGroup } from '~/standaloneModals/manageGroup';
 import { groupInfo } from '~/standaloneModals/groupInfo';
 import { lang } from '~/utils/lang';
 import { nodeService } from '~/service/node';
 import { dialogService } from '~/service/dialog';
 import { loadingService } from '~/service/loading';
 import { tooltipService } from '~/service/tooltip';
-import { IGroup } from '~/apis';
+
+import IconSeednetManage from 'assets/icon_seednet_manage.svg';
 
 interface Props {
   group: IGroup
@@ -18,15 +22,12 @@ interface Props {
 }
 
 export default observer((props: Props) => {
-  // const isGroupOwner = useIsCurrentGroupOwner();
-  // const activeGroup = useActiveGroup();
-  // const leaveGroup = useLeaveGroup();
-  // const activeGroupMutedPublishers = useActiveGroupMutedPublishers();
-  // const latestStatus = latestStatusStore.map[activeGroupStore.id] || latestStatusStore.DEFAULT_LATEST_STATUS;
   const state = useLocalObservable(() => ({
     open: false,
     showMutedListModal: false,
   }));
+  const isGroupOwner = props.group.user_pubkey === props.group.owner_pubkey;
+
   const menuButtonRef = React.useRef<HTMLDivElement>(null);
 
   const handleMenuClick = action(() => {
@@ -83,10 +84,10 @@ export default observer((props: Props) => {
     });
   };
 
-  // const handleManageGroup = () => {
-  //   manageGroup(activeGroupStore.id);
-  //   handleMenuClose();
-  // };
+  const handleManageGroup = () => {
+    manageGroup(nodeService.state.activeGroupId);
+    handleMenuClose();
+  };
 
   return (<>
     <div
@@ -120,7 +121,7 @@ export default observer((props: Props) => {
     >
       <MenuItem onClick={openGroupInfoModal}>
         <div className="flex items-center text-gray-600 leading-none pl-1 py-2">
-          <div className="flex items-center w-7">
+          <div className="flex items-center w-7 flex-none">
             <MdInfoOutline className="text-18 opacity-50" />
           </div>
           <span className="font-bold text-14">{lang.info}</span>
@@ -136,22 +137,22 @@ export default observer((props: Props) => {
             </div>
           </MenuItem>
         )} */}
-      {/* {isGroupOwner && (
-          <MenuItem onClick={handleManageGroup}>
-            <div className="flex items-center text-gray-600 leading-none pl-1 py-2">
-              <span className="flex items-center mr-3">
-                <img className="text-16 opacity-50" src={IconSeednetManage} />
-              </span>
-              <span className="font-bold">{lang.manageGroup}</span>
-            </div>
-          </MenuItem>
-        )} */}
+      {isGroupOwner && (
+        <MenuItem onClick={handleManageGroup}>
+          <div className="flex items-center text-gray-600 leading-none pl-1 py-2">
+            <span className="flex items-center w-7 flex-none">
+              <img className="text-16 opacity-50" src={IconSeednetManage} />
+            </span>
+            <span className="font-bold text-14">{lang.manageGroup}</span>
+          </div>
+        </MenuItem>
+      )}
       <MenuItem
         onClick={() => handleLeaveGroup()}
         data-test-id="group-menu-exit-group-button"
       >
         <div className="flex items-center text-red-400 leading-none pl-1 py-2">
-          <div className="flex items-center w-7">
+          <div className="flex items-center w-7 flex-none">
             <FiDelete className="text-16 opacity-50" />
           </div>
           <span className="font-bold text-14">{lang.exitGroup}</span>

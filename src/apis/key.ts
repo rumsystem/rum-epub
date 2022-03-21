@@ -1,5 +1,4 @@
 import request from '../request';
-import getBase from '~/utils/getBase';
 import { qwasm } from '~/utils/quorum-wasm/load-quorum';
 
 export interface BackupData {
@@ -14,7 +13,7 @@ export const backup = () => {
   }
   return request('/api/v1/backup', {
     method: 'GET',
-    base: getBase(),
+    quorum: true,
     jwt: true,
   }) as Promise<BackupData>;
 };

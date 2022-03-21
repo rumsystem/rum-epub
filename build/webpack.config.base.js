@@ -42,9 +42,7 @@ config.resolve
   .end()
   .alias
   .set('lodash', 'lodash-es')
-  .set('assets', path.join(__dirname, '../assets'))
-  .set('quorum_bin', path.join(__dirname, '../quorum_bin'))
-  .set('quorum-sdk-electron-renderer', path.join(__dirname, '../src/service/renderer'))
+  .set('~/assets', path.join(__dirname, '../assets'))
   .end();
 
 config.resolve.set('fallback', {

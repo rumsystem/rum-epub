@@ -10,10 +10,12 @@ import { GoChevronRight } from 'react-icons/go';
 import Dialog from '~/components/Dialog';
 import Button from '~/components/Button';
 import { ICreateGroupsResult } from '~/apis';
+import { tooltipService } from '~/service/tooltip';
 import sleep from '~/utils/sleep';
 import { ThemeRoot } from '~/utils/theme';
 import { lang } from '~/utils/lang';
-// import { useJoinGroup } from '~/hooks/useJoinGroup';
+import { nodeService } from '~/service/node';
+import { runLoading } from '~/utils';
 
 export const joinGroup = async () => new Promise<void>((rs) => {
   const div = document.createElement('div');
@@ -50,9 +52,8 @@ const JoinGroup = observer((props: Props) => {
     // seed: null as any,
     seedString: '',
   }));
-  // const joinGroupProcess = useJoinGroup();
 
-  const submit = async () => {
+  const submit = () => {
     if (state.loading) {
       return;
     }
@@ -61,55 +62,41 @@ const JoinGroup = observer((props: Props) => {
     try {
       seed = JSON.parse(state.seedString);
     } catch (e) {
-      snackbarStore.show({
-        message: lang.seedParsingError,
+      tooltipService.show({
+        content: lang.seedParsingError,
         type: 'error',
       });
       return;
     }
 
-    runInAction(() => {
-      state.loading = true;
-      state.done = false;
-    });
-
-    try {
-      // await joinGroupProcess(seed);
-      runInAction(() => {
-        state.done = true;
-      });
-      handleClose();
-    } catch (err: any) {
-      console.error(err);
-      if (err.message.includes('existed')) {
-        await sleep(400);
-        runInAction(() => {
-          state.done = true;
-        });
-        handleClose();
-        if (activeGroupStore.id !== seed.group_id) {
-          await sleep(400);
-          if (!groupStore.hasGroup(seed.group_id)) {
-            snackbarStore.show({
-              message: lang.existMember,
+    runInAction(() => { state.done = false; });
+    runLoading(
+      (l) => { state.loading = l; },
+      async () => {
+        try {
+          const group = await nodeService.joinGroup(seed);
+          nodeService.changeActiveGroup(group);
+          runInAction(() => { state.done = true; });
+          handleClose();
+        } catch (err: any) {
+          console.error(err);
+          if (err.message.includes('existed')) {
+            await sleep(400);
+            runInAction(() => { state.done = true; });
+            handleClose();
+            tooltipService.show({
+              content: lang.existMember,
               type: 'error',
             });
             return;
           }
-          activeGroupStore.setSwitchLoading(true);
-          activeGroupStore.setId(seed.group_id);
+          tooltipService.show({
+            content: lang.somethingWrong,
+            type: 'error',
+          });
         }
-        return;
-      }
-      snackbarStore.show({
-        message: lang.somethingWrong,
-        type: 'error',
-      });
-    } finally {
-      runInAction(() => {
-        state.loading = false;
-      });
-    }
+      },
+    );
   };
 
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {

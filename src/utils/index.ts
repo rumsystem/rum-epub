@@ -1,3 +1,4 @@
+import { shell } from '@electron/remote';
 import { runInAction } from 'mobx';
 
 export const setIntervalAsTimeout = (fn: (...a: Array<any>) => any, interval?: number) => {
@@ -46,4 +47,17 @@ export const runLoading: RunLoading = async (setLoading, fn) => {
   } finally {
     runInAction(() => setLoading(false));
   }
+};
+
+export const addLinkOpen = (element: HTMLElement | Window) => {
+  element.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    if (target && target.tagName === 'A') {
+      e.preventDefault();
+      const href = target.getAttribute('href');
+      if (href && href.startsWith('http')) {
+        shell.openExternal(href);
+      }
+    }
+  });
 };

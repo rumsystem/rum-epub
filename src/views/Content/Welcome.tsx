@@ -1,7 +1,7 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import Button from '~/components/Button';
-// import { joinGroup } from '~/standaloneModals/joinGroup';
+import { joinGroup } from '~/standaloneModals/joinGroup';
 import { createGroup } from '~/standaloneModals/createGroup';
 import { lang } from '~/utils/lang';
 
@@ -18,7 +18,7 @@ export default observer(() => (
       </Button>
       <div className="w-6" />
       <Button
-        // onClick={() => joinGroup()}
+        onClick={() => joinGroup()}
         outline
       >
         TODO:

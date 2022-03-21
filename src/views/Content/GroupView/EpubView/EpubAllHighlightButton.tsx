@@ -16,7 +16,7 @@ interface Props {
 
 interface ArrItem { a: Annotation, text: string }
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 5;
 
 export const EpubAllHighlightButton = observer((props: Props) => {
   const state = useLocalObservable(() => ({
@@ -29,6 +29,7 @@ export const EpubAllHighlightButton = observer((props: Props) => {
 
   const handleOpen = action(async () => {
     state.open = true;
+    state.currentPage = 1;
     const book = props.book;
     if (!book) {
       return;

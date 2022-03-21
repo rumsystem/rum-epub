@@ -177,12 +177,12 @@ export const checkTrx = async (groupId: string, trxId: string) => {
     try {
       const trx = await fetchTrx(groupId, trxId);
       if (!Object.keys(trx).length) {
-        await sleep(5000);
+        await sleep(2000);
         continue;
       }
       break;
     } catch (e) {
-      await sleep(5000);
+      await sleep(2000);
     }
   }
 };

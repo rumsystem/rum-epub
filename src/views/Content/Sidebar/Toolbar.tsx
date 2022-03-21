@@ -66,7 +66,7 @@ export default observer((props: Props) => {
       >
         <div className="flex items-center justify-between h-[70px] border-b border-gray-ec">
           {!state.searchMode && (<>
-            <div className="px-4 text-16 text-gray-4a">所有种子网络</div>
+            <div className="px-4 text-16 text-gray-4a">全部种子网络</div>
             <div className="flex-1" />
             {/* <div className="flex items-center text-16 ml-4">
               <div

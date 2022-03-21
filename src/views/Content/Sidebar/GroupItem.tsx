@@ -3,14 +3,13 @@ import classNames from 'classnames';
 import { action } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import escapeStringRegexp from 'escape-string-regexp';
-import { Popover } from '@mui/material';
+// import { Popover } from '@mui/material';
 
 import GroupIcon from '~/components/GroupIcon';
-import { getGroupIcon } from '~/utils/getGroupIcon';
 import { IGroup } from '~/apis';
 import { nodeService } from '~/service/node';
 
-import { GroupPopup } from './GroupPopup';
+// import { GroupPopup } from './GroupPopup';
 
 interface GroupItemProps {
   group: IGroup
@@ -27,23 +26,15 @@ export default observer((props: GroupItemProps) => {
   }));
   const boxRef = React.useRef<HTMLDivElement>(null);
 
-  // const latestStatus = latestStatusStore.map[props.group.group_id] || latestStatusStore.DEFAULT_LATEST_STATUS;
-  // const unreadCount = latestStatus.unreadCount;
-  const GroupTypeIcon = getGroupIcon(props.group.app_key);
-
-  // const showNotificationBadge = !state.active
-  //   && unreadCount === 0
-  //   && (sum(Object.values(latestStatus.notificationUnreadCountMap || {})) > 0);
-
-  const isOwner = props.group.role === 'owner';
+  const isOwner = props.group.owner_pubkey === props.group.user_pubkey;
 
   const handleClick = () => {
     nodeService.changeActiveGroup(props.group.group_id);
   };
 
-  const handleClose = action(() => {
-    state.groupPopupOpen = false;
-  });
+  // const handleClose = action(() => {
+  //   state.groupPopupOpen = false;
+  // });
 
   return (<>
     <div
@@ -159,17 +150,6 @@ export default observer((props: GroupItemProps) => {
               </span>
             ))}
           </div>
-          <GroupTypeIcon
-            className={classNames(
-              'ml-[5px] flex-none opacity-90',
-              state.active && 'text-white',
-              !state.active && 'text-gray-9c',
-            )}
-            style={{
-              strokeWidth: 4,
-            }}
-            width="16"
-          />
         </div>
 
         {/* <div className="absolute top-0 right-4 h-full flex items-center">
@@ -199,7 +179,7 @@ export default observer((props: GroupItemProps) => {
       </div>
     </div>
 
-    <Popover
+    {/* <Popover
       classes={{
         root: 'pointer-events-none',
         paper: 'pointer-events-auto',
@@ -221,7 +201,7 @@ export default observer((props: GroupItemProps) => {
         onClickAway={handleClose}
         onClose={handleClose}
       />
-    </Popover>
+    </Popover> */}
   </>);
 });
 

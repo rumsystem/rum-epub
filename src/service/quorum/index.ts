@@ -47,8 +47,6 @@ export const up = async () => {
     password,
   });
 
-  console.log(data);
-
   quorumService.state.port = data.port;
   quorumService.state.up = data.up;
 
@@ -73,3 +71,5 @@ export const quorumService = {
   up,
   down,
 };
+
+(window as any).quorumService = quorumService;

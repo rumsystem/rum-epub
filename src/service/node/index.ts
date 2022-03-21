@@ -8,6 +8,8 @@ import {
   fetchMyNodeInfo,
   fetchNetwork,
   INetworkGroup,
+  getGroupConfigKeyList,
+  getGroupConfigItem,
 } from '~/apis';
 import { setIntervalAsTimeout } from '~/utils';
 import sleep from '~/utils/sleep';
@@ -31,9 +33,14 @@ const state = observable({
     peerid: '',
     node: null,
   },
+  configMap: new Map<string, Record<string, string | boolean | number>>(),
 
   get activeGroup() {
     return this.groups.find((v) => v.group_id === this.activeGroupId) ?? null;
+  },
+
+  get groupMap() {
+    return Object.fromEntries(this.groups.map((v) => [v.group_id, v])) as Record<string, IGroup | undefined>;
   },
 
   disposes: [] as Array<() => unknown>,
@@ -42,7 +49,15 @@ const state = observable({
 const updateGroups = async (init = false) => {
   const data = await fetchMyGroups();
   runInAction(() => {
-    state.groups = data.groups ?? [];
+    const groups = data.groups ?? [];
+    groups.sort((a, b) => {
+      if (a.group_name > b.group_name) return 1;
+      if (a.group_name < b.group_name) return -1;
+      if (a.group_id > b.group_id) return 1;
+      if (a.group_id < b.group_id) return -1;
+      return 0;
+    });
+    state.groups = groups;
     if (init) {
       state.activeGroupId = state.groups[0].group_id ?? '';
     }
@@ -61,6 +76,27 @@ const updateNetworkInfo = async () => {
   runInAction(() => {
     state.network = data;
   });
+};
+
+const updateGroupConfig = async (groupId: string) => {
+  const keylist = await getGroupConfigKeyList(groupId) || [];
+  const pairs = await Promise.all(
+    keylist.map(async (keyItem) => {
+      const item = await getGroupConfigItem(groupId, keyItem.Name);
+      return [item.Name, item.Value];
+    }),
+  );
+  const config = Object.fromEntries(pairs) as Record<string, string | boolean | number>;
+
+  runInAction(() => {
+    state.configMap.set(groupId, config);
+  });
+};
+
+const updateAllGroupConfig = async () => {
+  for (const group of state.groups) {
+    await updateGroupConfig(group.group_id);
+  }
 };
 
 export const createGroup = async (params: Parameters<typeof createGroupApi>[0]) => {
@@ -140,11 +176,13 @@ const startPolling = (restart = false) => {
   updateGroups();
   updateNodeInfo();
   updateNetworkInfo();
+  updateAllGroupConfig();
 
   state.disposes.push(
     setIntervalAsTimeout(updateGroups, 5000),
-    setIntervalAsTimeout(updateNodeInfo, 5000),
-    setIntervalAsTimeout(updateNetworkInfo, 5000),
+    setIntervalAsTimeout(updateNodeInfo, 10000),
+    setIntervalAsTimeout(updateNetworkInfo, 10000),
+    setIntervalAsTimeout(updateAllGroupConfig, 20000),
   );
 };
 
@@ -164,4 +202,6 @@ export const nodeService = {
   changeActiveGroup,
   updateGroups,
   updateNodeInfo,
+  updateGroupConfig,
+  updateAllGroupConfig,
 };

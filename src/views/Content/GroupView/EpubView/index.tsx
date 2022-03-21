@@ -6,14 +6,19 @@ import Epub, { Book, Contents, Location, NavItem } from 'epubjs';
 import Section from 'epubjs/types/section';
 import { Annotation } from 'epubjs/types/annotations';
 import { PackagingMetadataObject } from 'epubjs/types/packaging';
-import { ClickAwayListener, Tooltip } from '@mui/material';
+import { Button, CircularProgress, ClickAwayListener, Tooltip } from '@mui/material';
 import { ChevronLeft, ChevronRight } from '@mui/icons-material';
 import FullscreenIcon from 'boxicons/svg/regular/bx-fullscreen.svg?react';
 import EditAltIcon from 'boxicons/svg/regular/bx-edit-alt.svg?fill';
 
 import { nodeService } from '~/service/node';
 import { EpubBook, epubService } from '~/service/epub';
-import { progressBarTheme, readerSettingsService, readerThemes } from '~/service/readerSettings';
+import { linkTheme, progressBarTheme, readerSettingsService, readerThemes } from '~/service/readerSettings';
+import { ReadingProgressItem } from '~/service/db';
+import { addLinkOpen } from '~/utils';
+
+import BookImage from '~/assets/illustration_book.svg';
+import ArrowImage from '~/assets/arrow.svg';
 
 import { EpubAllHighlightButton } from './EpubAllHighlightButton';
 import { EpubChaptersButton } from './EpubChaptersButton';
@@ -43,10 +48,10 @@ export const EpubView = observer((props: Props) => {
     mousePosition: { x: 0, y: 0 },
 
     fullScreen: false,
-
-    ro: null as null | ResizeObserver,
+    loadingFirstBook: true,
     renderBox: React.createRef<HTMLDivElement>(),
 
+    jumpingHistory: [] as Array<string>,
     get chapterProgress() {
       if (!this.currentHref || !state.spineLoaded) {
         return [0, 0, 0];
@@ -67,18 +72,13 @@ export const EpubView = observer((props: Props) => {
       const item = items.find((v) => v.href === state.currentHref) ?? null;
       return item;
     },
-  }, {}, { deep: false }));
-
-  const epubReaderBox = React.useRef<HTMLDivElement>(null);
-
-  const handleResize = () => {
-    const isRenditionReady = !!(state.book?.rendition as any)?.manager;
-    if (!isRenditionReady || !state.renderBox.current) {
-      return;
-    }
-    const rect = state.renderBox.current.getBoundingClientRect();
-    state.book!.rendition.resize(rect.width, rect.height);
-  };
+    get currentUploadItem() {
+      return epubService.state.uploadMap.get(nodeService.state.activeGroupId) ?? null;
+    },
+    get readerTheme() {
+      return readerThemes[readerSettingsService.state.theme];
+    },
+  }));
 
   const handlePrev = () => {
     if (state.atStart) {
@@ -108,11 +108,28 @@ export const EpubView = observer((props: Props) => {
     state.book?.rendition?.display(href);
   };
 
+  const handleBackJumpingHistory = () => {
+    const item = state.jumpingHistory.pop();
+    if (!item) {
+      return;
+    }
+    state.book?.rendition.display(item);
+  };
+
   const handleToggleFullScreen = action(() => {
     state.fullScreen = !state.fullScreen;
   });
 
-  const loadBook = (bookItem: EpubBook) => {
+  const handleResize = () => {
+    const isRenditionReady = !!(state.book?.rendition as any)?.manager;
+    if (!isRenditionReady || !state.renderBox.current) {
+      return;
+    }
+    const rect = state.renderBox.current.getBoundingClientRect();
+    state.book!.rendition.resize(rect.width, rect.height);
+  };
+
+  const loadBook = (bookItem: EpubBook, readingProgress?: ReadingProgressItem | null) => {
     state.book?.destroy();
     runInAction(() => {
       state.chapters = [];
@@ -144,11 +161,12 @@ export const EpubView = observer((props: Props) => {
       // spread: 'none',
       minSpreadWidth: 950,
     });
-    epubService.getReadingProgress(
+
+    Promise.resolve(readingProgress || epubService.getReadingProgress(
       nodeService.state.activeGroupId,
       bookItem.trxId,
-    ).then((progress) => {
-      rendition.display(progress ?? undefined);
+    )).then((p) => {
+      rendition.display(p?.readingProgress ?? undefined);
     });
 
     epubService.getHighlights(
@@ -185,17 +203,32 @@ export const EpubView = observer((props: Props) => {
 
     rendition.on('rendered', action((section: Section) => {
       state.currentHref = section.href;
-
       const iframe: HTMLIFrameElement = (book as any).rendition?.manager?.views?._views?.[0]?.iframe;
-      iframe.contentWindow!.addEventListener('mousemove', (event) => {
-        const boundingClientRect = iframe.getBoundingClientRect();
-        const evt = new CustomEvent('mousemove', { bubbles: true, cancelable: false }) as any;
-        evt.clientX = event.clientX + boundingClientRect.left;
-        evt.clientY = event.clientY + boundingClientRect.top;
-        iframe.dispatchEvent(evt);
-      });
+      if (iframe?.contentWindow) {
+        addLinkOpen(iframe.contentWindow);
+        iframe.contentWindow.addEventListener('keydown', (e) => {
+          const evt = new CustomEvent('keydown', { bubbles: true, cancelable: false }) as any;
+          evt.key = e.key;
+          evt.ctrlKey = e.ctrlKey;
+          iframe.dispatchEvent(evt);
+        });
+        iframe.contentWindow.addEventListener('mousemove', (event) => {
+          const boundingClientRect = iframe.getBoundingClientRect();
+          const evt = new CustomEvent('mousemove', { bubbles: true, cancelable: false }) as any;
+          evt.clientX = event.clientX + boundingClientRect.left;
+          evt.clientY = event.clientY + boundingClientRect.top;
+          iframe.dispatchEvent(evt);
+        });
+      }
     }));
 
+    rendition.hooks.content.register((contents: Contents) => {
+      contents.on('linkClicked', (href: string) => {
+        const relative = book.path.relative(href);
+        state.jumpingHistory.push(rendition.location.start.cfi);
+        rendition.display(relative);
+      });
+    });
     rendition.hooks.content.register(() => {
       readerSettingsService.injectCSS(rendition);
 
@@ -222,10 +255,13 @@ export const EpubView = observer((props: Props) => {
 
     rendition.once('displayed', () => {
     });
+  };
 
-    const ro = new ResizeObserver(handleResize);
-    ro.observe(state.renderBox.current!);
-    state.ro = ro;
+  const handleLoadRecentUpload = () => {
+    const book = state.currentUploadItem?.recentUploadBook;
+    if (book) {
+      loadBook(book);
+    }
   };
 
   const handleAddHighlight = () => {
@@ -250,22 +286,30 @@ export const EpubView = observer((props: Props) => {
     }
   };
 
-  const destroy = () => {
-    state.book?.destroy();
-    state.ro?.disconnect();
-  };
-
   React.useEffect(() => {
-    epubService.parseAllTrx(nodeService.state.activeGroupId).then(() => {
-      const item = epubService.state.bookMap.get(nodeService.state.activeGroupId);
-      const book = item?.at(0);
-      if (book) {
-        loadBook(book);
-      }
-    });
+    const loadFirstBook = async () => {
+      await epubService.parseAllTrx(nodeService.state.activeGroupId);
 
-    const handleEsc = (e: KeyboardEvent) => {
+      const books = epubService.state.bookMap.get(nodeService.state.activeGroupId);
+
+      const progress = await epubService.getReadingProgress(
+        nodeService.state.activeGroupId,
+      );
+      const book = books?.find((v) => v.trxId === progress?.bookTrx) ?? books?.at(0);
+      if (book) {
+        loadBook(book, progress);
+      }
+    };
+
+    loadFirstBook().then(action(() => {
+      state.loadingFirstBook = false;
+    }));
+
+    const handleKeydown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && state.fullScreen) {
+        handleToggleFullScreen();
+      }
+      if (e.key === 'f' && e.ctrlKey && !state.fullScreen) {
         handleToggleFullScreen();
       }
     };
@@ -275,15 +319,26 @@ export const EpubView = observer((props: Props) => {
       state.mousePosition.y = e.clientY;
     };
 
-    window.addEventListener('keydown', handleEsc);
+    window.addEventListener('keydown', handleKeydown);
     window.addEventListener('mousemove', handleMouseMove);
 
+    const ro = new ResizeObserver(handleResize);
+    ro.observe(state.renderBox.current!);
+
     return () => {
-      destroy();
-      window.removeEventListener('keydown', handleEsc);
+      state.book?.destroy();
+      window.removeEventListener('keydown', handleKeydown);
       window.removeEventListener('mousemove', handleMouseMove);
+      ro.disconnect();
     };
   }, []);
+
+  const noBook = !state.currentUploadItem?.uploading && !state.currentUploadItem?.recentUploadBook;
+  const uploading = !!state.currentUploadItem?.uploading;
+  const uploadDone = !state.currentUploadItem?.uploading && !!state.currentUploadItem?.recentUploadBook;
+
+  const lightTheme = ['white', 'light'].includes(readerSettingsService.state.theme);
+  const darkTheme = ['dark', 'black'].includes(readerSettingsService.state.theme);
 
   return (
     <div className={classNames('flex-col', props.className)}>
@@ -295,7 +350,6 @@ export const EpubView = observer((props: Props) => {
           !state.fullScreen && 'h-0',
           state.fullScreen && 'fixed inset-0 z-50',
         )}
-        ref={epubReaderBox}
       >
         <div className="flex justify-between items-center flex-none gap-x-4 border-b px-6 h-[62px]">
           <EpubSelectBook
@@ -342,94 +396,165 @@ export const EpubView = observer((props: Props) => {
           </div>
         </div>
 
-        {!state.book && (
-          <div className="flex flex-col items-stretch h-full select-none">
-            选本书
-          </div>
-        )}
-
-        {!!state.book && (
+        {state.loadingFirstBook && (
           <div
-            className="flex flex-col flex-1 items-stretch h-0 select-none"
-            style={{
-              background: readerThemes[readerSettingsService.state.theme].body.background,
-            }}
+            className="flex flex-1 flex-center"
+            style={{ background: state.readerTheme.body.background }}
           >
-            <div className="flex flex-1 justify-between items-stretch h-0 relative">
-              {state.spread && (
-                <div className="flex flex-col absolute left-1/2 top-0 bottom-0 w-px py-12">
-                  <div className="bg-gray-de flex-1" />
-                </div>
-              )}
+            <CircularProgress className="text-gray-ec" />
+          </div>
+        )}
 
-              <div
-                className="flex flex-center w-16 cursor-pointer group"
-                onClick={handlePrev}
-              >
-                <ChevronLeft
-                  className={classNames(
-                    'text-36 text-gray-9c',
-                    !state.atStart && 'group-hover:text-gray-33',
-                  )}
-                />
-              </div>
-              <div
-                className="flex flex-1 w-0 h-full max-w-[1750px]"
-                ref={state.renderBox}
+        {!state.book && !state.loadingFirstBook && (
+          <div className="flex flex-col items-center gap-y-12 p-12 select-none relative overflow-hidden flex-1 h-0">
+            {(uploading || uploadDone) && (
+              <img
+                className="absolute top-4 left-16"
+                src={ArrowImage}
+                alt=""
               />
-              <div
-                className="flex flex-center w-16 cursor-pointer group"
-                onClick={handleNext}
-              >
-                <ChevronRight
-                  className={classNames(
-                    'text-36 text-gray-9c',
-                    !state.atEnd && 'group-hover:text-gray-33',
-                  )}
-                />
-              </div>
+            )}
+
+            <div
+              className={classNames(
+                'relative flex-col select-none p-6 gap-y-2 z-10',
+                'text-gray-4a text-20 font-bold text-center',
+                'outline outline-2 w-[500px] outline-dashed outline-gray-c4 outline-offset-4',
+              )}
+            >
+              {noBook && (<>
+                <p>种子网络还没有书籍</p>
+                <p>点击上方的上传书籍按钮上传第一本书</p>
+              </>)}
+
+              {uploading && (<>
+                <p>书籍正在上传中……</p>
+                <p>上传完毕后，你可以在这里选择书籍开始阅读</p>
+              </>)}
+
+              {uploadDone && (<>
+                <p>书籍已成功上传</p>
+                <p>{state.currentUploadItem?.recentUploadBook?.title}</p>
+              </>)}
             </div>
 
-            <div className="flex flex-none justify-between items-center gap-x-12 px-16 py-4">
-              <div
-                className={classNames(
-                  'flex flex-none flex-center cursor-pointer group p-2 select-none',
-                  !!state.currentSpineItem?.prev() && 'text-producer-blue',
-                  !state.currentSpineItem?.prev() && 'text-gray-88',
-                )}
-                onClick={() => handleChangeChapter('prev')}
+            {uploadDone && (
+              <Button
+                className="rounded-full text-20 px-12"
+                onClick={handleLoadRecentUpload}
               >
-                上一章
-              </div>
-              <Tooltip title={`${state.chapterProgress[1] + 1} / ${state.chapterProgress[2]}`}>
-                <div className="py-5 w-full">
-                  <div
-                    className="flex items-stretch h-1 w-full bg-gray-de"
-                    style={progressBarTheme[readerSettingsService.state.theme].track}
-                  >
-                    <div
-                      className="flex-none bg-gray-4a"
-                      style={{
-                        ...progressBarTheme[readerSettingsService.state.theme].progress,
-                        width: `${(state.chapterProgress[0] * 100).toFixed(2)}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-              </Tooltip>
-              <div
-                className={classNames(
-                  'flex flex-none flex-center cursor-pointer group p-2 select-none',
-                  !!state.currentSpineItem?.next() && 'text-producer-blue',
-                  !state.currentSpineItem?.next() && 'text-gray-88',
-                )}
-                onClick={() => handleChangeChapter('next')}
-              >
-                下一章
-              </div>
+                开始阅读
+              </Button>
+            )}
+
+            <div className="flex-col flex-center flex-1 h-0 self-stretch">
+              <img className="flex-1 h-0 max-h-[550px]" src={BookImage} alt="" />
             </div>
           </div>
         )}
+
+        <div
+          className={classNames(
+            'flex flex-col flex-1 items-stretch h-0 select-none',
+            !state.book && 'hidden',
+          )}
+          style={{ background: state.readerTheme.body.background }}
+        >
+          <div className="flex flex-1 justify-between items-stretch h-0 relative">
+            {state.spread && (
+              <div className="flex flex-col absolute left-1/2 top-0 bottom-0 w-px py-12 z-10">
+                <div
+                  className={classNames(
+                    lightTheme && 'bg-gray-de flex-1',
+                    darkTheme && 'bg-gray-88 flex-1',
+                  )}
+                />
+              </div>
+            )}
+
+            <div
+              className="flex flex-center w-16 cursor-pointer group"
+              onClick={handlePrev}
+            >
+              <ChevronLeft
+                className={classNames(
+                  'text-36',
+                  lightTheme && 'text-gray-9c',
+                  darkTheme && 'text-gray-6f',
+                  !state.atStart && lightTheme && 'group-hover:text-gray-33',
+                  !state.atStart && darkTheme && 'group-hover:text-gray-af',
+                )}
+              />
+            </div>
+            <div
+              className="flex flex-1 w-0 h-full max-w-[1750px]"
+              ref={state.renderBox}
+            />
+            <div
+              className="flex flex-center w-16 cursor-pointer group"
+              onClick={handleNext}
+            >
+              <ChevronRight
+                className={classNames(
+                  'text-36',
+                  lightTheme && 'text-gray-9c',
+                  darkTheme && 'text-gray-6f',
+                  !state.atStart && lightTheme && 'group-hover:text-gray-33',
+                  !state.atStart && darkTheme && 'group-hover:text-gray-af',
+                )}
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-none justify-between items-stretch gap-x-4 px-16 h-16">
+            <div
+              className="flex flex-none flex-center cursor-pointer group px-4 select-none"
+              style={{
+                color: state.currentSpineItem?.prev()
+                  ? linkTheme[readerSettingsService.state.theme].enabled
+                  : linkTheme[readerSettingsService.state.theme].disabled,
+              }}
+              onClick={() => handleChangeChapter('prev')}
+            >
+              上一章
+            </div>
+            {!!state.jumpingHistory.length && (
+              <div
+                className="flex flex-none flex-center cursor-pointer group px-4 text-producer-blue select-none"
+                onClick={handleBackJumpingHistory}
+              >
+                返回跳转前位置
+              </div>
+            )}
+            <Tooltip title={`${state.chapterProgress[1] + 1} / ${state.chapterProgress[2]}`}>
+              <div className="py-5 w-full self-center mx-4">
+                <div
+                  className="flex items-stretch h-1 w-full bg-gray-de"
+                  style={progressBarTheme[readerSettingsService.state.theme].track}
+                >
+                  <div
+                    className="flex-none bg-gray-4a"
+                    style={{
+                      ...progressBarTheme[readerSettingsService.state.theme].progress,
+                      width: `${(state.chapterProgress[0] * 100).toFixed(2)}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            </Tooltip>
+            <div
+              className="flex flex-none flex-center cursor-pointer group px-4 select-none"
+              style={{
+                color: state.currentSpineItem?.next()
+                  ? linkTheme[readerSettingsService.state.theme].enabled
+                  : linkTheme[readerSettingsService.state.theme].disabled,
+              }}
+              onClick={() => handleChangeChapter('next')}
+            >
+              下一章
+            </div>
+          </div>
+        </div>
 
         <ClickAwayListener onClickAway={action(() => { state.highlightButton = null; })}>
           <div

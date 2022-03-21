@@ -3,6 +3,7 @@ import { postNote } from '~/apis';
 import { runLoading } from '~/utils';
 import { dbService, HighlightItem } from '~/service/db';
 import { verifyEpub, VerifiedEpub, checkTrx, getAllEpubs, EpubBook } from './helper';
+import sleep from '~/utils/sleep';
 
 export * from './helper';
 
@@ -17,6 +18,7 @@ interface GroupUploadState {
   uploadDone: boolean
   fileinfo: any
   segments: Array<SegmentUploadStatus>
+  recentUploadBook: EpubBook | null
 }
 
 const state = observable({
@@ -34,6 +36,7 @@ const getOrInit = action((groupId: string, reset = false) => {
       uploadDone: false,
       fileinfo: '',
       segments: [],
+      recentUploadBook: item?.recentUploadBook ?? null,
     });
     state.uploadMap.set(groupId, item);
   }
@@ -45,6 +48,7 @@ const selectFile = async (groupId: string, fileName: string, buf: Buffer) => {
   const epub = await verifyEpub(fileName, buf);
   runInAction(() => {
     item.epub = epub;
+    item.uploadDone = false;
     item.segments = [
       { name: 'fileinfo', status: 'pending' },
       ...epub.segments.map((v) => ({
@@ -57,6 +61,7 @@ const selectFile = async (groupId: string, fileName: string, buf: Buffer) => {
 
 const doUpload = (groupId: string) => {
   const item = getOrInit(groupId);
+
   const epub = item?.epub;
   if (item.uploading || !epub) {
     return;
@@ -94,8 +99,8 @@ const doUpload = (groupId: string) => {
       });
 
       changeStatus('fileinfo', 'uploading');
-      const result = await postNote(data as any);
-      await checkTrx(groupId, result.trx_id);
+      const fileInfoTrx = await postNote(data as any);
+      await checkTrx(groupId, fileInfoTrx.trx_id);
       changeStatus('fileinfo', 'done');
 
       for (const seg of epub.segments) {
@@ -116,14 +121,23 @@ const doUpload = (groupId: string) => {
           },
         };
         changeStatus(seg.id, 'uploading');
-        const segResult = await postNote(segData as any);
-        await checkTrx(groupId, segResult.trx_id);
+        const segTrx = await postNote(segData as any);
+        await checkTrx(groupId, segTrx.trx_id);
         changeStatus(seg.id, 'done');
+      }
+      for (let i = 0; i < 30; i += 1) {
+        await parseAllTrx(groupId);
+        const theBook = state.bookMap.get(groupId)!.find((v) => v.trxId === fileInfoTrx.trx_id);
+        await sleep(1000);
+        if (theBook) {
+          break;
+        }
       }
       runInAction(() => {
         item.uploadDone = true;
+        const epub = state.bookMap.get(groupId)!.find((v) => v.trxId === fileInfoTrx.trx_id);
+        item.recentUploadBook = epub ?? null;
       });
-      parseAllTrx(groupId);
     },
   );
 };
@@ -165,12 +179,12 @@ const deleteHighlight = async (groupId: string, bookTrx: string, cfiRange: strin
   }).delete();
 };
 
-const getReadingProgress = async (groupId: string, bookTrx: string) => {
+const getReadingProgress = async (groupId: string, bookTrx?: string) => {
   const item = await dbService.db.readingProgress.where({
     groupId,
-    bookTrx,
-  }).first();
-  return item?.readingProgress ?? null;
+    ...bookTrx ? { bookTrx } : {},
+  }).last();
+  return item ?? null;
 };
 
 const saveReadingProgress = async (groupId: string, bookTrx: string, readingProgress: string) => {

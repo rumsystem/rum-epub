@@ -1,5 +1,4 @@
 import request from '../request';
-import getBase from '~/utils/getBase';
 import { qwasm } from '~/utils/quorum-wasm/load-quorum';
 
 
@@ -20,7 +19,7 @@ export const fetchTrx = (GroupId: string, TrxId: string) => {
   }
   return request(`/api/v1/trx/${GroupId}/${TrxId}`, {
     method: 'GET',
-    base: getBase(),
+    quorum: true,
     jwt: true,
   }) as Promise<ITrx>;
 };

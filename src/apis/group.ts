@@ -1,6 +1,5 @@
 import request from '../request';
 import { GROUP_TEMPLATE_TYPE } from '~/utils/constant';
-import getBase from '~/utils/getBase';
 import { qwasm } from '~/utils/quorum-wasm/load-quorum';
 
 export interface IGetGroupsResult {
@@ -95,7 +94,7 @@ export const createGroup = (params: {
   }
   return request('/api/v1/group', {
     method: 'POST',
-    base: getBase(),
+    quorum: true,
     minPendingDuration: 500,
     body: {
       group_name: params.group_name,
@@ -112,7 +111,7 @@ export const deleteGroup = (groupId: string) => {
   throw new Error('not implemented');
   // return request('/api/v1/group', {
   //   method: 'DELETE',
-  //   base: getBase(),
+  //   quorum: true,
   //   body: { group_id: groupId },
   //   jwt: true,
   // }) as Promise<IDeleteGroupResult>;
@@ -124,7 +123,7 @@ export const fetchMyGroups = () => {
   }
   return request('/api/v1/groups', {
     method: 'GET',
-    base: getBase(),
+    quorum: true,
     jwt: true,
   }) as Promise<IGetGroupsResult>;
 };
@@ -135,7 +134,7 @@ export const joinGroup = (data: ICreateGroupsResult) => {
   }
   return request('/api/v1/group/join', {
     method: 'POST',
-    base: getBase(),
+    quorum: true,
     body: data,
     jwt: true,
   }) as Promise<IGroupResult>;
@@ -147,7 +146,7 @@ export const leaveGroup = (groupId: string) => {
   }
   return request('/api/v1/group/leave', {
     method: 'POST',
-    base: getBase(),
+    quorum: true,
     body: { group_id: groupId },
     jwt: true,
   }) as Promise<IGroupResult>;
@@ -159,7 +158,7 @@ export const clearGroup = (groupId: string) => {
   }
   return request('/api/v1/group/clear', {
     method: 'POST',
-    base: getBase(),
+    quorum: true,
     body: { group_id: groupId },
     jwt: true,
   }) as Promise<IGroupResult>;
@@ -171,7 +170,7 @@ export const syncGroup = (groupId: string) => {
   }
   return request(`/api/v1/group/${groupId}/startsync`, {
     method: 'POST',
-    base: getBase(),
+    quorum: true,
     jwt: true,
   })!;
 };
@@ -182,7 +181,7 @@ export const fetchSeed = (groupId: string) => {
   }
   return request(`/api/v1/group/${groupId}/seed`, {
     method: 'GET',
-    base: getBase(),
+    quorum: true,
     jwt: true,
   }) as Promise<IGetGroupsResult>;
 };
@@ -193,7 +192,7 @@ export const applyToken = () => {
   }
   return request('/app/api/v1/token/apply', {
     method: 'POST',
-    base: getBase(),
+    quorum: true,
     jwt: true,
   })!;
 };
@@ -204,7 +203,7 @@ export const refreshToken = () => {
   }
   return request('/app/api/v1/token/refresh', {
     method: 'POST',
-    base: getBase(),
+    quorum: true,
     jwt: true,
   })!;
 };
@@ -222,7 +221,7 @@ export const changeGroupConfig = (params: {
   }
   return request('/api/v1/group/appconfig', {
     method: 'POST',
-    base: getBase(),
+    quorum: true,
     body: params,
     jwt: true,
   })!;
@@ -234,7 +233,7 @@ export const getGroupConfigKeyList = (groupId: string) => {
   }
   return request(`/api/v1/group/${groupId}/config/keylist`, {
     method: 'GET',
-    base: getBase(),
+    quorum: true,
     jwt: true,
   }) as Promise<GroupConfigKeyListResult>;
 };
@@ -245,7 +244,7 @@ export const getGroupConfigItem = (groupId: string, key: string) => {
   }
   return request(`/api/v1/group/${groupId}/config/${key}`, {
     method: 'GET',
-    base: getBase(),
+    quorum: true,
     jwt: true,
   }) as Promise<GroupConfigItemResult>;
 };

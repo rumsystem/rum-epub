@@ -42,10 +42,11 @@ const injectCSS = (rendition: Rendition) => {
   };
 
   // css override
-  ['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].forEach((v) => {
+  ['p', 'span', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].forEach((v) => {
     item[v] = {
       'font-size': 'unset !important',
       'line-height': 'unset !important',
+      'font-family': 'unset !important',
     };
   });
   item.h1 = { 'font-size': '2.25em !important' };
@@ -120,11 +121,11 @@ export const readerThemes: Record<string, Record<string, Record<string, string>>
       color: 'white',
     },
     body: {
-      background: '#e1e1db',
-      color: '#262625',
+      background: '#f4f2ec',
+      color: '#333333',
     },
     a: {
-      color: '#2b79a2',
+      color: '#0080FF',
     },
   },
   dark: {
@@ -133,11 +134,11 @@ export const readerThemes: Record<string, Record<string, Record<string, string>>
       color: 'white',
     },
     body: {
-      background: '#30353A',
-      color: '#AAA',
+      background: '#20252A',
+      color: '#ccc',
     },
     a: {
-      color: '#8b96b1',
+      color: '#5299e0',
     },
   },
   black: {
@@ -147,10 +148,10 @@ export const readerThemes: Record<string, Record<string, Record<string, string>>
     },
     body: {
       background: '#000',
-      color: '#999',
+      color: '#aaa',
     },
     a: {
-      color: '#7c8393',
+      color: '#5299e0',
     },
   },
 };
@@ -180,15 +181,15 @@ export const progressBarTheme = {
       background: '#dedede',
     },
     progress: {
-      background: '#4a',
+      background: '#4a4a4a',
     },
   },
   'light': {
     track: {
-      background: '#fff',
+      background: '#bbb',
     },
     progress: {
-      background: '#4a',
+      background: '#4a4a4a',
     },
   },
   'dark': {
@@ -206,5 +207,24 @@ export const progressBarTheme = {
     progress: {
       background: '#999',
     },
+  },
+};
+
+export const linkTheme = {
+  'white': {
+    enabled: '#0080ff',
+    disabled: '#888',
+  },
+  'light': {
+    enabled: '#0080ff',
+    disabled: '#888',
+  },
+  'dark': {
+    enabled: '#5299e0',
+    disabled: '#888',
+  },
+  'black': {
+    enabled: '#5299e0',
+    disabled: '#888',
   },
 };

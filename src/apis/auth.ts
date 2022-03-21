@@ -1,5 +1,4 @@
 import request from '../request';
-import getBase from '~/utils/getBase';
 import { qwasm } from '~/utils/quorum-wasm/load-quorum';
 
 export type TrxType = 'POST' | 'ANNOUNCE' | 'REQ_BLOCK_FORWARD' | 'REQ_BLOCK_BACKWARD' | 'BLOCK_SYNCED' | 'BLOCK_PRODUCED' | 'ASK_PEERID';
@@ -33,7 +32,7 @@ export const getFollowingRule = async (groupId: string, trxType: TrxType) => {
   }
   return request(`/api/v1/group/${groupId}/trx/auth/${trxType.toLowerCase()}`, {
     method: 'GET',
-    base: getBase(),
+    quorum: true,
     jwt: true,
   }) as Promise<FollowingRule>;
 };
@@ -59,7 +58,7 @@ export const updateFollowingRule = async (params: {
   }
   return request('/api/v1/group/chainconfig', {
     method: 'POST',
-    base: getBase(),
+    quorum: true,
     body,
     jwt: true,
   }) as Promise<AuthResponse>;
@@ -87,7 +86,7 @@ export const updateAuthList = async (params: {
   }
   return request('/api/v1/group/chainconfig', {
     method: 'POST',
-    base: getBase(),
+    quorum: true,
     body,
     jwt: true,
   }) as Promise<AuthResponse>;
@@ -99,7 +98,7 @@ export const getAllowList = async (groupId: string) => {
   }
   return request(`/api/v1/group/${groupId}/trx/allowlist`, {
     method: 'GET',
-    base: getBase(),
+    quorum: true,
     jwt: true,
   }) as Promise<Array<AllowOrDenyListItem> | null>;
 };
@@ -110,7 +109,7 @@ export const getDenyList = async (groupId: string) => {
   }
   return request(`/api/v1/group/${groupId}/trx/denylist`, {
     method: 'GET',
-    base: getBase(),
+    quorum: true,
     jwt: true,
   }) as Promise<Array<AllowOrDenyListItem> | null>;
 };

@@ -41,13 +41,12 @@ export const EpubUploadButton = observer((props: Props) => {
       return epubService.state.uploadMap.get(nodeService.state.activeGroupId) ?? null;
     },
 
-    get progress() {
+    get progressPercentage() {
       const items = this.item?.segments ?? [];
       if (!items.length) { return 0; }
-      return items.filter((v) => v.status === 'done').length / items.length;
-    },
-    get progressPercentage() {
-      return `${(this.progress * 100).toFixed(2)}%`;
+      const doneItems = items.filter((v) => v.status === 'done').length;
+      const progress = doneItems / items.length;
+      return `${(progress * 100).toFixed(2)}%`;
     },
   }));
   // const { snackbarStore } = useStore();
@@ -121,7 +120,6 @@ export const EpubUploadButton = observer((props: Props) => {
     if (!item) {
       return;
     }
-    console.log('scroll', item.name);
     const e = progressBox.current?.querySelector(`[data-upload-item-id="${item.name}"]`);
     if (e) {
       scrollIntoView(e, {
@@ -163,7 +161,7 @@ export const EpubUploadButton = observer((props: Props) => {
       <div
         className={classNames(
           'absolute left-0 top-0 h-full bg-white/30 duration-300',
-          (state.item.uploadDone || !state.progress) && 'hidden',
+          (state.item.uploadDone || !state.item.uploading) && 'hidden',
         )}
         style={{ width: state.progressPercentage }}
       />

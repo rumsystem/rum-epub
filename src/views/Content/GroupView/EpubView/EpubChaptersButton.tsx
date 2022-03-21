@@ -4,7 +4,7 @@ import { action } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import { NavItem } from 'epubjs';
 import scrollIntoView from 'scroll-into-view-if-needed';
-import { MenuItem, Popover, Tooltip } from '@mui/material';
+import { Divider, MenuItem, Popover, Tooltip } from '@mui/material';
 import ListUlIcon from 'boxicons/svg/regular/bx-list-ul.svg?react';
 
 interface Props {
@@ -62,15 +62,22 @@ export const EpubChaptersButton = observer((props: Props) => {
       keepMounted
     >
       <div
-        className="py-4 max-w-[600px] min-w-[200px]"
+        className="max-w-[600px] min-w-[250px]"
         style={{ maxHeight: `${Math.max(300, window.innerHeight - 300)}px` }}
       >
+        <div className="flex flex-center text-20 text-gray-70 py-4">
+          目录
+        </div>
+        {!!props.chapters.length && (
+          <Divider className="!my-0 mx-4" />
+        )}
         <EpubChapters
           open={state.open}
           chapters={props.chapters}
           current={props.current}
           onClick={handleChapterClick}
         />
+        <div className="h-4" />
       </div>
     </Popover>
   </>);
@@ -119,12 +126,12 @@ const EpubChapters = (props: EpubChaptersProps) => {
           <div key={v.id}>
             <MenuItem
               className={classNames(
-                'pr-4',
+                'pr-4 py-2 text-producer-blue',
                 isCurrent && 'current-chapter font-bold',
                 !isCurrent && 'text-gray-88',
               )}
               style={{
-                paddingLeft: `${(props.level ?? 0) * 16 + 16}px`,
+                paddingLeft: `${(props.level ?? 0) * 20 + 20}px`,
               }}
               onClick={() => props.onClick?.(v.href)}
             >
@@ -132,6 +139,7 @@ const EpubChapters = (props: EpubChaptersProps) => {
                 {v.label.trim()}
               </span>
             </MenuItem>
+            <Divider className="!my-0 mx-4" />
             {!!v.subitems && (
               <EpubChapters
                 onClick={props.onClick}

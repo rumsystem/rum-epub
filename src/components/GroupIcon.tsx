@@ -23,7 +23,7 @@ export default observer((props: Props) => {
       <div>
         <div
           className={classNames(
-            'flex flex-center group-letter font-bold uppercase bg-gray-af leading-none',
+            'flex flex-center group-letter font-bold uppercase bg-gray-af leading-none select-none',
             props.colorClassName ?? 'text-white',
             props.className,
           )}

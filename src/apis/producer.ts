@@ -1,5 +1,4 @@
 import request from '../request';
-import getBase from '~/utils/getBase';
 import { qwasm } from '~/utils/quorum-wasm/load-quorum';
 
 export interface IAnnouncedProducer {
@@ -38,7 +37,7 @@ export const announce = (data: {
   }
   return request('/api/v1/group/announce', {
     method: 'POST',
-    base: getBase(),
+    quorum: true,
     body: data,
     jwt: true,
   }) as Promise<{
@@ -57,7 +56,7 @@ export const fetchAnnouncedProducers = (groupId: string) => {
     return qwasm.GetAnnouncedGroupProducers(groupId) as Promise<Array<IAnnouncedProducer>>;
   }
   return request(`/api/v1/group/${groupId}/announced/producers`, {
-    base: getBase(),
+    quorum: true,
     jwt: true,
   }) as Promise<Array<IAnnouncedProducer>>;
 };
@@ -80,7 +79,7 @@ export const producer = (data: {
   }
   return request('/api/v1/group/producer', {
     method: 'POST',
-    base: getBase(),
+    quorum: true,
     body: data,
     jwt: true,
   }) as Promise<{
@@ -99,7 +98,7 @@ export const fetchApprovedProducers = (groupId: string) => {
     return qwasm.GetGroupProducers(groupId) as Promise<Array<IApprovedProducer>>;
   }
   return request(`/api/v1/group/${groupId}/producers`, {
-    base: getBase(),
+    quorum: true,
     jwt: true,
   }) as Promise<Array<IApprovedProducer>>;
 };

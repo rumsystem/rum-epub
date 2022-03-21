@@ -1,19 +1,16 @@
 import React from 'react';
-import classNames from 'classnames';
 import { observer, useLocalObservable } from 'mobx-react-lite';
-
 import { HiOutlineShare } from 'react-icons/hi';
-import { GoSync } from 'react-icons/go';
-
 import { Tooltip } from '@mui/material';
 
 import GroupMenu from '~/components/GroupMenu';
 import GroupIcon from '~/components/GroupIcon';
+
 import { shareGroup } from '~/standaloneModals/shareGroup';
+import { groupInfo } from '~/standaloneModals/groupInfo';
+
 import { lang } from '~/utils/lang';
 import ago from '~/utils/ago';
-import { GroupStatus } from '~/apis';
-
 import { nodeService } from '~/service/node';
 
 import { EpubUploadButton } from './EpubUploadButton';
@@ -26,13 +23,19 @@ export const EpubHeader = observer(() => {
       return item?.Peers?.length ?? 0;
     },
   }));
+
+  const handleOpenGroupInfo = () => {
+    if (nodeService.state.activeGroup) {
+      groupInfo(nodeService.state.activeGroup);
+    }
+  };
+
   const group = nodeService.state.activeGroup;
+  // const syncing = group?.group_status === GroupStatus.SYNCING;
 
   if (!group) {
     return null;
   }
-
-  const syncing = group.group_status === GroupStatus.SYNCING;
 
   return (
     <div className="flex items-center justify-between flex-none border-b border-gray-200 h-[70px] pr-6">
@@ -44,18 +47,18 @@ export const EpubHeader = observer(() => {
           fontSize={24}
           group={group}
         />
-        <div className="font-bold text-black text-18 tracking-wider truncate cursor-pointer max-w-[220px]">
-          <span
-            className="opacity-90"
-            // onClick={() => openGroupInfoModal()}
-          >
+        <div
+          className="font-bold text-18 tracking-wider truncate cursor-pointer max-w-[220px]"
+          onClick={() => handleOpenGroupInfo()}
+        >
+          <span className="text-gray-1e">
             {group.group_name}
           </span>
           <div className="mt-[2px] text-11 transform flex items-center opacity-90">
             <span className="text-gray-9c">
               {ago(group.last_updated)}更新
             </span>
-            <Tooltip
+            {/* <Tooltip
               enterDelay={800}
               enterNextDelay={800}
               placement="bottom"
@@ -67,7 +70,7 @@ export const EpubHeader = observer(() => {
               >
                 <GoSync className={classNames('text-18', syncing && 'animate-spin')} />
               </div>
-            </Tooltip>
+            </Tooltip> */}
           </div>
         </div>
 

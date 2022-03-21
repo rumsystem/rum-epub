@@ -1,3 +1,3 @@
-import { quorumService } from '~/service/quorum';
+import type { quorumService } from '~/service/quorum';
 
-export default () => `https://127.0.0.1:${quorumService.state.port}`;
+export default () => `https://127.0.0.1:${((window as any).quorumService as typeof quorumService).state.port}`;

@@ -187,7 +187,7 @@ const actions = {
     console.log(args);
 
     return new Promise((resovle, reject) => {
-      childProcess.exec(command, (err, stdout, stderr) => {
+      childProcess.exec(command, (err, _stdout, stderr) => {
         if (err) {
           reject(err);
           return;
