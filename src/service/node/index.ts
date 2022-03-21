@@ -59,7 +59,7 @@ const updateGroups = async (init = false) => {
     });
     state.groups = groups;
     if (init) {
-      state.activeGroupId = state.groups[0].group_id ?? '';
+      state.activeGroupId = state.groups[0]?.group_id ?? '';
     }
   });
 };
