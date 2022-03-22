@@ -1,3 +1,4 @@
+
 import React from 'react';
 import classNames from 'classnames';
 import { action } from 'mobx';
@@ -9,6 +10,7 @@ import { ArrowDropDown } from '@mui/icons-material';
 import BookContentIcon from 'boxicons/svg/regular/bx-book-content.svg?react';
 import BookOpenIcon from 'boxicons/svg/regular/bx-book-open.svg?fill';
 
+import { BookCoverImgTooltip } from '~/components/BookCoverImgTooltip';
 import { EpubBook, epubService } from '~/service/epub';
 import { nodeService } from '~/service/node';
 
@@ -19,7 +21,7 @@ interface Props {
   currentBookTrxId?: string
 }
 
-export const EpubSelectBook = observer((props: Props) => {
+export const EpubSelectBookButton = observer((props: Props) => {
   const state = useLocalObservable(() => ({
     open: false,
 
@@ -31,7 +33,9 @@ export const EpubSelectBook = observer((props: Props) => {
   const buttonRef = React.useRef<HTMLDivElement>(null);
 
   const handleSelectFile = (v: EpubBook) => {
-    props.onSelect?.(v);
+    if (v.trxId !== props.currentBookTrxId) {
+      props.onSelect?.(v);
+    }
     handleClose();
   };
 
@@ -96,30 +100,34 @@ export const EpubSelectBook = observer((props: Props) => {
             </div>
           )}
           {state.books.map((v, i) => (
-            <div
-              className="flex items-center gap-x-2 hover:bg-gray-f2 cursor-pointer p-2 relative"
-              onClick={() => handleSelectFile(v)}
+            <BookCoverImgTooltip
+              book={v}
               key={i}
             >
-              <div className="flex-col flex-1">
-                <div>
-                  {v.title}
+              <div
+                className="flex items-center gap-x-2 hover:bg-gray-f2 cursor-pointer p-2 relative"
+                onClick={() => handleSelectFile(v)}
+              >
+                <div className="flex-col flex-1">
+                  <div>
+                    {v.title}
+                  </div>
+                  <div className="text-gray-af">
+                    上传于：{format(v.date, 'yyyy-MM-dd hh:mm:ss')}
+                  </div>
                 </div>
-                <div className="text-gray-af">
-                  上传于：{format(v.date, 'yyyy-MM-dd hh:mm:ss')}
-                </div>
+                <Tooltip title="当前阅读">
+                  <div
+                    className={classNames(
+                      'px-2',
+                      v.trxId !== props.currentBookTrxId && 'opacity-0',
+                    )}
+                  >
+                    <BookOpenIcon className="text-blue-400" />
+                  </div>
+                </Tooltip>
               </div>
-              <Tooltip title="当前阅读">
-                <div
-                  className={classNames(
-                    'px-2',
-                    v.trxId !== props.currentBookTrxId && 'opacity-0',
-                  )}
-                >
-                  <BookOpenIcon className="text-blue-400" />
-                </div>
-              </Tooltip>
-            </div>
+            </BookCoverImgTooltip>
           ))}
         </div>
       </div>

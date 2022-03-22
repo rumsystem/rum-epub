@@ -1,11 +1,12 @@
 import { Buffer } from 'buffer';
 import { createHash } from 'crypto';
+import { posix } from 'path';
 import { Entry, fromBuffer, ZipFile } from 'yauzl';
 
 import { fetchContents, fetchTrx } from '~/apis';
 import sleep from '~/utils/sleep';
 
-export interface VerifiedEpub {
+export interface FileInfo {
   mediaType: string
   name: string
   title: string
@@ -17,7 +18,11 @@ export interface VerifiedEpub {
   }>
 }
 
-export const verifyEpub = async (fileName: string, fileBuffer: Buffer): Promise<VerifiedEpub> => {
+export interface VerifiedEpub extends FileInfo {
+  cover: null | Buffer
+}
+
+export const parseEpub = async (fileName: string, fileBuffer: Buffer): Promise<VerifiedEpub> => {
   const zipResult = await readFromZip(fileBuffer);
 
   const mimetypeEntry = zipResult.entries.find((v) => v.fileName === 'mimetype');
@@ -32,11 +37,11 @@ export const verifyEpub = async (fileName: string, fileBuffer: Buffer): Promise<
   const xmlContent = (await readEntryFromZip(zipResult, containerEntry)).toString().replace(/^\uFEFF/, '');
 
   const containerDom = parseXML(xmlContent);
-  const fullPath = containerDom.querySelector('container > rootfiles > rootfile')?.getAttribute('full-path');
-  if (!fullPath) {
+  const contentEntryPath = containerDom.querySelector('container > rootfiles > rootfile')?.getAttribute('full-path');
+  if (!contentEntryPath) {
     throw new Error('cant find container path');
   }
-  const contentEntry = zipResult.entries.find((v) => v.fileName === fullPath);
+  const contentEntry = zipResult.entries.find((v) => v.fileName === contentEntryPath);
   if (!contentEntry) {
     throw new Error('cant find content');
   }
@@ -46,6 +51,22 @@ export const verifyEpub = async (fileName: string, fileBuffer: Buffer): Promise<
   const title = contentDom.querySelector('metadata > title')?.textContent;
   if (!title) {
     throw new Error('cant find title');
+  }
+  let coverImage = null as null | Buffer;
+  try {
+    const coverId = contentDom.querySelector('metadata > meta[name="cover"]')?.getAttribute('content');
+    if (coverId) {
+      const coverHref = contentDom.querySelector(`manifest > [id="${coverId}"]`)?.getAttribute('href');
+      if (coverHref) {
+        const coverPath = posix.join(contentEntryPath, '..', coverHref);
+        const coverEntry = zipResult.entries.find((v) => v.fileName === coverPath);
+        if (coverEntry) {
+          coverImage = await readEntryFromZip(zipResult, coverEntry);
+        }
+      }
+    }
+  } catch (e) {
+
   }
 
   const hash = createHash('sha256');
@@ -73,6 +94,7 @@ export const verifyEpub = async (fileName: string, fileBuffer: Buffer): Promise<
     mediaType: mimetype,
     name: fileName,
     title,
+    cover: coverImage,
     sha256,
     segments,
   };
@@ -100,7 +122,7 @@ export const getAllEpubs = async (groupId: string) => {
     .map((v, i) => ({ trx: v, i }))
     .filter((v) => v.trx.Content.type === 'File' && v.trx.Content.name === 'fileinfo')
     .map((v) => {
-      const fileData = JSON.parse(Buffer.from(v.trx.Content.file.content, 'base64').toString());
+      const fileData: FileInfo = JSON.parse(Buffer.from(v.trx.Content.file.content, 'base64').toString());
       const segmentsTrx = arr.slice(v.i + 1, v.i + 1 + fileData.segments.length);
       const isSegmentsValid = segmentsTrx.every((v) => {
         const isSegment = v.Content.type === 'File'
@@ -145,9 +167,9 @@ export const getAllEpubs = async (groupId: string) => {
         return null;
       }
 
-
       return {
         ...fileData,
+        cover: { type: 'notloaded' },
         trxId: v.trx.TrxId as string,
         date: new Date(v.trx.TimeStamp / 1000000),
         file,
@@ -159,6 +181,10 @@ export const getAllEpubs = async (groupId: string) => {
     mediaType: string
     name: string
     title: string
+    cover: { type: 'noloaded' }
+    | { type: 'loading', value: Promise<unknown> }
+    | { type: 'nocover' }
+    | { type: 'loaded', value: string }
     sha256: string
     file: Buffer
     date: Date

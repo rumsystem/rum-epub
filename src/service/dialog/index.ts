@@ -31,7 +31,15 @@ const open = action((params: Omit<DialogItem, 'id' | 'rs'>) => {
   const item: DialogItem = observable({
     id,
     ...params,
-    rs: p.rs,
+    rs: (v) => {
+      p.rs(v);
+      window.setTimeout(action(() => {
+        state.dialogs.splice(
+          state.dialogs.indexOf(item),
+          1,
+        );
+      }), 5000);
+    },
   });
 
   state.dialogs.push(item);

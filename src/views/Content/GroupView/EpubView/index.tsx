@@ -23,9 +23,10 @@ import ArrowImage from '~/assets/arrow.svg';
 import { EpubAllHighlightButton } from './EpubAllHighlightButton';
 import { EpubChaptersButton } from './EpubChaptersButton';
 import { EpubHeader } from './EpubHeader';
-import { EpubSelectBook } from './EpubSelectBook';
+import { EpubSelectBookButton } from './EpubSelectBookButton';
 import { EpubSettings } from './EpubSettings';
 import { highLightRange } from './helper';
+import { BookCoverImgTooltip } from '~/components/BookCoverImgTooltip';
 
 interface Props {
   className?: string
@@ -33,6 +34,7 @@ interface Props {
 
 export const EpubView = observer((props: Props) => {
   const state = useLocalObservable(() => observable({
+    bookItem: null as null | EpubBook,
     book: null as null | Book,
     bookTrxId: '',
     bookMetadata: null as null | PackagingMetadataObject,
@@ -143,6 +145,7 @@ export const EpubView = observer((props: Props) => {
     const buffer = bookItem.file;
     const book = Epub(buffer.buffer);
     runInAction(() => {
+      state.bookItem = bookItem;
       state.book = book;
       state.bookTrxId = bookItem.trxId;
     });
@@ -352,11 +355,14 @@ export const EpubView = observer((props: Props) => {
         )}
       >
         <div className="flex justify-between items-center flex-none gap-x-4 border-b px-6 h-[62px]">
-          <EpubSelectBook
+          <EpubSelectBookButton
             onSelect={(v) => loadBook(v)}
             currentBookTrxId={state.bookTrxId}
           />
-          <Tooltip title={`${state.bookMetadata?.title}${state.bookMetadata?.creator ? ` - ${state.bookMetadata?.creator}` : ''}`}>
+          <BookCoverImgTooltip
+            book={state.bookItem}
+            placement="bottom"
+          >
             <div className="text-18 truncate">
               <span className="text-gray-33">
                 {state.bookMetadata?.title}
@@ -368,7 +374,9 @@ export const EpubView = observer((props: Props) => {
                 </span>
               )}
             </div>
-          </Tooltip>
+          </BookCoverImgTooltip>
+          {/* <Tooltip title={`${state.bookMetadata?.title}${state.bookMetadata?.creator ? ` - ${state.bookMetadata?.creator}` : ''}`}>
+          </Tooltip> */}
 
           <div className="flex items-center gap-x-3">
             <EpubChaptersButton

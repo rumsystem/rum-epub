@@ -2,7 +2,7 @@ import { action, observable, runInAction } from 'mobx';
 import { postNote } from '~/apis';
 import { runLoading } from '~/utils';
 import { dbService, HighlightItem } from '~/service/db';
-import { verifyEpub, VerifiedEpub, checkTrx, getAllEpubs, EpubBook } from './helper';
+import { parseEpub, VerifiedEpub, checkTrx, getAllEpubs, EpubBook } from './helper';
 import sleep from '~/utils/sleep';
 
 export * from './helper';
@@ -45,7 +45,7 @@ const getOrInit = action((groupId: string, reset = false) => {
 
 const selectFile = async (groupId: string, fileName: string, buf: Buffer) => {
   const item = getOrInit(groupId);
-  const epub = await verifyEpub(fileName, buf);
+  const epub = await parseEpub(fileName, buf);
   runInAction(() => {
     item.epub = epub;
     item.uploadDone = false;
@@ -71,7 +71,10 @@ const doUpload = (groupId: string) => {
     (l) => { item.uploading = l; },
     async () => {
       const fileinfoContent = Buffer.from(JSON.stringify({
-        ...epub,
+        mediaType: epub.mediaType,
+        name: epub.name,
+        title: epub.title,
+        sha256: epub.sha256,
         segments: epub.segments.map((v) => ({
           id: v.id,
           sha256: v.sha256,
@@ -147,6 +150,42 @@ const parseAllTrx = async (groupId: string) => {
   state.bookMap.set(groupId, epubs);
 };
 
+const parseCover = (groupId: string, bookTrxId: string) => {
+  const item = state.bookMap.get(groupId)?.find((v) => v.trxId === bookTrxId);
+  if (!item) { return; }
+  if (['loaded', 'loading', 'nocover'].includes(item.cover.type)) {
+    return;
+  }
+  const doParse = async () => {
+    try {
+      const epub = await parseEpub(item.name, item.file);
+      const cover = epub.cover;
+      if (!cover) {
+        runInAction(() => {
+          item.cover = { type: 'nocover' };
+        });
+        return;
+      }
+      runInAction(() => {
+        item.cover = {
+          type: 'loaded',
+          value: URL.createObjectURL(new Blob([cover.buffer])),
+        };
+      });
+    } catch (e) {
+      runInAction(() => {
+        item.cover = { type: 'nocover' };
+      });
+    }
+  };
+  runInAction(() => {
+    item.cover = {
+      type: 'loading',
+      value: doParse(),
+    };
+  });
+};
+
 const getHighlights = async (groupId: string, bookTrx: string) => {
   const items = await dbService.db.highlights.where({
     groupId,
@@ -208,6 +247,7 @@ export const epubService = {
   selectFile,
   doUpload,
   parseAllTrx,
+  parseCover,
   getHighlights,
   saveHighlight,
   deleteHighlight,
