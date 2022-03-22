@@ -37,6 +37,6 @@ export const createTray = (params: CreateTrayParams) => {
   ]);
   tray.on('click', showApp);
   tray.on('double-click', showApp);
-  tray.setToolTip('Rum');
+  tray.setToolTip('Rum Epub');
   tray.setContextMenu(contextMenu);
 };
