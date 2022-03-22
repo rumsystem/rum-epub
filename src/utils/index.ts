@@ -1,4 +1,5 @@
 import { shell } from '@electron/remote';
+import escapeStringRegexp from 'escape-string-regexp';
 import { runInAction } from 'mobx';
 
 export const setIntervalAsTimeout = (fn: (...a: Array<any>) => any, interval?: number) => {
@@ -60,4 +61,27 @@ export const addLinkOpen = (element: HTMLElement | Window) => {
       }
     }
   });
+};
+
+export const splitByHighlightText = (groupName: string, highlight: string) => {
+  const reg = new RegExp(escapeStringRegexp(highlight), 'ig');
+  const matches = Array.from(groupName.matchAll(reg)).map((v) => ({
+    start: v.index!,
+    end: v.index! + v[0].length,
+  }));
+  const sections: Array<{ type: 'text' | 'highlight', text: string }> = [
+    { start: 0, end: matches.at(0)!.start, type: 'text' } as const,
+    ...matches.map((v) => ({ ...v, type: 'highlight' } as const)),
+    { start: matches.at(-1)!.end, end: groupName.length, type: 'text' } as const,
+  ].flatMap((v, i, a) => {
+    const next = a[i + 1];
+    if (next && next.start > v.end) {
+      return [v, { start: v.end, end: next.start, type: 'text' as const }];
+    }
+    return v;
+  }).map((v) => ({
+    type: v.type,
+    text: groupName.substring(v.start, v.end),
+  }));
+  return sections;
 };

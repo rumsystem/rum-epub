@@ -2,14 +2,11 @@ import React from 'react';
 import classNames from 'classnames';
 import { action } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
-import escapeStringRegexp from 'escape-string-regexp';
-// import { Popover } from '@mui/material';
 
 import GroupIcon from '~/components/GroupIcon';
 import { IGroup } from '~/apis';
 import { nodeService } from '~/service/node';
-
-// import { GroupPopup } from './GroupPopup';
+import { splitByHighlightText } from '~/utils';
 
 interface GroupItemProps {
   group: IGroup
@@ -144,7 +141,7 @@ export default observer((props: GroupItemProps) => {
           />
           <div className="py-1 font-medium truncate max-w-36 text-14">
             {!props.highlight && props.group.group_name}
-            {!!props.highlight && highlightGroupName(props.group.group_name, props.highlight).map((v, i) => (
+            {!!props.highlight && splitByHighlightText(props.group.group_name, props.highlight).map((v, i) => (
               <span className={classNames(v.type === 'highlight' && 'text-highlight-green')} key={i}>
                 {v.text}
               </span>
@@ -204,26 +201,3 @@ export default observer((props: GroupItemProps) => {
     </Popover> */}
   </>);
 });
-
-const highlightGroupName = (groupName: string, highlight: string) => {
-  const reg = new RegExp(escapeStringRegexp(highlight), 'ig');
-  const matches = Array.from(groupName.matchAll(reg)).map((v) => ({
-    start: v.index!,
-    end: v.index! + v[0].length,
-  }));
-  const sections = [
-    { start: 0, end: matches.at(0)!.start, type: 'text' },
-    ...matches.map((v) => ({ ...v, type: 'highlight' })),
-    { start: matches.at(-1)!.end, end: groupName.length, type: 'text' },
-  ].flatMap((v, i, a) => {
-    const next = a[i + 1];
-    if (next && next.start > v.end) {
-      return [v, { start: v.end, end: next.start, type: 'text' }];
-    }
-    return v;
-  }).map((v) => ({
-    type: v.type,
-    text: groupName.substring(v.start, v.end),
-  }));
-  return sections;
-};
