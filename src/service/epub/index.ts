@@ -1,6 +1,6 @@
 import { action, observable, runInAction } from 'mobx';
 import { postNote } from '~/apis';
-import { runLoading } from '~/utils';
+import { promiseAllSettledThrottle, runLoading } from '~/utils';
 import { dbService, HighlightItem } from '~/service/db';
 import { parseEpub, VerifiedEpub, checkTrx, getAllEpubs, EpubBook } from './helper';
 import sleep from '~/utils/sleep';
@@ -106,7 +106,7 @@ const doUpload = (groupId: string) => {
       await checkTrx(groupId, fileInfoTrx.trx_id);
       changeStatus('fileinfo', 'done');
 
-      for (const seg of epub.segments) {
+      const jobs = epub.segments.map((seg) => async () => {
         const segData = {
           type: 'Add',
           object: {
@@ -127,7 +127,10 @@ const doUpload = (groupId: string) => {
         const segTrx = await postNote(segData as any);
         await checkTrx(groupId, segTrx.trx_id);
         changeStatus(seg.id, 'done');
-      }
+      });
+
+      await promiseAllSettledThrottle(jobs, 20);
+
       for (let i = 0; i < 30; i += 1) {
         await parseAllTrx(groupId);
         const theBook = state.bookMap.get(groupId)!.find((v) => v.trxId === fileInfoTrx.trx_id);

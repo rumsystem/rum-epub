@@ -85,3 +85,57 @@ export const splitByHighlightText = (groupName: string, highlight: string) => {
   }));
   return sections;
 };
+
+export const promiseAllSettledThrottle = <T extends readonly (() => Promise<unknown>)[]>(
+  values: T,
+  concurrentLimit: number,
+): Promise<{
+  [K in keyof T]: K extends number
+    ? PromiseSettledResult<Awaited<ReturnType<T[K]>>>
+    : unknown
+}> => {
+  let running = 0;
+  const result: Array<any> = [];
+  let current = 0;
+
+  const p = createPromise();
+
+  const run = () => {
+    if (current === values.length) {
+      if (running === 0) {
+        p.rs(result);
+      }
+      return;
+    }
+    while (running < concurrentLimit && current < values.length) {
+      running += 1;
+      const itemIndex = current;
+      const item = values[current]();
+      item.then(
+        (v) => {
+          result[itemIndex] = {
+            status: 'fulfilled',
+            value: v,
+          };
+        },
+        (e) => {
+          result[itemIndex] = {
+            status: 'rejected',
+            reason: e,
+          };
+        },
+      ).finally(() => {
+        running -= 1;
+        run();
+      });
+      result[current] = item;
+      current += 1;
+    }
+  };
+
+  run();
+
+  return p.p as any;
+};
+
+(window as any).promiseAllSettledThrottle = promiseAllSettledThrottle;
