@@ -186,7 +186,7 @@ export const progressBarTheme = {
   },
   'light': {
     track: {
-      background: '#bbb',
+      background: '#ccc',
     },
     progress: {
       background: '#4a4a4a',
