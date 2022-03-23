@@ -3,7 +3,6 @@ import classNames from 'classnames';
 import { action } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import { NavItem } from 'epubjs';
-import scrollIntoView from 'scroll-into-view-if-needed';
 import { Divider, MenuItem, Popover, Tooltip } from '@mui/material';
 import ListUlIcon from 'boxicons/svg/regular/bx-list-ul.svg?react';
 
@@ -19,11 +18,25 @@ export const EpubChaptersButton = observer((props: Props) => {
     open: false,
   }));
   const buttonRef = React.useRef<HTMLDivElement>(null);
+  const chaptersBox = React.useRef<HTMLDivElement>(null);
 
   const handleChapterClick = (href: string) => {
     props.onChapterClick?.(href);
     handleClose();
   };
+
+  const handleOpen = action(() => {
+    state.open = true;
+    window.setTimeout(() => {
+      const current = chaptersBox.current!.querySelector('.current-chapter') as HTMLDivElement | undefined;
+      if (!current) {
+        return;
+      }
+      chaptersBox.current!.scrollTo({
+        top: Math.max(current.offsetTop - 200, 0),
+      });
+    });
+  });
 
   const handleClose = action(() => {
     state.open = false;
@@ -36,7 +49,7 @@ export const EpubChaptersButton = observer((props: Props) => {
           'cursor-pointer',
           props.className,
         )}
-        onClick={action(() => { state.open = true; })}
+        onClick={handleOpen}
         ref={buttonRef}
       >
         <ListUlIcon
@@ -60,6 +73,9 @@ export const EpubChaptersButton = observer((props: Props) => {
       }}
       onClose={handleClose}
       keepMounted
+      PaperProps={{
+        ref: chaptersBox,
+      }}
     >
       <div
         className="max-w-[600px] min-w-[250px]"
@@ -72,7 +88,6 @@ export const EpubChaptersButton = observer((props: Props) => {
           <Divider className="!my-0 mx-4" />
         )}
         <EpubChapters
-          open={state.open}
           chapters={props.chapters}
           current={props.current}
           onClick={handleChapterClick}
@@ -86,7 +101,6 @@ export const EpubChaptersButton = observer((props: Props) => {
 interface EpubChaptersProps {
   className?: string
   chapters: Array<NavItem>
-  open?: boolean
   current?: string
   onClick?: (href: string) => unknown
   inner?: boolean
@@ -94,65 +108,46 @@ interface EpubChaptersProps {
   nonRoot?: boolean
 }
 
-const EpubChapters = (props: EpubChaptersProps) => {
-  const rootBox = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    if (props.inner || !props.open) {
-      return;
-    }
-    const current = rootBox.current!.querySelector('.current-chapter');
-    if (!current) {
-      return;
-    }
-    scrollIntoView(current, {
-      scrollMode: 'if-needed',
-    });
-  }, [props.open]);
-
-  return (
-    <div
-      className={classNames(props.className)}
-      ref={rootBox}
-    >
-      {!props.chapters.length && !props.nonRoot && (
-        <MenuItem className="">
-          暂无章节
-        </MenuItem>
-      )}
-      {props.chapters.map((v) => {
-        const isCurrent = props.current === v.href.replace(/#.*/, '');
-        return (
-          <div key={v.id}>
-            <MenuItem
-              className={classNames(
-                'pr-4 py-2 text-producer-blue',
-                isCurrent && 'current-chapter font-bold',
-                !isCurrent && 'text-gray-88',
-              )}
-              style={{
-                paddingLeft: `${(props.level ?? 0) * 20 + 20}px`,
-              }}
-              onClick={() => props.onClick?.(v.href)}
-            >
-              <span className="truncate">
-                {v.label.trim()}
-              </span>
-            </MenuItem>
-            <Divider className="!my-0 mx-4" />
-            {!!v.subitems && (
-              <EpubChapters
-                onClick={props.onClick}
-                current={props.current}
-                chapters={v.subitems}
-                inner
-                level={(props.level ?? 0) + 1}
-                nonRoot
-              />
+const EpubChapters = (props: EpubChaptersProps) => (
+  <div className={classNames(props.className)}>
+    {!props.chapters.length && !props.nonRoot && (
+      <MenuItem className="">
+        暂无章节
+      </MenuItem>
+    )}
+    {props.chapters.map((v) => {
+      const isCurrent = props.current === v.href.replace(/#.*/, '');
+      return (
+        <div key={v.id}>
+          <MenuItem
+            className={classNames(
+              'pr-4 py-2 text-producer-blue',
+              isCurrent && 'current-chapter font-bold',
+              !isCurrent && 'text-gray-88',
             )}
-          </div>
-        );
-      })}
-    </div>
-  );
-};
+            style={{
+              paddingLeft: `${(props.level ?? 0) * 20 + 20}px`,
+            }}
+            data-is-current={isCurrent ? 'true' : 'false'}
+            onClick={() => props.onClick?.(v.href)}
+          >
+            <span className="truncate">
+              {v.label.trim()}
+            </span>
+          </MenuItem>
+          <Divider className="!my-0 mx-4" />
+          {!!v.subitems && (
+            <EpubChapters
+              onClick={props.onClick}
+              current={props.current}
+              chapters={v.subitems}
+              inner
+              level={(props.level ?? 0) + 1}
+              nonRoot
+            />
+          )}
+        </div>
+      );
+    })}
+  </div>
+);
