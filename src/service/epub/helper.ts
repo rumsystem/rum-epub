@@ -3,26 +3,20 @@ import { createHash } from 'crypto';
 import { posix } from 'path';
 import { Entry, fromBuffer, ZipFile } from 'yauzl';
 
-import { fetchContents, fetchTrx } from '~/apis';
+import { fetchContents, fetchTrx, IContentItemBasic } from '~/apis';
 import sleep from '~/utils/sleep';
+import { FileInfo } from '~/service/db';
 
-export interface FileInfo {
-  mediaType: string
-  name: string
-  title: string
-  sha256: string
-  segments: Array<{
-    id: string
-    sha256: string
-    buf: Buffer
-  }>
-}
-
-export interface VerifiedEpub extends FileInfo {
+export interface ParsedEpubBook {
+  fileInfo: FileInfo
   cover: null | Buffer
+  segments: Array<{ id: string, sha256: string, buf: Buffer }>
 }
 
-export const parseEpub = async (fileName: string, fileBuffer: Buffer): Promise<VerifiedEpub> => {
+export const parseEpub = async (fileName: string, buffer: Buffer | Uint8Array): Promise<ParsedEpubBook> => {
+  const fileBuffer = buffer instanceof Buffer
+    ? buffer
+    : Buffer.from(buffer);
   const zipResult = await readFromZip(fileBuffer);
 
   const mimetypeEntry = zipResult.entries.find((v) => v.fileName === 'mimetype');
@@ -73,7 +67,7 @@ export const parseEpub = async (fileName: string, fileBuffer: Buffer): Promise<V
   hash.update(fileBuffer);
   const sha256 = hash.digest('hex');
 
-  const segments = [];
+  const segments: ParsedEpubBook['segments'] = [];
   for (let i = 0; ;i += 1) {
     const buf = fileBuffer.slice(150 * 1024 * i, 150 * 1024 * (i + 1));
     if (!buf.length) {
@@ -86,117 +80,112 @@ export const parseEpub = async (fileName: string, fileBuffer: Buffer): Promise<V
       id: `seg-${i + 1}`,
       sha256: segsha256,
       buf,
-      length: buf.length,
     });
   }
 
-  return {
+  const fileInfo: FileInfo = {
     mediaType: mimetype,
     name: fileName,
     title,
-    cover: coverImage,
     sha256,
+    segments: segments.map((v) => ({
+      id: v.id,
+      sha256: v.sha256,
+    })),
+  };
+
+  return {
+    cover: coverImage,
+    fileInfo,
     segments,
   };
 };
 
-export const getAllEpubs = async (groupId: string) => {
-  const arr = [] as Array<any>;
+export interface EpubItem {
+  fileInfo: FileInfo
+  trxId: string
+  lastSegmentTrxId: string
+  cover: { type: 'notloaded', value: null }
+  | { type: 'loading', value: Promise<unknown> }
+  | { type: 'nocover', value: null }
+  | { type: 'loaded', value: string }
+  date: Date
+  file: Buffer
+}
+
+export const getAllEpubsFromTrx = async (groupId: string, starttrx = ''): Promise<Array<EpubItem>> => {
+  const arr = [] as Array<IContentItemBasic>;
   for (;;) {
+    const nextTrx = arr.length ? arr.at(-1)?.TrxId : starttrx;
     const res = await fetchContents(
       groupId,
       {
         num: 100,
-        starttrx: arr.at(-1)?.TrxId,
+        starttrx: nextTrx,
+        includestarttrx: !nextTrx,
       },
     );
-
-    if (!res || !res.length) {
-      break;
-    }
-
+    if (!res || !res.length) { break; }
     res.forEach((v) => arr.push(v));
   }
 
   const epubs = arr
-    .map((v, i) => ({ trx: v, i }))
-    .filter((v) => v.trx.Content.type === 'File' && v.trx.Content.name === 'fileinfo')
-    .map((v) => {
-      const fileData: FileInfo = JSON.parse(Buffer.from(v.trx.Content.file.content, 'base64').toString());
-      const segmentsTrx = arr.slice(v.i + 1, v.i + 1 + fileData.segments.length);
-      const isSegmentsValid = segmentsTrx.every((v) => {
+    .map((trx, i) => ({ trx, i }))
+    .filter((trx) => trx.trx.Content.type === 'File' && trx.trx.Content.name === 'fileinfo')
+    .map((fileinfoTrx) => {
+      const fileData: FileInfo = JSON.parse(Buffer.from(fileinfoTrx.trx.Content.file.content, 'base64').toString());
+      const segmentsTrxArr = arr.slice(fileinfoTrx.i + 1, fileinfoTrx.i + 1 + fileData.segments.length);
+      const isSegmentsValid = segmentsTrxArr.length && segmentsTrxArr.every((v) => {
         const isSegment = v.Content.type === 'File'
           && /^seg-\d+$/.test(v.Content.name ?? '')
           && v.Content.file.mediaType === 'application/octet-stream';
         return isSegment;
       });
-      if (!isSegmentsValid) {
-        return null;
-      }
-      const segments = segmentsTrx.map((v) => ({
+
+      if (!isSegmentsValid) { return null; }
+      const segments = segmentsTrxArr.map((v) => ({
         name: v.Content.name,
         buf: Buffer.from(v.Content.file.content, 'base64'),
+        trxId: v.TrxId,
       }));
+
       const isSegmentIntegrityGood = segments.every((v) => {
         const correctHash = fileData.segments.find((u: any) => u.id === v.name)?.sha256;
-        if (!correctHash) {
-          return false;
-        }
-
+        if (!correctHash) { return false; }
         const hash = createHash('sha256');
         hash.update(v.buf);
         const sha256 = hash.digest('hex');
         return sha256 === correctHash;
       });
-      if (!isSegmentIntegrityGood) {
-        return null;
-      }
+      if (!isSegmentIntegrityGood) { return null; }
 
       segments.sort((a, b) => {
         const numA = Number(a.name.replace('seg-', ''));
         const numB = Number(b.name.replace('seg-', ''));
         return numA - numB;
       });
+      const lastSegmentTrxId = segments.at(-1)!.trxId;
       const file = Buffer.concat(segments.map((v) => v.buf));
 
       const hash = createHash('sha256');
       hash.update(file);
       const sha256 = hash.digest('hex');
 
-      if (fileData.sha256 !== sha256) {
-        return null;
-      }
+      if (fileData.sha256 !== sha256) { return null; }
 
       return {
-        ...fileData,
-        cover: { type: 'notloaded' },
-        trxId: v.trx.TrxId as string,
-        date: new Date(v.trx.TimeStamp / 1000000),
+        fileInfo: fileData,
+        trxId: fileinfoTrx.trx.TrxId,
+        lastSegmentTrxId,
+        cover: { type: 'notloaded', value: null } as const,
+        date: new Date(fileinfoTrx.trx.TimeStamp / 1000000),
         file,
       };
     })
-    .filter(Boolean);
+    .filter(<T>(v: T | null): v is T => !!v);
 
-  return epubs as Array<{
-    mediaType: string
-    name: string
-    title: string
-    cover: { type: 'noloaded' }
-    | { type: 'loading', value: Promise<unknown> }
-    | { type: 'nocover' }
-    | { type: 'loaded', value: string }
-    sha256: string
-    file: Buffer
-    date: Date
-    trxId: string
-    segments: Array<{
-      id: string
-      sha256: string
-    }>
-  }>;
+  return epubs;
 };
-
-export type EpubBook = Awaited<ReturnType<typeof getAllEpubs>>[number];
 
 export const checkTrx = async (groupId: string, trxId: string) => {
   for (;;) {

@@ -4,11 +4,11 @@ import { action } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import { Tooltip, TooltipProps } from '@mui/material';
 
-import { EpubBook, epubService } from '~/service/epub';
+import { EpubItem, epubService } from '~/service/epub';
 import { nodeService } from '~/service/node';
 
 interface BookCoverImgProps extends Omit<TooltipProps, 'title'> {
-  book?: EpubBook | null
+  book?: EpubItem | null
   children: React.ReactElement
 }
 

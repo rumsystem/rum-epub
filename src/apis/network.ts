@@ -1,5 +1,4 @@
 import request from '../request';
-import { qwasm } from '~/utils/quorum-wasm/load-quorum';
 
 export interface INetworkGroup {
   GroupId: string
@@ -17,13 +16,8 @@ export interface INetwork {
   node: any
 }
 
-export const fetchNetwork = () => {
-  if (!process.env.IS_ELECTRON) {
-    return qwasm.GetNetwork() as Promise<INetwork>;
-  }
-  return request('/api/v1/network', {
-    method: 'GET',
-    quorum: true,
-    jwt: true,
-  }) as Promise<INetwork>;
-};
+export const fetchNetwork = () => request('/api/v1/network', {
+  method: 'GET',
+  quorum: true,
+  jwt: true,
+}) as Promise<INetwork>;

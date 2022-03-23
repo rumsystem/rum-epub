@@ -12,7 +12,7 @@ import FullscreenIcon from 'boxicons/svg/regular/bx-fullscreen.svg?react';
 import EditAltIcon from 'boxicons/svg/regular/bx-edit-alt.svg?fill';
 
 import { nodeService } from '~/service/node';
-import { EpubBook, epubService } from '~/service/epub';
+import { EpubItem, epubService } from '~/service/epub';
 import { linkTheme, progressBarTheme, readerSettingsService, readerThemes } from '~/service/readerSettings';
 import { ReadingProgressItem } from '~/service/db';
 import { addLinkOpen } from '~/utils';
@@ -34,7 +34,7 @@ interface Props {
 
 export const EpubView = observer((props: Props) => {
   const state = useLocalObservable(() => observable({
-    bookItem: null as null | EpubBook,
+    bookItem: null as null | EpubItem,
     book: null as null | Book,
     bookTrxId: '',
     bookMetadata: null as null | PackagingMetadataObject,
@@ -131,7 +131,7 @@ export const EpubView = observer((props: Props) => {
     state.book!.rendition.resize(rect.width, rect.height);
   };
 
-  const loadBook = (bookItem: EpubBook, readingProgress?: ReadingProgressItem | null) => {
+  const loadBook = (bookItem: EpubItem, readingProgress?: ReadingProgressItem | null) => {
     state.book?.destroy();
     runInAction(() => {
       state.chapters = [];
@@ -442,7 +442,7 @@ export const EpubView = observer((props: Props) => {
 
               {uploadDone && (<>
                 <p>书籍已成功上传</p>
-                <p>{state.currentUploadItem?.recentUploadBook?.title}</p>
+                <p>{state.currentUploadItem?.recentUploadBook?.fileInfo.title}</p>
               </>)}
             </div>
 

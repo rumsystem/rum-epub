@@ -95,7 +95,7 @@ export const EpubUploadButton = observer((props: Props) => {
       const book = state.item?.epub;
       if (book) {
         const allBooks = epubService.state.bookMap.get(nodeService.state.activeGroupId) ?? [];
-        if (allBooks.some((v) => v.sha256 === book.sha256)) {
+        if (allBooks.some((v) => v.fileInfo.sha256 === book.fileInfo.sha256)) {
           const result = await dialogService.open({
             content: (
               <div>
@@ -103,7 +103,7 @@ export const EpubUploadButton = observer((props: Props) => {
                   当前种子网络已经上传过
                 </p>
                 <p className="my-1">
-                  {book.title}
+                  {book.fileInfo.title}
                 </p>
                 <p>
                   这本书了，还需要重新上传一遍吗？
@@ -251,7 +251,7 @@ export const EpubUploadButton = observer((props: Props) => {
                 已选择：
               </div>
               <div className="text-18 text-gray-4a font-bold relative z-10">
-                {state.item.epub.name}
+                {state.item.epub.fileInfo.name}
               </div>
               <div
                 className={classNames(
@@ -262,7 +262,7 @@ export const EpubUploadButton = observer((props: Props) => {
             </div>
 
             <div className="text-16 text-gray-70 mt-8 mx-4">
-              {state.item.epub.title}
+              {state.item.epub.fileInfo.title}
             </div>
 
             <div className="grid grid-cols-3 gap-2 max-h-[250px] mt-4 mx-4 overflow-y-auto py-1" ref={progressBox}>

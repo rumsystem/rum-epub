@@ -1,8 +1,8 @@
 import { action, observable, runInAction } from 'mobx';
-import { postNote } from '~/apis';
-import { promiseAllSettledThrottle, runLoading } from '~/utils';
-import { dbService, HighlightItem } from '~/service/db';
-import { parseEpub, VerifiedEpub, checkTrx, getAllEpubs, EpubBook } from './helper';
+import { postContent } from '~/apis';
+import { cachePromiseHof, promiseAllSettledThrottle, runLoading } from '~/utils';
+import { dbService, HighlightItem, BookDatabaseItem } from '~/service/db';
+import { parseEpub, ParsedEpubBook, checkTrx, getAllEpubsFromTrx, EpubItem } from './helper';
 import sleep from '~/utils/sleep';
 
 export * from './helper';
@@ -13,18 +13,18 @@ interface SegmentUploadStatus {
 }
 
 interface GroupUploadState {
-  epub: VerifiedEpub | null
+  epub: ParsedEpubBook | null
   uploading: boolean
   uploadDone: boolean
-  fileinfo: any
   segments: Array<SegmentUploadStatus>
-  recentUploadBook: EpubBook | null
+  recentUploadBook: EpubItem | null
 }
 
 const state = observable({
   uploadMap: new Map<string, GroupUploadState>(),
-  bookMap: new Map<string, Array<EpubBook>>(),
+  bookMap: new Map<string, Array<EpubItem>>(),
   highlightMap: new Map<string, Map<string, Array<HighlightItem>>>(),
+  parseStatusMap: new Map<string, boolean>(),
 });
 
 const getOrInit = action((groupId: string, reset = false) => {
@@ -34,7 +34,6 @@ const getOrInit = action((groupId: string, reset = false) => {
       epub: null,
       uploading: false,
       uploadDone: false,
-      fileinfo: '',
       segments: [],
       recentUploadBook: item?.recentUploadBook ?? null,
     });
@@ -51,10 +50,11 @@ const selectFile = async (groupId: string, fileName: string, buf: Buffer) => {
     item.uploadDone = false;
     item.segments = [
       { name: 'fileinfo', status: 'pending' },
-      ...epub.segments.map((v) => ({
+      ...epub.fileInfo.segments.map((v) => ({
         name: v.id,
         status: 'pending',
       } as SegmentUploadStatus)),
+      { name: 'trxcheck', status: 'pending' },
     ];
   });
 };
@@ -70,17 +70,7 @@ const doUpload = (groupId: string) => {
   runLoading(
     (l) => { item.uploading = l; },
     async () => {
-      const fileinfoContent = Buffer.from(JSON.stringify({
-        mediaType: epub.mediaType,
-        name: epub.name,
-        title: epub.title,
-        sha256: epub.sha256,
-        segments: epub.segments.map((v) => ({
-          id: v.id,
-          sha256: v.sha256,
-        })),
-      }));
-
+      const fileinfoContent = Buffer.from(JSON.stringify(epub.fileInfo));
       const data = {
         type: 'Add',
         object: {
@@ -102,7 +92,7 @@ const doUpload = (groupId: string) => {
       });
 
       changeStatus('fileinfo', 'uploading');
-      const fileInfoTrx = await postNote(data as any);
+      const fileInfoTrx = await postContent(data as any);
       await checkTrx(groupId, fileInfoTrx.trx_id);
       changeStatus('fileinfo', 'done');
 
@@ -124,13 +114,13 @@ const doUpload = (groupId: string) => {
           },
         };
         changeStatus(seg.id, 'uploading');
-        const segTrx = await postNote(segData as any);
+        const segTrx = await postContent(segData as any);
         await checkTrx(groupId, segTrx.trx_id);
         changeStatus(seg.id, 'done');
       });
-
       await promiseAllSettledThrottle(jobs, 20);
 
+      changeStatus('trxcheck', 'uploading');
       for (let i = 0; i < 30; i += 1) {
         await parseAllTrx(groupId);
         const theBook = state.bookMap.get(groupId)!.find((v) => v.trxId === fileInfoTrx.trx_id);
@@ -139,6 +129,8 @@ const doUpload = (groupId: string) => {
           break;
         }
       }
+      changeStatus('trxcheck', 'done');
+
       runInAction(() => {
         item.uploadDone = true;
         const epub = state.bookMap.get(groupId)!.find((v) => v.trxId === fileInfoTrx.trx_id);
@@ -148,10 +140,39 @@ const doUpload = (groupId: string) => {
   );
 };
 
-const parseAllTrx = async (groupId: string) => {
-  const epubs = await getAllEpubs(groupId);
-  state.bookMap.set(groupId, epubs);
-};
+const parseAllTrx = cachePromiseHof(async (groupId: string) => {
+  if (state.parseStatusMap.get(groupId)) {
+    return;
+  }
+  await runLoading(
+    (l) => { state.parseStatusMap.set(groupId, l); },
+    async () => {
+      const lastBook = await dbService.db.book.where({ groupId }).last();
+      const lastBookTrx = lastBook?.lastSegmentTrxId ?? '';
+      const newEpubs = await getAllEpubsFromTrx(groupId, lastBookTrx);
+      const items: Array<BookDatabaseItem> = newEpubs.map((v) => ({
+        bookTrx: v.trxId,
+        groupId,
+        fileInfo: v.fileInfo,
+        lastSegmentTrxId: v.lastSegmentTrxId,
+        date: v.date,
+        file: v.file,
+      }));
+      await dbService.db.book.bulkAdd(items);
+
+      const allEpubs = await dbService.db.book.where({ groupId }).toArray();
+      const allBooks: Array<EpubItem> = allEpubs.map((v) => ({
+        cover: { type: 'notloaded', value: null } as const,
+        date: v.date,
+        file: Buffer.from(v.file),
+        fileInfo: v.fileInfo,
+        lastSegmentTrxId: v.lastSegmentTrxId,
+        trxId: v.bookTrx,
+      }));
+      state.bookMap.set(groupId, allBooks);
+    },
+  );
+});
 
 const parseCover = (groupId: string, bookTrxId: string) => {
   const item = state.bookMap.get(groupId)?.find((v) => v.trxId === bookTrxId);
@@ -161,31 +182,24 @@ const parseCover = (groupId: string, bookTrxId: string) => {
   }
   const doParse = async () => {
     try {
-      const epub = await parseEpub(item.name, item.file);
+      const epub = await parseEpub(item.fileInfo.name, item.file);
       const cover = epub.cover;
-      if (!cover) {
-        runInAction(() => {
-          item.cover = { type: 'nocover' };
-        });
-        return;
-      }
       runInAction(() => {
-        item.cover = {
-          type: 'loaded',
-          value: URL.createObjectURL(new Blob([cover.buffer])),
-        };
+        if (!cover) {
+          item.cover = { type: 'nocover', value: null };
+          return;
+        }
+        item.cover = { type: 'loaded', value: URL.createObjectURL(new Blob([cover.buffer])) };
       });
     } catch (e) {
+      console.error(e);
       runInAction(() => {
-        item.cover = { type: 'nocover' };
+        item.cover = { type: 'nocover', value: null };
       });
     }
   };
   runInAction(() => {
-    item.cover = {
-      type: 'loading',
-      value: doParse(),
-    };
+    item.cover = { type: 'loading', value: doParse() };
   });
 };
 

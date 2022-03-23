@@ -1,6 +1,5 @@
-import request from '../request';
 import qs from 'query-string';
-import { qwasm } from '~/utils/quorum-wasm/load-quorum';
+import request from '../request';
 
 export enum ContentTypeUrl {
   Object = 'quorum.pb.Object',
@@ -11,73 +10,20 @@ export interface IPostContentResult {
   trx_id: string
 }
 
-export type IContentItem = INoteItem | ILikeItem | IPersonItem;
-
-export interface IContentItemBasic {
+export type IContentItemBasic = {
   TrxId: string
   Publisher: string
   TypeUrl: string
   TimeStamp: number
-}
+} & Record<string, any>;
 
-export interface INoteItem extends IContentItemBasic {
-  Content: INote
-}
-
-export interface ILikeItem extends IContentItemBasic {
-  Content: ILike
-}
-
-export interface INote {
-  type: 'Note'
-  content: string
-  id?: string
-  name?: string
-  image?: IImage[]
-  inreplyto?: {
-    trxid: string
-  }
-  attributedTo?: Array<Record<string, string>>
-}
-
-export interface ILike {
-  type: LikeType
-  id: string
-}
-
-export interface IImage {
-  mediaType: string
-  name: string
-  content: string
-}
-
-export interface INotePayload {
+export interface IContentPayload {
   type: string
-  object: INote
+  object: any
   target: {
     id: string
     type: string
   }
-}
-
-export enum LikeType {
-  Like = 'Like',
-  Dislike = 'Dislike',
-}
-
-export interface ILikePayload {
-  type: LikeType
-  object: {
-    id: string
-  }
-  target: {
-    id: string
-    type: string
-  }
-}
-
-export interface IPersonItem extends IContentItemBasic {
-  Content: IPerson
 }
 
 export interface IPerson {
@@ -120,59 +66,34 @@ export const fetchContents = (
     includestarttrx?: boolean
   },
 ) => {
-  if (!process.env.IS_ELECTRON) {
-    return qwasm.GetContent(
-      groupId,
-      options.num,
-      options.starttrx ?? '',
-      options.nonce ?? 0,
-      options.reverse ?? false,
-      options.includestarttrx ?? false,
-    ) as Promise<null | Array<IContentItem>>;
-  }
+  const normalizedOptions = {
+    num: options.num,
+    starttrx: options.starttrx ?? '',
+    nonce: options.nonce ?? 0,
+    reverse: options.reverse ?? false,
+    includestarttrx: options.includestarttrx ?? false,
+  };
   return request(
-    `/app/api/v1/group/${groupId}/content?${qs.stringify(options)}`,
+    `/app/api/v1/group/${groupId}/content?${qs.stringify(normalizedOptions)}`,
     {
       method: 'POST',
       quorum: true,
       body: { senders: [] },
       jwt: true,
     },
-  ) as Promise<null | Array<IContentItem>>;
+  ) as Promise<null | Array<IContentItemBasic>>;
 };
 
-export const postNote = (content: INotePayload) => {
-  if (!process.env.IS_ELECTRON) {
-    return qwasm.PostToGroup(JSON.stringify(content)) as Promise<IPostContentResult>;
-  }
-  return request('/api/v1/group/content', {
-    method: 'POST',
-    quorum: true,
-    body: content,
-    jwt: true,
-  }) as Promise<IPostContentResult>;
-};
+export const postContent = (content: IContentPayload) => request('/api/v1/group/content', {
+  method: 'POST',
+  quorum: true,
+  body: content,
+  jwt: true,
+}) as Promise<IPostContentResult>;
 
-export const like = (likeContent: ILikePayload) => {
-  if (!process.env.IS_ELECTRON) {
-    return qwasm.PostToGroup(JSON.stringify(likeContent)) as Promise<IPostContentResult>;
-  }
-  return request('/api/v1/group/content', {
-    method: 'POST',
-    quorum: true,
-    body: likeContent,
-    jwt: true,
-  }) as Promise<IPostContentResult>;
-};
-
-export const updateProfile = (profile: IProfilePayload) => {
-  if (!process.env.IS_ELECTRON) {
-    return qwasm.UpdateProfile(JSON.stringify(profile)) as Promise<IPostContentResult>;
-  }
-  return request('/api/v1/group/profile', {
-    method: 'POST',
-    quorum: true,
-    body: profile,
-    jwt: true,
-  }) as Promise<IPostContentResult>;
-};
+export const updateProfile = (profile: IProfilePayload) => request('/api/v1/group/profile', {
+  method: 'POST',
+  quorum: true,
+  body: profile,
+  jwt: true,
+}) as Promise<IPostContentResult>;

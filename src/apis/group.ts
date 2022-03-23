@@ -1,6 +1,5 @@
 import request from '../request';
 import { GROUP_TEMPLATE_TYPE } from '~/utils/constant';
-import { qwasm } from '~/utils/quorum-wasm/load-quorum';
 
 export interface IGetGroupsResult {
   groups: Array<IGroup> | null
@@ -88,23 +87,18 @@ export const createGroup = (params: {
   encryption_type: string
   /** group_type */
   app_key: string
-}) => {
-  if (!process.env.IS_ELECTRON) {
-    return qwasm.CreateGroup(JSON.stringify(params)) as Promise<ICreateGroupsResult>;
-  }
-  return request('/api/v1/group', {
-    method: 'POST',
-    quorum: true,
-    minPendingDuration: 500,
-    body: {
-      group_name: params.group_name,
-      consensus_type: params.consensus_type,
-      encryption_type: params.encryption_type,
-      app_key: params.app_key,
-    },
-    jwt: true,
-  }) as Promise<ICreateGroupsResult>;
-};
+}) => request('/api/v1/group', {
+  method: 'POST',
+  quorum: true,
+  minPendingDuration: 500,
+  body: {
+    group_name: params.group_name,
+    consensus_type: params.consensus_type,
+    encryption_type: params.encryption_type,
+    app_key: params.app_key,
+  },
+  jwt: true,
+}) as Promise<ICreateGroupsResult>;
 
 export const deleteGroup = (groupId: string) => {
   console.log(groupId);
@@ -117,74 +111,44 @@ export const deleteGroup = (groupId: string) => {
   // }) as Promise<IDeleteGroupResult>;
 };
 
-export const fetchMyGroups = () => {
-  if (!process.env.IS_ELECTRON) {
-    return qwasm.GetGroups() as Promise<IGetGroupsResult>;
-  }
-  return request('/api/v1/groups', {
-    method: 'GET',
-    quorum: true,
-    jwt: true,
-  }) as Promise<IGetGroupsResult>;
-};
+export const fetchMyGroups = () => request('/api/v1/groups', {
+  method: 'GET',
+  quorum: true,
+  jwt: true,
+}) as Promise<IGetGroupsResult>;
 
-export const joinGroup = (data: ICreateGroupsResult) => {
-  if (!process.env.IS_ELECTRON) {
-    return qwasm.JoinGroup(JSON.stringify(data)) as Promise<IGroupResult>;
-  }
-  return request('/api/v1/group/join', {
-    method: 'POST',
-    quorum: true,
-    body: data,
-    jwt: true,
-  }) as Promise<IGroupResult>;
-};
+export const joinGroup = (data: ICreateGroupsResult) => request('/api/v1/group/join', {
+  method: 'POST',
+  quorum: true,
+  body: data,
+  jwt: true,
+}) as Promise<IGroupResult>;
 
-export const leaveGroup = (groupId: string) => {
-  if (!process.env.IS_ELECTRON) {
-    return qwasm.LeaveGroup(groupId) as Promise<IGroupResult>;
-  }
-  return request('/api/v1/group/leave', {
-    method: 'POST',
-    quorum: true,
-    body: { group_id: groupId },
-    jwt: true,
-  }) as Promise<IGroupResult>;
-};
+export const leaveGroup = (groupId: string) => request('/api/v1/group/leave', {
+  method: 'POST',
+  quorum: true,
+  body: { group_id: groupId },
+  jwt: true,
+}) as Promise<IGroupResult>;
 
-export const clearGroup = (groupId: string) => {
-  if (!process.env.IS_ELECTRON) {
-    return qwasm.ClearGroupData(groupId) as Promise<IGroupResult>;
-  }
-  return request('/api/v1/group/clear', {
-    method: 'POST',
-    quorum: true,
-    body: { group_id: groupId },
-    jwt: true,
-  }) as Promise<IGroupResult>;
-};
+export const clearGroup = (groupId: string) => request('/api/v1/group/clear', {
+  method: 'POST',
+  quorum: true,
+  body: { group_id: groupId },
+  jwt: true,
+}) as Promise<IGroupResult>;
 
-export const syncGroup = (groupId: string) => {
-  if (!process.env.IS_ELECTRON) {
-    return qwasm.StartSync(groupId) as Promise<unknown>;
-  }
-  return request(`/api/v1/group/${groupId}/startsync`, {
-    method: 'POST',
-    quorum: true,
-    jwt: true,
-  })!;
-};
+export const syncGroup = (groupId: string) => request(`/api/v1/group/${groupId}/startsync`, {
+  method: 'POST',
+  quorum: true,
+  jwt: true,
+})!;
 
-export const fetchSeed = (groupId: string) => {
-  if (!process.env.IS_ELECTRON) {
-    return qwasm.GetGroupSeed(groupId) as Promise<IGetGroupsResult>;
-  }
-  return request(`/api/v1/group/${groupId}/seed`, {
-    method: 'GET',
-    quorum: true,
-    jwt: true,
-  }) as Promise<IGetGroupsResult>;
-};
+export const fetchSeed = (groupId: string) => request(`/api/v1/group/${groupId}/seed`, {
+  method: 'GET',
+  quorum: true,
+  jwt: true,
+}) as Promise<IGetGroupsResult>;
 
 export const applyToken = () => {
   if (!process.env.IS_ELECTRON) {
@@ -215,36 +179,21 @@ export const changeGroupConfig = (params: {
   type: 'int' | 'string' | 'bool'
   value: unknown
   memo?: string
-}) => {
-  if (!process.env.IS_ELECTRON) {
-    return qwasm.MgrAppConfig(JSON.stringify(params)) as Promise<unknown>;
-  }
-  return request('/api/v1/group/appconfig', {
-    method: 'POST',
-    quorum: true,
-    body: params,
-    jwt: true,
-  })!;
-};
+}) => request('/api/v1/group/appconfig', {
+  method: 'POST',
+  quorum: true,
+  body: params,
+  jwt: true,
+})!;
 
-export const getGroupConfigKeyList = (groupId: string) => {
-  if (!process.env.IS_ELECTRON) {
-    return qwasm.GetGroupConfigKeyList(groupId) as Promise<GroupConfigKeyListResult>;
-  }
-  return request(`/api/v1/group/${groupId}/config/keylist`, {
-    method: 'GET',
-    quorum: true,
-    jwt: true,
-  }) as Promise<GroupConfigKeyListResult>;
-};
+export const getGroupConfigKeyList = (groupId: string) => request(`/api/v1/group/${groupId}/config/keylist`, {
+  method: 'GET',
+  quorum: true,
+  jwt: true,
+}) as Promise<GroupConfigKeyListResult>;
 
-export const getGroupConfigItem = (groupId: string, key: string) => {
-  if (!process.env.IS_ELECTRON) {
-    return qwasm.GetGroupConfigKey(groupId, key) as Promise<GroupConfigItemResult>;
-  }
-  return request(`/api/v1/group/${groupId}/config/${key}`, {
-    method: 'GET',
-    quorum: true,
-    jwt: true,
-  }) as Promise<GroupConfigItemResult>;
-};
+export const getGroupConfigItem = (groupId: string, key: string) => request(`/api/v1/group/${groupId}/config/${key}`, {
+  method: 'GET',
+  quorum: true,
+  jwt: true,
+}) as Promise<GroupConfigItemResult>;

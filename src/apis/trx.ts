@@ -1,6 +1,4 @@
 import request from '../request';
-import { qwasm } from '~/utils/quorum-wasm/load-quorum';
-
 
 export interface ITrx {
   TrxId: string
@@ -13,13 +11,8 @@ export interface ITrx {
   SenderSign: string
 }
 
-export const fetchTrx = (GroupId: string, TrxId: string) => {
-  if (!process.env.IS_ELECTRON) {
-    return qwasm.GetTrx(GroupId, TrxId) as Promise<ITrx>;
-  }
-  return request(`/api/v1/trx/${GroupId}/${TrxId}`, {
-    method: 'GET',
-    quorum: true,
-    jwt: true,
-  }) as Promise<ITrx>;
-};
+export const fetchTrx = (GroupId: string, TrxId: string) => request(`/api/v1/trx/${GroupId}/${TrxId}`, {
+  method: 'GET',
+  quorum: true,
+  jwt: true,
+}) as Promise<ITrx>;
