@@ -7,12 +7,13 @@ import { format } from 'date-fns';
 import { Popover, Tooltip } from '@mui/material';
 import { ArrowDropDown } from '@mui/icons-material';
 
-import BookContentIcon from 'boxicons/svg/regular/bx-book-content.svg?react';
+import BookContentIcon from 'boxicons/svg/regular/bx-book-content.svg?fill';
 import BookOpenIcon from 'boxicons/svg/regular/bx-book-open.svg?fill';
 
 import { BookCoverImgTooltip } from '~/components/BookCoverImgTooltip';
 import { EpubItem, epubService } from '~/service/epub';
 import { nodeService } from '~/service/node';
+import { readerSettingsService } from '~/service/readerSettings';
 
 
 interface Props {
@@ -67,9 +68,18 @@ export const EpubSelectBookButton = observer((props: Props) => {
       )}
       ref={buttonRef}
     >
-      <BookContentIcon width="24" height="24" />
+      <BookContentIcon
+        className={classNames(
+          readerSettingsService.state.dark && 'text-gray-af',
+        )}
+        width="24"
+        height="24"
+      />
       <div
-        className="flex flex-center border-b border-gray-33 pb-[3px] pl-1 text-16 cursor-pointer select-none"
+        className={classNames(
+          'flex flex-center border-b border-gray-33 pb-[3px] pl-1 text-16 cursor-pointer select-none',
+          readerSettingsService.state.dark && 'text-gray-af border-gray-af',
+        )}
         onClick={handleOpen}
       >
         切换书籍

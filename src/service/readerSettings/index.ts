@@ -9,6 +9,10 @@ const state = observable({
   theme: 'white' as ReaderThemes,
   font: '',
   customFont: '',
+
+  get dark() {
+    return ['dark', 'black'].includes(this.theme);
+  },
 });
 
 export const THEME_STORAGE_KEY = 'RUM_EPUB_THEME_SETTING';

@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import { Help } from '@mui/icons-material';
 import { Annotation } from 'epubjs/types/annotations';
-import SliderAltIcon from 'boxicons/svg/regular/bx-slider-alt.svg?react';
+import SliderAltIcon from 'boxicons/svg/regular/bx-slider-alt.svg?fill';
 
 import { readerSettingsService, ReaderThemes } from '~/service/readerSettings';
 import { nodeService } from '~/service/node';
@@ -134,6 +134,10 @@ export const EpubSettings = observer((props: Props) => {
         ref={buttonRef}
       >
         <SliderAltIcon
+          className={classNames(
+            !readerSettingsService.state.dark && 'text-black',
+            readerSettingsService.state.dark && 'text-gray-af',
+          )}
           width="24"
           height="24"
         />
@@ -157,45 +161,47 @@ export const EpubSettings = observer((props: Props) => {
     >
       <div className="flex flex-col gap-y-3 p-5">
         <div className="">
-          <div className="leading-loose text-16">
+          <div className="leading-loose text-14">
             字号:
             &nbsp;{readerSettingsService.state.fontSize}pt
             &nbsp;{readerSettingsService.state.fontSize === 16 && '(默认)'}
           </div>
           <Slider
-            className="w-70 mt-1"
+            className="w-70"
             classes={{ mark: 'hidden' }}
             value={readerSettingsService.state.fontSize}
             onChange={(_, v) => handleChangeFontSize(v as number, false)}
             onChangeCommitted={(_, v) => handleChangeFontSize(v as number, true)}
             step={2}
             marks
+            size="small"
             min={14}
             max={24}
           />
         </div>
 
         <div className="">
-          <div className="leading-loose text-16">
+          <div className="leading-loose text-14">
             行距:
             &nbsp;{readerSettingsService.state.lineHeight }
             &nbsp;{readerSettingsService.state.lineHeight === 1.75 && '(默认)'}
           </div>
           <Slider
-            className="w-70 mt-1"
+            className="w-70"
             classes={{ mark: 'hidden' }}
             value={readerSettingsService.state.lineHeight}
             onChange={(_, v) => handleChangeLineHeight(v as number, false)}
             onChangeCommitted={(_, v) => handleChangeLineHeight(v as number, true)}
             step={null}
             marks={[1.2, 1.35, 1.5, 1.75, 1.9, 2.1].map((value) => ({ value }))}
+            size="small"
             max={2.1}
             min={1.2}
           />
         </div>
 
         <div className="flex flex-col">
-          <div className="leading-loose text-16">
+          <div className="leading-loose text-14">
             主题
           </div>
 
@@ -208,9 +214,10 @@ export const EpubSettings = observer((props: Props) => {
                 ['black', '黑色'],
               ].map((v) => (
                 <FormControlLabel
+                  classes={{ label: 'text-14' }}
                   className="-mt-2"
                   value={v[0]}
-                  control={<Radio color="primary" />}
+                  control={<Radio size="small" color="primary" />}
                   label={v[1]}
                   key={v[0]}
                 />
@@ -220,7 +227,7 @@ export const EpubSettings = observer((props: Props) => {
         </div>
 
         <div className="flex flex-col">
-          <div className="leading-loose text-16">
+          <div className="leading-loose text-14">
             字体
           </div>
 
@@ -233,8 +240,9 @@ export const EpubSettings = observer((props: Props) => {
               ].map((v) => (
                 <FormControlLabel
                   className="-mt-2"
+                  classes={{ label: 'text-14' }}
                   value={v[0]}
-                  control={<Radio color="primary" />}
+                  control={<Radio size="small" color="primary" />}
                   label={v[1]}
                   key={v[0]}
                 />
@@ -243,15 +251,15 @@ export const EpubSettings = observer((props: Props) => {
                 <FormControlLabel
                   className="-mt-2 flex-1"
                   classes={{
-                    label: 'w-full',
+                    label: 'w-full text-14',
                   }}
                   value="custom"
-                  control={<Radio color="primary" />}
+                  control={<Radio size="small" color="primary" />}
                   label={(
                     <Input
                       className="w-full"
                       classes={{
-                        input: 'text-16',
+                        input: 'text-14',
                       }}
                       placeholder="自定义"
                       value={readerSettingsService.state.customFont}

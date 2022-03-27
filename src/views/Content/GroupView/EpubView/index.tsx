@@ -8,7 +8,8 @@ import { Annotation } from 'epubjs/types/annotations';
 import { PackagingMetadataObject } from 'epubjs/types/packaging';
 import { Button, CircularProgress, ClickAwayListener, Tooltip } from '@mui/material';
 import { ChevronLeft, ChevronRight } from '@mui/icons-material';
-import FullscreenIcon from 'boxicons/svg/regular/bx-fullscreen.svg?react';
+import FullscreenIcon from 'boxicons/svg/regular/bx-fullscreen.svg?fill';
+import ExitFullscreenIcon from 'boxicons/svg/regular/bx-exit-fullscreen.svg?fill';
 import EditAltIcon from 'boxicons/svg/regular/bx-edit-alt.svg?fill';
 
 import { nodeService } from '~/service/node';
@@ -382,7 +383,12 @@ export const EpubView = observer((props: Props) => {
           state.fullScreen && 'fixed inset-0 z-50',
         )}
       >
-        <div className="flex justify-between items-center flex-none gap-x-4 border-b px-6 h-[62px]">
+        <div
+          className={classNames(
+            'flex justify-between items-center flex-none gap-x-4 px-6 h-[62px]',
+            readerSettingsService.state.dark && 'bg-gray-2c',
+          )}
+        >
           <EpubSelectBookButton
             onSelect={(v) => loadBook(v)}
             currentBookTrxId={state.bookTrxId}
@@ -392,7 +398,12 @@ export const EpubView = observer((props: Props) => {
             placement="bottom"
           >
             <div className="text-18 truncate">
-              <span className="text-gray-33">
+              <span
+                className={classNames(
+                  !readerSettingsService.state.dark && 'text-gray-33',
+                  readerSettingsService.state.dark && 'text-gray-f7',
+                )}
+              >
                 {state.bookMetadata?.title}
               </span>
               {!!state.bookMetadata?.creator && (
@@ -428,7 +439,20 @@ export const EpubView = observer((props: Props) => {
                 className="w-11 h-11 flex flex-center cursor-pointer"
                 onClick={handleToggleFullScreen}
               >
-                <FullscreenIcon />
+                <ExitFullscreenIcon
+                  className={classNames(
+                    !state.fullScreen && 'hidden',
+                    !readerSettingsService.state.dark && 'text-black',
+                    readerSettingsService.state.dark && 'text-gray-af',
+                  )}
+                />
+                <FullscreenIcon
+                  className={classNames(
+                    state.fullScreen && 'hidden',
+                    !readerSettingsService.state.dark && 'text-black',
+                    readerSettingsService.state.dark && 'text-gray-af',
+                  )}
+                />
               </div>
             </Tooltip>
           </div>

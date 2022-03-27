@@ -4,6 +4,7 @@ import { action } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import { Popover, Tooltip } from '@mui/material';
 import KeyboardIcon from 'boxicons/svg/solid/bxs-keyboard.svg?fill';
+import { readerSettingsService } from '~/service/readerSettings';
 
 interface Props {
   className?: string
@@ -36,7 +37,12 @@ export const EpubShortCutPopover = observer((props: Props) => {
         onClick={handleOpen}
         ref={buttonRef}
       >
-        <KeyboardIcon className="text-inherit" />
+        <KeyboardIcon
+          className={classNames(
+            !readerSettingsService.state.dark && 'text-black',
+            readerSettingsService.state.dark && 'text-gray-af',
+          )}
+        />
       </div>
     </Tooltip>
 

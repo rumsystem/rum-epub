@@ -6,10 +6,11 @@ import escapeStringRegexp from 'escape-string-regexp';
 import { Popover, Tooltip, Pagination, Input } from '@mui/material';
 import { Book } from 'epubjs';
 import { Annotation } from 'epubjs/types/annotations';
-import EditAltIcon from 'boxicons/svg/regular/bx-edit-alt.svg?react';
+import EditAltIcon from 'boxicons/svg/regular/bx-edit-alt.svg?fill';
 import TrashIcon from 'boxicons/svg/regular/bx-trash.svg?fill';
 
 import { modifierKeys, splitByHighlightText } from '~/utils';
+import { readerSettingsService } from '~/service/readerSettings';
 
 interface Props {
   className?: string
@@ -114,6 +115,10 @@ export const EpubAllHighlightButton = observer((props: Props) => {
         ref={buttonRef}
       >
         <EditAltIcon
+          className={classNames(
+            !readerSettingsService.state.dark && 'text-black',
+            readerSettingsService.state.dark && 'text-gray-af',
+          )}
           width="24"
           height="24"
         />
