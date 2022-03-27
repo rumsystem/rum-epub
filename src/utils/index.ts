@@ -155,3 +155,9 @@ export const cachePromiseHof = <T extends (...args: Array<any>) => unknown>(fn: 
     return promise;
   }) as T;
 };
+
+export const modifierKeys = (e: KeyboardEvent, keys: Array<'shift' | 'ctrl' | 'alt' | 'meta'> = []) => {
+  const keyNames = keys.map((v) => `${v}Key` as const);
+  const notAllowedKeyNames = (['shiftKey', 'ctrlKey', 'altKey', 'metaKey'] as const).filter((v) => !keyNames.includes(v));
+  return keyNames.every((k) => e[k]) && notAllowedKeyNames.every((k) => !e[k]);
+};

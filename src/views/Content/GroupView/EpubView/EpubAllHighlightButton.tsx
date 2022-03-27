@@ -2,13 +2,14 @@ import React from 'react';
 import classNames from 'classnames';
 import { action, reaction, runInAction } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
+import escapeStringRegexp from 'escape-string-regexp';
 import { Popover, Tooltip, Pagination, Input } from '@mui/material';
 import { Book } from 'epubjs';
 import { Annotation } from 'epubjs/types/annotations';
 import EditAltIcon from 'boxicons/svg/regular/bx-edit-alt.svg?react';
 import TrashIcon from 'boxicons/svg/regular/bx-trash.svg?fill';
-import escapeStringRegexp from 'escape-string-regexp';
-import { splitByHighlightText } from '~/utils';
+
+import { modifierKeys, splitByHighlightText } from '~/utils';
 
 interface Props {
   className?: string
@@ -78,6 +79,23 @@ export const EpubAllHighlightButton = observer((props: Props) => {
     state.arr.splice(state.arr.indexOf(v), 1);
   });
 
+  React.useEffect(() => {
+    const handleKeydown = (e: KeyboardEvent) => {
+      const targetTagName = (e.target as HTMLElement)?.tagName.toLowerCase();
+      if (['textarea', 'input'].includes(targetTagName)) {
+        return;
+      }
+      const key = e.key.toLowerCase();
+      if (key === 'n' && modifierKeys(e, ['shift'])) {
+        handleOpen();
+      }
+    };
+    window.addEventListener('keydown', handleKeydown);
+    return () => {
+      window.removeEventListener('keydown', handleKeydown);
+    };
+  }, []);
+
   React.useEffect(reaction(
     () => state.search,
     action(() => {
@@ -89,7 +107,7 @@ export const EpubAllHighlightButton = observer((props: Props) => {
     <Tooltip title="所有标注">
       <div
         className={classNames(
-          'cursor-pointer',
+          'flex flex-center cursor-pointer',
           props.className,
         )}
         onClick={handleOpen}

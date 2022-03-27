@@ -5,6 +5,7 @@ import { observer, useLocalObservable } from 'mobx-react-lite';
 import { NavItem } from 'epubjs';
 import { Divider, MenuItem, Popover, Tooltip } from '@mui/material';
 import ListUlIcon from 'boxicons/svg/regular/bx-list-ul.svg?react';
+import { modifierKeys } from '~/utils';
 
 interface Props {
   className?: string
@@ -42,11 +43,28 @@ export const EpubChaptersButton = observer((props: Props) => {
     state.open = false;
   });
 
+  React.useEffect(() => {
+    const handleKeydown = (e: KeyboardEvent) => {
+      const targetTagName = (e.target as HTMLElement)?.tagName.toLowerCase();
+      if (['textarea', 'input'].includes(targetTagName)) {
+        return;
+      }
+      const key = e.key.toLowerCase();
+      if (key === 'c' && modifierKeys(e, ['shift'])) {
+        handleOpen();
+      }
+    };
+    window.addEventListener('keydown', handleKeydown);
+    return () => {
+      window.removeEventListener('keydown', handleKeydown);
+    };
+  }, []);
+
   return (<>
     <Tooltip title="章节选择">
       <div
         className={classNames(
-          'cursor-pointer',
+          'flex flex-center cursor-pointer',
           props.className,
         )}
         onClick={handleOpen}

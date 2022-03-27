@@ -127,7 +127,7 @@ export const EpubSettings = observer((props: Props) => {
     <Tooltip title="显示设置">
       <div
         className={classNames(
-          'cursor-pointer',
+          'flex flex-center cursor-pointer',
           props.className,
         )}
         onClick={handleOpen}

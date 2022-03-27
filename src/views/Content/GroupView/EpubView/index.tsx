@@ -15,18 +15,19 @@ import { nodeService } from '~/service/node';
 import { EpubItem, epubService } from '~/service/epub';
 import { linkTheme, progressBarTheme, readerSettingsService, readerThemes } from '~/service/readerSettings';
 import { ReadingProgressItem } from '~/service/db';
-import { addLinkOpen } from '~/utils';
+import { addLinkOpen, modifierKeys } from '~/utils';
+import { BookCoverImgTooltip } from '~/components/BookCoverImgTooltip';
 
 import BookImage from '~/assets/illustration_book.svg';
 import ArrowImage from '~/assets/arrow.svg';
 
+import { EpubShortCutPopover } from './EpubShortCutPopover';
 import { EpubAllHighlightButton } from './EpubAllHighlightButton';
 import { EpubChaptersButton } from './EpubChaptersButton';
 import { EpubHeader } from './EpubHeader';
 import { EpubSelectBookButton } from './EpubSelectBookButton';
 import { EpubSettings } from './EpubSettings';
 import { highLightRange } from './helper';
-import { BookCoverImgTooltip } from '~/components/BookCoverImgTooltip';
 
 interface Props {
   className?: string
@@ -211,8 +212,15 @@ export const EpubView = observer((props: Props) => {
         addLinkOpen(iframe.contentWindow);
         iframe.contentWindow.addEventListener('keydown', (e) => {
           const evt = new CustomEvent('keydown', { bubbles: true, cancelable: false }) as any;
-          evt.key = e.key;
+          evt.altKey = e.altKey;
+          evt.code = e.code;
           evt.ctrlKey = e.ctrlKey;
+          evt.isComposing = e.isComposing;
+          evt.key = e.key;
+          evt.location = e.location;
+          evt.metaKey = e.metaKey;
+          evt.repeat = e.repeat;
+          evt.shiftKey = e.shiftKey;
           iframe.dispatchEvent(evt);
         });
         iframe.contentWindow.addEventListener('mousemove', (event) => {
@@ -309,11 +317,31 @@ export const EpubView = observer((props: Props) => {
     }));
 
     const handleKeydown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && state.fullScreen) {
+      const targetTagName = (e.target as HTMLElement)?.tagName.toLowerCase();
+      if (['textarea', 'input'].includes(targetTagName)) {
+        return;
+      }
+      const key = e.key.toLowerCase();
+      if (key === 'escape' && modifierKeys(e) && state.fullScreen) {
         handleToggleFullScreen();
       }
-      if (e.key === 'f' && e.ctrlKey && !state.fullScreen) {
+      if (key === 'f' && modifierKeys(e) && !state.fullScreen) {
         handleToggleFullScreen();
+      }
+      if (['arrowleft', 'pageup'].includes(key) && modifierKeys(e)) {
+        handlePrev();
+      }
+      if ([' ', 'enter', 'arrowright', 'pagedown'].includes(key) && modifierKeys(e)) {
+        handleNext();
+      }
+      if (key === 'arrowup' && modifierKeys(e)) {
+        handleChangeChapter('prev');
+      }
+      if (key === 'arrowdown' && modifierKeys(e)) {
+        handleChangeChapter('next');
+      }
+      if (key === 'b' && modifierKeys(e, ['shift'])) {
+        handleBackJumpingHistory();
       }
     };
 
@@ -375,27 +403,29 @@ export const EpubView = observer((props: Props) => {
               )}
             </div>
           </BookCoverImgTooltip>
-          {/* <Tooltip title={`${state.bookMetadata?.title}${state.bookMetadata?.creator ? ` - ${state.bookMetadata?.creator}` : ''}`}>
-          </Tooltip> */}
 
-          <div className="flex items-center gap-x-3">
+          <div className="flex items-center gap-x-1">
             <EpubChaptersButton
-              className="p-2"
+              className="w-11 h-11"
               chapters={state.chapters}
               current={state.currentHref}
               onChapterClick={handleJumpToHref}
             />
             <EpubAllHighlightButton
+              className="w-11 h-11"
               book={state.book}
             />
             <EpubSettings
-              className="p-2"
+              className="w-11 h-11"
               book={state.book}
               bookTrx={state.bookTrxId}
             />
+            <EpubShortCutPopover
+              className="w-11 h-11"
+            />
             <Tooltip title="切换全屏">
               <div
-                className="p-2 cursor-pointer"
+                className="w-11 h-11 flex flex-center cursor-pointer"
                 onClick={handleToggleFullScreen}
               >
                 <FullscreenIcon />
