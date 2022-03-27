@@ -265,7 +265,7 @@ export const EpubUploadButton = observer((props: Props) => {
               {state.item.epub.fileInfo.title}
             </div>
 
-            <div className="grid grid-cols-3 gap-2 max-h-[250px] mt-4 mx-4 overflow-y-auto py-1" ref={progressBox}>
+            <div className="grid grid-cols-3 gap-2 max-h-[210px] mt-4 mx-4 overflow-y-auto py-1" ref={progressBox}>
               {state.item.segments.map((v) => (
                 <div
                   className={classNames(
@@ -299,17 +299,17 @@ export const EpubUploadButton = observer((props: Props) => {
               </div>
             )}
 
-            <div className="flex flex-center gap-x-16 mt-8 mb-2">
+            <div className="flex flex-center gap-x-16 mt-12 mb-2">
               {!state.item.uploading && !state.item.uploadDone && (<>
                 <Button
-                  className="text-20 px-12 rounded-full"
+                  className="text-16 px-12 rounded-full"
                   color="inherit"
                   onClick={handleCancelFileSelect}
                 >
                   返回
                 </Button>
                 <Button
-                  className="text-20 px-12 rounded-full"
+                  className="text-16 px-12 rounded-full"
                   onClick={handleConfirmUpload}
                 >
                   确认上传
@@ -317,7 +317,7 @@ export const EpubUploadButton = observer((props: Props) => {
               </>)}
               {state.item.uploading && (
                 <Button
-                  className="text-20 px-12 rounded-full"
+                  className="text-16 px-12 rounded-full"
                   color="inherit"
                   onClick={handleClose}
                 >
@@ -326,7 +326,7 @@ export const EpubUploadButton = observer((props: Props) => {
               )}
               {!state.item.uploading && state.item.uploadDone && (<>
                 <Button
-                  className="text-20 px-12 rounded-full"
+                  className="text-16 px-12 rounded-full"
                   color="inherit"
                   onClick={handleReset}
                 >
@@ -334,7 +334,7 @@ export const EpubUploadButton = observer((props: Props) => {
                 </Button>
 
                 <Button
-                  className="text-20 px-12 rounded-full"
+                  className="text-16 px-12 rounded-full"
                   color="primary"
                   onClick={() => { handleClose(); window.setTimeout(handleReset, 300); }}
                 >
