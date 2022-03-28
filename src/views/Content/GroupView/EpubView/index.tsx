@@ -108,7 +108,11 @@ export const EpubView = observer((props: Props) => {
     state.book?.rendition.display(item.href);
   };
 
-  const handleJumpToHref = (href: string) => {
+  const handleJumpToChapter = (href: string) => {
+    const cfi = state.book?.rendition?.location?.start.cfi;
+    if (cfi) {
+      state.jumpingHistory.push(cfi);
+    }
     state.book?.rendition?.display(href);
   };
 
@@ -420,7 +424,7 @@ export const EpubView = observer((props: Props) => {
               className="w-11 h-11"
               chapters={state.chapters}
               current={state.currentHref}
-              onChapterClick={handleJumpToHref}
+              onChapterClick={handleJumpToChapter}
             />
             <EpubAllHighlightButton
               className="w-11 h-11"
