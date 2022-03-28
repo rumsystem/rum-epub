@@ -7,7 +7,7 @@ import Loading from '~/components/Loading';
 import { TextField } from '@mui/material';
 import Button from '~/components/Button';
 import { isWindow } from '~/utils/env';
-import sleep from '~/utils/sleep';
+import { sleep } from '~/utils';
 import { useStore } from '~/store';
 import { client_id, getVerifierAndChanllege, getOAuthUrl } from '~/utils/mixinOAuth';
 import { getAccessToken, getUserProfile } from '~/apis/mixin';

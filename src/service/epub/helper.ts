@@ -4,7 +4,7 @@ import { posix } from 'path';
 import { Entry, fromBuffer, ZipFile } from 'yauzl';
 
 import { fetchContents, fetchTrx, IContentItemBasic } from '~/apis';
-import sleep from '~/utils/sleep';
+import { sleep } from '~/utils';
 import { FileInfo } from '~/service/db';
 
 export interface ParsedEpubBook {

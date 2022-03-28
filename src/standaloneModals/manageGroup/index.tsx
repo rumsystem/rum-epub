@@ -12,12 +12,11 @@ import Loading from '~/components/Loading';
 import ImageEditor from '~/components/ImageEditor';
 import GroupIcon from '~/components/GroupIcon';
 
-import sleep from '~/utils/sleep';
+import { sleep, runLoading } from '~/utils';
 import { GROUP_CONFIG_KEY } from '~/utils/constant';
 import { ThemeRoot } from '~/utils/theme';
 import { changeGroupConfig } from '~/apis';
 import { lang } from '~/utils/lang';
-import { runLoading } from '~/utils';
 
 import { tooltipService } from '~/service/tooltip';
 import { nodeService } from '~/service/node';

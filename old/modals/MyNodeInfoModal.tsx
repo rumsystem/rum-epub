@@ -11,7 +11,7 @@ import MiddleTruncate from '~/components/MiddleTruncate';
 
 import { useStore } from '~/store';
 
-import sleep from '~/utils/sleep';
+import { sleep } from '~/utils';
 import { lang } from '~/utils/lang';
 import formatPath from '~/utils/formatPath';
 

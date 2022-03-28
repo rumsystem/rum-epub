@@ -15,7 +15,7 @@ import { lang } from '~/utils/lang';
 import { IImage } from '~/apis/content';
 import Base64 from '~/utils/base64';
 import { replaceSeedAsButton } from '~/utils/replaceSeedAsButton';
-import sleep from '~/utils/sleep';
+import { sleep } from '~/utils';
 
 interface IProps {
   object: IDbDerivedObjectItem

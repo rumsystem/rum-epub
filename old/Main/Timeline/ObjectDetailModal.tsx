@@ -6,7 +6,7 @@ import { useStore } from '~/store';
 import useDatabase from '~/hooks/useDatabase';
 import * as ObjectModel from '~/hooks/useDatabase/models/object';
 import useActiveGroup from '~/store/selectors/useActiveGroup';
-import sleep from '~/utils/sleep';
+import { sleep } from '~/utils';
 import { lang } from '~/utils/lang';
 
 const ObjectDetail = observer(() => {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useStore } from '~/store';
 import ContentApi, { IImage, ContentTypeUrl, INotePayload } from '~/apis/content';
-import sleep from '~/utils/sleep';
+import { sleep } from '~/utils';
 import useDatabase from '~/hooks/useDatabase';
 import { ContentStatus } from '~/hooks/useDatabase/contentStatus';
 import * as AttributedToModel from '~/hooks/useDatabase/models/attributedTo';

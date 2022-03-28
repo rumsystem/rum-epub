@@ -4,7 +4,7 @@ import useCheckPermission from '~/hooks/useCheckPermission';
 import useSubmitObject from '~/hooks/useSubmitObject';
 import { OBJECT_STATUS_DELETED_LABEL } from '~/utils/constant';
 import { lang } from '~/utils/lang';
-import sleep from '~/utils/sleep';
+import { sleep } from '~/utils';
 import useActiveGroup from '~/store/selectors/useActiveGroup';
 
 export default () => {

@@ -26,7 +26,7 @@ import { IProfile } from '~/apis/content';
 import openPhotoSwipe from '~/standaloneModals/openPhotoSwipe';
 import { ISubmitObjectPayload, IDraft, IPreviewItem } from '~/hooks/useSubmitObject';
 import { v4 as uuidV4 } from 'uuid';
-import sleep from '~/utils/sleep';
+import { sleep } from '~/utils';
 import { IDbDerivedObjectItem } from '~/hooks/useDatabase/models/object';
 
 interface IProps {

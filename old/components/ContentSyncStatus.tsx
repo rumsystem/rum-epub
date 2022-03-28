@@ -1,6 +1,6 @@
 import React from 'react';
 import { observer, useLocalObservable } from 'mobx-react-lite';
-import sleep from '~/utils/sleep';
+import { sleep } from '~/utils';
 import { ContentStatus } from '~/hooks/useDatabase/contentStatus';
 import usePrevious from '~/hooks/usePrevious';
 import { Tooltip } from '@mui/material';

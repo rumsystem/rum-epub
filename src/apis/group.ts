@@ -100,17 +100,6 @@ export const createGroup = (params: {
   jwt: true,
 }) as Promise<ICreateGroupsResult>;
 
-export const deleteGroup = (groupId: string) => {
-  console.log(groupId);
-  throw new Error('not implemented');
-  // return request('/api/v1/group', {
-  //   method: 'DELETE',
-  //   quorum: true,
-  //   body: { group_id: groupId },
-  //   jwt: true,
-  // }) as Promise<IDeleteGroupResult>;
-};
-
 export const fetchMyGroups = () => request('/api/v1/groups', {
   method: 'GET',
   quorum: true,

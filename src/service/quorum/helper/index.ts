@@ -1,6 +1,6 @@
 import { sendRequest } from './request';
 
-import sleep from '~/utils/sleep';
+import { sleep } from '~/utils';
 
 export interface ProcessStatus {
   up: boolean

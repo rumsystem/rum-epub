@@ -1,4 +1,4 @@
-import sleep from '~/utils/sleep';
+import { sleep } from '~/utils';
 
 interface ShowOptions {
   message?: string

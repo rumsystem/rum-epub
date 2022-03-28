@@ -4,7 +4,7 @@ import Loading from '~/components/Loading';
 import pixabayApi from '~/apis/pixabay';
 import useInfiniteScroll from 'react-infinite-scroll-hook';
 import BottomLine from '~/components/BottomLine';
-import sleep from '~/utils/sleep';
+import { sleep } from '~/utils';
 import { Tooltip, Dialog } from '@mui/material';
 import SearchInput from '~/components/SearchInput';
 import { lang } from '~/utils/lang';

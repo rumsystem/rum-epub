@@ -1,5 +1,5 @@
 import React from 'react';
-import sleep from '~/utils/sleep';
+import { sleep } from '~/utils';
 import { GroupStatus } from '~/apis/group';
 import { useStore } from '~/store';
 import useFetchGroups from '~/hooks/useFetchGroups';

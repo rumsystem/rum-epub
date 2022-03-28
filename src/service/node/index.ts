@@ -11,8 +11,7 @@ import {
   getGroupConfigKeyList,
   getGroupConfigItem,
 } from '~/apis';
-import { setIntervalAsTimeout } from '~/utils';
-import sleep from '~/utils/sleep';
+import { PollingTask, sleep } from '~/utils';
 
 const state = observable({
   groups: [] as Array<IGroup>,
@@ -43,7 +42,12 @@ const state = observable({
     return Object.fromEntries(this.groups.map((v) => [v.group_id, v])) as Record<string, IGroup | undefined>;
   },
 
-  disposes: [] as Array<() => unknown>,
+  pollings: {
+    updateGroups: null as null | PollingTask,
+    updateNodeInfo: null as null | PollingTask,
+    updateNetworkInfo: null as null | PollingTask,
+    updateAllGroupConfig: null as null | PollingTask,
+  },
 });
 
 const updateGroups = async (init = false) => {
@@ -166,29 +170,25 @@ const changeActiveGroup = action((group: string | IGroup) => {
 const init = () => stopPolling;
 
 const startPolling = (restart = false) => {
-  if (!restart && state.disposes.length) {
+  if (!restart && Object.values(state.pollings).some(Boolean)) {
     throw new Error('can\'t start polling twice');
   }
   if (restart) {
     stopPolling();
   }
 
-  updateGroups();
-  updateNodeInfo();
-  updateNetworkInfo();
-  updateAllGroupConfig();
-
-  state.disposes.push(
-    setIntervalAsTimeout(updateGroups, 5000),
-    setIntervalAsTimeout(updateNodeInfo, 10000),
-    setIntervalAsTimeout(updateNetworkInfo, 10000),
-    setIntervalAsTimeout(updateAllGroupConfig, 20000),
-  );
+  state.pollings.updateGroups = new PollingTask(updateGroups, 5000, true, true);
+  state.pollings.updateNodeInfo = new PollingTask(updateNodeInfo, 10000, true, true);
+  state.pollings.updateNetworkInfo = new PollingTask(updateNetworkInfo, 10000, true, true);
+  state.pollings.updateAllGroupConfig = new PollingTask(updateAllGroupConfig, 20000, true, true);
 };
 
 const stopPolling = action(() => {
-  state.disposes.forEach((v) => v());
-  state.disposes = [];
+  Object.keys(state.pollings).forEach((k) => {
+    const key = k as keyof typeof state.pollings;
+    state.pollings[key]?.stop();
+    state.pollings[key] = null;
+  });
 });
 
 export const nodeService = {

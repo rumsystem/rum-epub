@@ -1,5 +1,5 @@
 import React from 'react';
-import sleep from '~/utils/sleep';
+import { sleep } from '~/utils';
 import NodeApi from '~/apis/node';
 import { useStore } from '~/store';
 import * as Quorum from '~/utils/quorum';

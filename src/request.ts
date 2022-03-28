@@ -1,4 +1,4 @@
-import sleep from '~/utils/sleep';
+import { sleep } from '~/utils';
 import getBase from './utils/getBase';
 
 interface RequestOption extends Omit<RequestInit, 'body'> {

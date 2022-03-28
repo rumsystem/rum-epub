@@ -4,7 +4,7 @@ import { join } from 'path';
 import { fetchMyNodeInfo } from '~/apis';
 import { BOOTSTRAPS } from '~/utils/constant';
 import * as Quorum from '~/service/quorum/helper';
-import sleep from '~/utils/sleep';
+import { sleep } from '~/utils';
 import { initQuorum } from './helper/request';
 
 const state = observable({

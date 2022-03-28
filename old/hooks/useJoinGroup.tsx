@@ -1,4 +1,4 @@
-// import sleep from '~/utils/sleep';
+// import { sleep } from '~/utils';
 // import { useStore } from '~/store';
 // import { ICreateGroupsResult } from 'quorum-sdk-electron-renderer';
 // import GroupApi from '~/apis/group';

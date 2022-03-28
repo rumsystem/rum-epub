@@ -5,7 +5,7 @@ import Button from '~/components/Button';
 import { useStore } from '~/store';
 import copy from 'copy-to-clipboard';
 import { lang } from '~/utils/lang';
-import sleep from '~/utils/sleep';
+import { sleep } from '~/utils';
 import { setClipboard } from '~/utils/setClipboard';
 import Loading from '~/components/Loading';
 

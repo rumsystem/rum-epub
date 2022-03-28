@@ -4,7 +4,7 @@ import ContentApi, { ContentTypeUrl, ILikePayload } from '~/apis/content';
 import useDatabase from '~/hooks/useDatabase';
 import { ContentStatus } from '~/hooks/useDatabase/contentStatus';
 import * as LikeModel from '~/hooks/useDatabase/models/like';
-import sleep from '~/utils/sleep';
+import { sleep } from '~/utils';
 import * as ObjectModel from '~/hooks/useDatabase/models/object';
 import * as CommentModel from '~/hooks/useDatabase/models/comment';
 import useActiveGroup from '~/store/selectors/useActiveGroup';

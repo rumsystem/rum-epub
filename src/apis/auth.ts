@@ -25,37 +25,26 @@ export interface FollowingRule {
   'AuthType': AuthType
 }
 
-export const getFollowingRule = async (groupId: string, trxType: TrxType) => request(`/api/v1/group/${groupId}/trx/auth/${trxType.toLowerCase()}`, {
-  method: 'GET',
-  quorum: true,
-  jwt: true,
-}) as Promise<FollowingRule>;
+export const getFollowingRule = async (groupId: string, trxType: TrxType) => request(
+  `/api/v1/group/${groupId}/trx/auth/${trxType.toLowerCase()}`,
+  {
+    method: 'GET',
+    quorum: true,
+    jwt: true,
+  },
+) as Promise<FollowingRule>;
 
-export const updateFollowingRule = async (params: {
+export interface ChainAuthModeParams {
   group_id: string
   type: 'set_trx_auth_mode'
   config: {
     trx_type: TrxType
-    trx_auth_mode: AuthType
+    trx_auth_mode: Lowercase<AuthType>
     memo: string
   }
-}) => {
-  const body = {
-    ...params,
-    config: JSON.stringify({
-      ...params.config,
-      trx_auth_mode: params.config.trx_auth_mode.toLowerCase(),
-    }),
-  };
-  return request('/api/v1/group/chainconfig', {
-    method: 'POST',
-    quorum: true,
-    body,
-    jwt: true,
-  }) as Promise<AuthResponse>;
-};
+}
 
-export const updateAuthList = async (params: {
+export interface ChainAuthListParams {
   group_id: string
   type: 'upd_alw_list' | 'upd_dny_list'
   config: {
@@ -64,30 +53,37 @@ export const updateAuthList = async (params: {
     trx_type: TrxType[]
     memo: string
   }
-}) => {
-  const body = {
-    ...params,
-    config: JSON.stringify({
-      ...params.config,
-      trx_type: params.config.trx_type.map((item) => item.toLowerCase()),
-    }),
-  };
-  return request('/api/v1/group/chainconfig', {
+}
+
+export type ChainConfigParams = ChainAuthModeParams | ChainAuthListParams;
+
+export const setChainConfig = async (params: ChainConfigParams) => request(
+  '/api/v1/group/chainconfig',
+  {
     method: 'POST',
     quorum: true,
-    body,
+    body: {
+      ...params,
+      config: JSON.stringify(params.config),
+    },
     jwt: true,
-  }) as Promise<AuthResponse>;
-};
+  },
+) as Promise<AuthResponse>;
 
-export const getAllowList = async (groupId: string) => request(`/api/v1/group/${groupId}/trx/allowlist`, {
-  method: 'GET',
-  quorum: true,
-  jwt: true,
-}) as Promise<Array<AllowOrDenyListItem> | null>;
+export const getAllowList = async (groupId: string) => request(
+  `/api/v1/group/${groupId}/trx/allowlist`,
+  {
+    method: 'GET',
+    quorum: true,
+    jwt: true,
+  },
+) as Promise<Array<AllowOrDenyListItem> | null>;
 
-export const getDenyList = async (groupId: string) => request(`/api/v1/group/${groupId}/trx/denylist`, {
-  method: 'GET',
-  quorum: true,
-  jwt: true,
-}) as Promise<Array<AllowOrDenyListItem> | null>;
+export const getDenyList = async (groupId: string) => request(
+  `/api/v1/group/${groupId}/trx/denylist`,
+  {
+    method: 'GET',
+    quorum: true,
+    jwt: true,
+  },
+) as Promise<Array<AllowOrDenyListItem> | null>;

@@ -9,7 +9,7 @@ import useDatabase from '~/hooks/useDatabase';
 import useSubmitComment from '~/hooks/useSubmitComment';
 import useSelectComment from '~/hooks/useSelectComment';
 import { ISubmitObjectPayload } from '~/hooks/useSubmitObject';
-import sleep from '~/utils/sleep';
+import { sleep } from '~/utils';
 import { lang } from '~/utils/lang';
 import useActiveGroup from '~/store/selectors/useActiveGroup';
 

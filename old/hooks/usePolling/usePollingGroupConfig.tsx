@@ -1,5 +1,5 @@
 import React from 'react';
-import sleep from '~/utils/sleep';
+import { sleep } from '~/utils';
 import GroupApi, { GroupUpdatedStatus } from '~/apis/group';
 import { useStore } from '~/store';
 import { runInAction } from 'mobx';

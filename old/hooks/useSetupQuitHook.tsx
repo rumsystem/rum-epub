@@ -2,7 +2,7 @@ import React from 'react';
 import { useStore } from '~/store';
 import { ipcRenderer } from 'electron';
 import { dialog } from '@electron/remote';
-import sleep from '~/utils/sleep';
+import { sleep } from '~/utils';
 import useCloseNode from '~/hooks/useCloseNode';
 import useActiveGroup from '~/store/selectors/useActiveGroup';
 import { lang } from '~/utils/lang';

@@ -11,11 +11,10 @@ import Dialog from '~/components/Dialog';
 import Button from '~/components/Button';
 import { ICreateGroupsResult } from '~/apis';
 import { tooltipService } from '~/service/tooltip';
-import sleep from '~/utils/sleep';
+import { sleep, runLoading } from '~/utils';
 import { ThemeRoot } from '~/utils/theme';
 import { lang } from '~/utils/lang';
 import { nodeService } from '~/service/node';
-import { runLoading } from '~/utils';
 
 export const joinGroup = async () => new Promise<void>((rs) => {
   const div = document.createElement('div');

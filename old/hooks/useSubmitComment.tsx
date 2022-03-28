@@ -4,7 +4,7 @@ import ContentApi, { ContentTypeUrl, INotePayload } from '~/apis/content';
 import useDatabase from '~/hooks/useDatabase';
 import { ContentStatus } from '~/hooks/useDatabase/contentStatus';
 import * as CommentModel from '~/hooks/useDatabase/models/comment';
-import sleep from '~/utils/sleep';
+import { sleep } from '~/utils';
 import * as ObjectModel from '~/hooks/useDatabase/models/object';
 import useActiveGroup from '~/store/selectors/useActiveGroup';
 import useGroupStatusCheck from './useGroupStatusCheck';

@@ -27,7 +27,7 @@ import { IUser } from '~/hooks/useDatabase/models/person';
 
 import useMixinPayment from '~/standaloneModals/useMixinPayment';
 
-import sleep from '~/utils/sleep';
+import { sleep } from '~/utils';
 import { lang } from '~/utils/lang';
 
 import BuyadrinkWhite from 'assets/buyadrink_white.svg';

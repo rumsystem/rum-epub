@@ -12,7 +12,7 @@ import { useStore } from '~/store';
 import { ObjectsFilterType } from '~/store/activeGroup';
 import ago from '~/utils/ago';
 import { lang } from '~/utils/lang';
-import sleep from '~/utils/sleep';
+import { sleep } from '~/utils';
 import { MDEditor } from './MDEditor';
 import Dialog from '~/components/Dialog';
 import Button from '~/components/Button';

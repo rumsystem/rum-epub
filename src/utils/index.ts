@@ -2,6 +2,8 @@ import { shell } from '@electron/remote';
 import escapeStringRegexp from 'escape-string-regexp';
 import { runInAction } from 'mobx';
 
+export * from './PollingTask';
+
 export const setIntervalAsTimeout = (fn: (...a: Array<any>) => any, interval?: number) => {
   let timerId = 0;
   let stop = false;
@@ -161,3 +163,10 @@ export const modifierKeys = (e: KeyboardEvent, keys: Array<'shift' | 'ctrl' | 'a
   const notAllowedKeyNames = (['shiftKey', 'ctrlKey', 'altKey', 'metaKey'] as const).filter((v) => !keyNames.includes(v));
   return keyNames.every((k) => e[k]) && notAllowedKeyNames.every((k) => !e[k]);
 };
+
+
+export const sleep = (duration: number) => new Promise((resolve: any) => {
+  setTimeout(() => {
+    resolve();
+  }, duration);
+});

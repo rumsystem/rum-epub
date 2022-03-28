@@ -8,7 +8,7 @@ import { IDbDerivedObjectItem } from '~/hooks/useDatabase/models/object';
 import * as CommentModel from '~/hooks/useDatabase/models/comment';
 import useSubmitComment from '~/hooks/useSubmitComment';
 import useSelectComment from '~/hooks/useSelectComment';
-import sleep from '~/utils/sleep';
+import { sleep } from '~/utils';
 import { Fade } from '@mui/material';
 import Loading from '~/components/Loading';
 import classNames from 'classnames';

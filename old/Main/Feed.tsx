@@ -4,7 +4,7 @@ import { Fade } from '@mui/material';
 import Loading from '~/components/Loading';
 import { useStore } from '~/store';
 import useInfiniteScroll from 'react-infinite-scroll-hook';
-import sleep from '~/utils/sleep';
+import { sleep } from '~/utils';
 import { runInAction } from 'mobx';
 import useQueryObjects from '~/hooks/useQueryObjects';
 import { ContentStatus } from '~/hooks/useDatabase/contentStatus';

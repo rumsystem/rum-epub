@@ -1,6 +1,6 @@
 import React from 'react';
 import useDatabase from '~/hooks/useDatabase';
-import sleep from '~/utils/sleep';
+import { sleep } from '~/utils';
 import { lang } from '~/utils/lang';
 import { useStore } from '~/store';
 import ElectronCurrentNodeStore from '~/store/electronCurrentNodeStore';

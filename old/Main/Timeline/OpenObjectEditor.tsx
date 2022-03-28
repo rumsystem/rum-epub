@@ -10,7 +10,7 @@ import { lang } from '~/utils/lang';
 import Avatar from '~/components/Avatar';
 import { toJS } from 'mobx';
 import * as MainScrollView from '~/utils/mainScrollView';
-import sleep from '~/utils/sleep';
+import { sleep } from '~/utils';
 import Dialog from '~/components/Dialog';
 import { IDbDerivedObjectItem } from '~/hooks/useDatabase/models/object';
 import useActiveGroup from '~/store/selectors/useActiveGroup';

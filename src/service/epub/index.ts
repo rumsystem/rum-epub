@@ -1,9 +1,8 @@
 import { action, observable, runInAction } from 'mobx';
 import { postContent } from '~/apis';
-import { cachePromiseHof, promiseAllSettledThrottle, runLoading } from '~/utils';
+import { cachePromiseHof, promiseAllSettledThrottle, runLoading, sleep } from '~/utils';
 import { dbService, HighlightItem, BookDatabaseItem } from '~/service/db';
 import { parseEpub, ParsedEpubBook, checkTrx, getAllEpubsFromTrx, EpubItem } from './helper';
-import sleep from '~/utils/sleep';
 
 export * from './helper';
 

@@ -10,7 +10,7 @@ import useSubmitComment from '~/hooks/useSubmitComment';
 import useSelectComment from '~/hooks/useSelectComment';
 import { ISubmitObjectPayload } from '~/hooks/useSubmitObject';
 import useActiveGroup from '~/store/selectors/useActiveGroup';
-import sleep from '~/utils/sleep';
+import { sleep } from '~/utils';
 import { Fade } from '@mui/material';
 import Loading from '~/components/Loading';
 import { lang } from '~/utils/lang';

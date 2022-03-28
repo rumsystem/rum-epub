@@ -4,7 +4,7 @@ const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 
 const config = require('./webpack.config.base');
 
-const port = process.env.PORT || 1212;
+const port = process.env.PORT || 31521;
 
 config.devtool('eval-source-map');
 config.mode('development');
@@ -42,7 +42,7 @@ config.plugin('fork-ts-checker-webpack-plugin')
       },
     },
     eslint: {
-      enabled: false,
+      enabled: true,
       files: [
         './src/**/*.{js,jsx,ts,tsx}',
       ],

@@ -5,7 +5,7 @@ const webpack = require('webpack');
 const WebpackDevServer = require('webpack-dev-server');
 const config = require('./webpack.config.dev');
 
-const port = process.env.PORT || (process.env.WEBPACK_BROWSER ? 1213 : 1212);
+const port = process.env.PORT || 31521;
 
 const run = () => {
   const theConfig = config.toConfig();

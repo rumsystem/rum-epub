@@ -1,5 +1,5 @@
 import React from 'react';
-import sleep from '~/utils/sleep';
+import { sleep } from '~/utils';
 import useDatabase from '~/hooks/useDatabase';
 import { useStore } from '~/store';
 

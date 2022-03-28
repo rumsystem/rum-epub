@@ -6,7 +6,7 @@ import { ContentStatus } from '~/hooks/useDatabase/contentStatus';
 import Base64 from '~/utils/base64';
 import * as PersonModel from '~/hooks/useDatabase/models/person';
 import { useStore } from '~/store';
-import sleep from '~/utils/sleep';
+import { sleep } from '~/utils';
 
 export default () => {
   const { groupStore } = useStore();

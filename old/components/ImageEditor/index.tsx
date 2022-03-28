@@ -10,7 +10,7 @@ import { Dialog, Slider } from '@mui/material';
 import { withStyles } from '@mui/styles';
 
 import Button from '~/components/Button';
-import sleep from '~/utils/sleep';
+import { sleep } from '~/utils';
 import MimeType from '~/utils/mimeType';
 import { lang } from '~/utils/lang';
 import Base64 from '~/utils/base64';

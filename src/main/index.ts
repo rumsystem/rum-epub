@@ -44,8 +44,9 @@ const main = () => {
 
     enable(state.win.webContents);
 
+    const port = process.env.PORT || 31521;
     if (isDevelopment) {
-      state.win.loadURL('http://localhost:1212/dist/index.html');
+      state.win.loadURL(`http://localhost:${port}/dist/index.html`);
     } else {
       state.win.loadFile('dist/index.html');
     }

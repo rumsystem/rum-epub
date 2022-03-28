@@ -1,5 +1,5 @@
 import React from 'react';
-import sleep from '~/utils/sleep';
+import { sleep } from '~/utils';
 import ProducerApi from '~/apis/producer';
 import { useStore } from '~/store';
 import { differenceInMinutes } from 'date-fns';

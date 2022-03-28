@@ -6,7 +6,7 @@ import { Tooltip, Dialog } from '@mui/material';
 import pixabayApi from '~/apis/pixabay';
 import Loading from '~/components/Loading';
 import SearchInput from '~/components/SearchInput';
-import sleep from '~/utils/sleep';
+import { sleep } from '~/utils';
 import { lang } from '~/utils/lang';
 
 const LIMIT = 24;
@@ -57,7 +57,7 @@ const ImageLib = observer((props: any) => {
         state.total = res.totalHits;
         state.hasMore = res.hits.length === LIMIT;
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
       state.isFetching = false;
       state.isFetched = true;

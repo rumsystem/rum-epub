@@ -16,7 +16,7 @@ import Avatar from '~/components/Avatar';
 import { groupInfo } from '~/standaloneModals/groupInfo';
 
 import { lang } from '~/utils/lang';
-import sleep from '~/utils/sleep';
+import { sleep } from '~/utils';
 import { getGroupIcon } from '~/utils/getGroupIcon';
 
 import WalletIcon from 'assets/icon_wallet.svg?react';
