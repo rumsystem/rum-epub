@@ -24,15 +24,14 @@ const ping = async (retries = 60) => {
   for (let i = 0; i < retries; i += 1) {
     const getInfoPromise = fetchMyNodeInfo();
     // await at least 1 sec
-
-    try {
-      await Promise.all([
-        getInfoPromise,
-        sleep(1000),
-      ]);
-      return 'success';
-    } catch (e) {
+    const result = await Promise.allSettled([
+      getInfoPromise,
+      sleep(1000),
+    ]);
+    if (result[0].status === 'rejected') {
       continue;
+    } else {
+      return 'success';
     }
   }
 
