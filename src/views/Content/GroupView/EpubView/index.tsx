@@ -1,3 +1,4 @@
+import { posix } from 'path';
 import React from 'react';
 import classNames from 'classnames';
 import { action, observable, runInAction } from 'mobx';
@@ -38,24 +39,24 @@ export const EpubView = observer((props: Props) => {
   const state = useLocalObservable(() => observable({
     bookItem: null as null | EpubItem,
     book: null as null | Book,
+
+    // book states
     bookTrxId: '',
     bookMetadata: null as null | PackagingMetadataObject,
     chapters: [] as Array<NavItem>,
-
+    jumpingHistory: [] as Array<string>,
     currentHref: '',
     spread: false,
     atEnd: true,
     atStart: true,
-    // selectedCfiRange: '',
     spineLoaded: false,
+
+    // other states
     highlightButton: null as null | { range: string, top: number, left: number },
     mousePosition: { x: 0, y: 0 },
-
     fullScreen: false,
     loadingFirstBook: true,
     renderBox: React.createRef<HTMLDivElement>(),
-
-    jumpingHistory: [] as Array<string>,
     get chapterProgress() {
       if (!this.currentHref || !state.spineLoaded) {
         return [0, 0, 0];
@@ -109,11 +110,13 @@ export const EpubView = observer((props: Props) => {
   };
 
   const handleJumpToChapter = (href: string) => {
-    const cfi = state.book?.rendition?.location?.start.cfi;
+    const book = state.book;
+    if (!book) { return; }
+    const cfi = book.rendition?.location?.start.cfi;
     if (cfi) {
       state.jumpingHistory.push(cfi);
     }
-    state.book?.rendition?.display(href);
+    book.rendition?.display(href);
   };
 
   const handleBackJumpingHistory = () => {
@@ -137,17 +140,24 @@ export const EpubView = observer((props: Props) => {
     state.book!.rendition.resize(rect.width, rect.height);
   };
 
-  const loadBook = (bookItem: EpubItem, readingProgress?: ReadingProgressItem | null) => {
+  const unloadBook = action(() => {
     state.book?.destroy();
-    runInAction(() => {
-      state.chapters = [];
-      state.bookTrxId = '';
-      state.bookMetadata = null;
-      state.spineLoaded = false;
-      state.atEnd = false;
-      state.atStart = false;
-      state.currentHref = '';
-    });
+    state.bookTrxId = '';
+    state.bookMetadata = null;
+    state.chapters = [];
+    state.jumpingHistory = [];
+    state.currentHref = '';
+    state.spread = false;
+    state.atEnd = false;
+    state.atStart = false;
+    state.spineLoaded = false;
+
+    state.book = null;
+    state.bookItem = null;
+  });
+
+  const loadBook = (bookItem: EpubItem, readingProgress?: ReadingProgressItem | null) => {
+    unloadBook();
     const buffer = bookItem.file;
     const book = Epub(buffer.buffer);
     runInAction(() => {
@@ -193,7 +203,22 @@ export const EpubView = observer((props: Props) => {
     });
 
     book.loaded.navigation.then(action((navigation) => {
-      state.chapters = navigation.toc;
+      const navPath = book.packaging.navPath || book.packaging.ncxPath;
+      const mapNavItems = (toc: Array<NavItem>) => {
+        const arr = toc.map((v) => {
+          const item = { ...v };
+          // get chapter path relative to navPath for navigation
+          // https://github.com/futurepress/epub.js/issues/1084#issuecomment-647002309
+          const correctHref = posix.join(navPath, '..', item.href);
+          item.href = correctHref;
+          if (item.subitems && item.subitems.length) {
+            item.subitems = mapNavItems(item.subitems);
+          }
+          return item;
+        });
+        return arr;
+      };
+      state.chapters = mapNavItems(navigation.toc);
     }));
 
     rendition.on('layout', action((layout: any) => {
@@ -245,9 +270,9 @@ export const EpubView = observer((props: Props) => {
         rendition.display(relative);
       });
     });
+
     rendition.hooks.content.register(() => {
       readerSettingsService.injectCSS(rendition);
-
       rendition.views().forEach((v: any) => {
         const document = v.document as Document;
         document.addEventListener('selectionchange', () => {
@@ -268,9 +293,6 @@ export const EpubView = observer((props: Props) => {
         top: state.mousePosition.y,
       };
     }));
-
-    rendition.once('displayed', () => {
-    });
   };
 
   const handleLoadRecentUpload = () => {

@@ -23,6 +23,7 @@ export const dbService = {
     if (!state.db) {
       throw new Error('try using db before init');
     }
+    (window as any).db = state.db;
     return state.db;
   },
   init,
