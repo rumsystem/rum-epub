@@ -1,5 +1,5 @@
 import React from 'react';
-import { unmountComponentAtNode, render } from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import classNames from 'classnames';
 import { action, reaction } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
@@ -25,12 +25,13 @@ import { ThemeRoot } from '~/utils/theme';
 
 export const createGroup = async () => new Promise<void>((rs) => {
   const div = document.createElement('div');
+  const root = createRoot(div);
   document.body.append(div);
   const unmount = () => {
-    unmountComponentAtNode(div);
+    root.unmount();
     div.remove();
   };
-  render(
+  root.render(
     (
       <ThemeRoot>
         <CreateGroup
@@ -41,7 +42,6 @@ export const createGroup = async () => new Promise<void>((rs) => {
         />
       </ThemeRoot>
     ),
-    div,
   );
 });
 

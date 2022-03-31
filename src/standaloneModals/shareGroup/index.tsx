@@ -1,5 +1,5 @@
 import React from 'react';
-import { unmountComponentAtNode, render } from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import fs from 'fs-extra';
 import { action } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
@@ -18,12 +18,13 @@ import { tooltipService } from '~/service/tooltip';
 
 export const shareGroup = async (groupId: string) => new Promise<void>((rs) => {
   const div = document.createElement('div');
+  const root = createRoot(div);
   document.body.append(div);
   const unmount = () => {
-    unmountComponentAtNode(div);
+    root.unmount();
     div.remove();
   };
-  render(
+  root.render(
     (
       <ThemeRoot>
         <ShareGroup
@@ -35,18 +36,18 @@ export const shareGroup = async (groupId: string) => new Promise<void>((rs) => {
         />
       </ThemeRoot>
     ),
-    div,
   );
 });
 
 export const shareSeed = async (seed: string) => new Promise<void>((rs) => {
   const div = document.createElement('div');
+  const root = createRoot(div);
   document.body.append(div);
   const unmount = () => {
-    unmountComponentAtNode(div);
+    root.unmount();
     div.remove();
   };
-  render(
+  root.render(
     (
       <ThemeRoot>
         <ShareGroup
@@ -58,7 +59,6 @@ export const shareSeed = async (seed: string) => new Promise<void>((rs) => {
         />
       </ThemeRoot>
     ),
-    div,
   );
 });
 

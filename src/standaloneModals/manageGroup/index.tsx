@@ -1,6 +1,6 @@
 import React from 'react';
 import classNames from 'classnames';
-import { render, unmountComponentAtNode } from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import { action, runInAction } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import { MdEdit } from 'react-icons/md';
@@ -23,12 +23,13 @@ import { nodeService } from '~/service/node';
 
 export const manageGroup = async (groudId: string, init = false) => new Promise<void>((rs) => {
   const div = document.createElement('div');
+  const root = createRoot(div);
   document.body.append(div);
   const unmount = () => {
-    unmountComponentAtNode(div);
+    root.unmount();
     div.remove();
   };
-  render(
+  root.render(
     (
       <ThemeRoot>
         <ManageGroup
@@ -41,7 +42,6 @@ export const manageGroup = async (groudId: string, init = false) => new Promise<
         />
       </ThemeRoot>
     ),
-    div,
   );
 });
 

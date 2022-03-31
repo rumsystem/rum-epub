@@ -1,4 +1,5 @@
 import React from 'react';
+import { createRoot } from 'react-dom/client';
 import { action } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import { GroupStatus, IGroup } from '~/apis';
@@ -8,16 +9,16 @@ import ago from '~/utils/ago';
 import { i18n } from '~/service/i18n';
 import { lang } from '~/utils/lang';
 import { ThemeRoot } from '~/utils/theme';
-import { render, unmountComponentAtNode } from 'react-dom';
 
 export const groupInfo = async (group: IGroup) => new Promise<void>((rs) => {
   const div = document.createElement('div');
+  const root = createRoot(div);
   document.body.append(div);
   const unmount = () => {
-    unmountComponentAtNode(div);
+    root.unmount();
     div.remove();
   };
-  render(
+  root.render(
     (
       <ThemeRoot>
         <GroupInfo
@@ -29,7 +30,6 @@ export const groupInfo = async (group: IGroup) => new Promise<void>((rs) => {
         />
       </ThemeRoot>
     ),
-    div,
   );
 });
 

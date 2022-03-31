@@ -18,6 +18,7 @@ export const initService = () => {
     nodeService.init(),
     quorumService.init(),
     readerSettingsService.init(),
+    epubService.init(),
   ];
 
   return () => disposes.forEach((v) => v());

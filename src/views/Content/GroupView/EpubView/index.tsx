@@ -1,7 +1,7 @@
 import { posix } from 'path';
 import React from 'react';
 import classNames from 'classnames';
-import { action, observable, runInAction } from 'mobx';
+import { action, observable, reaction, runInAction } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import Epub, { Book, Contents, Location, NavItem } from 'epubjs';
 import Section from 'epubjs/types/section';
@@ -297,6 +297,7 @@ export const EpubView = observer((props: Props) => {
 
   const handleLoadRecentUpload = () => {
     const book = state.currentUploadItem?.recentUploadBook;
+    epubService.getOrInit(nodeService.state.activeGroupId, true);
     if (book) {
       loadBook(book);
     }
@@ -337,6 +338,23 @@ export const EpubView = observer((props: Props) => {
       if (book) {
         loadBook(book, progress);
       }
+    };
+
+    const watchGroupSync = () => {
+      const groupId = nodeService.state.activeGroupId;
+      const dispose = reaction(
+        () => nodeService.state.groupMap[groupId]?.highest_height,
+        async () => {
+          await epubService.parseAllTrx(groupId);
+          if (!state.book && !state.currentUploadItem?.epub) {
+            const epub = epubService.state.bookMap.get(groupId)?.at(0);
+            if (epub) {
+              loadBook(epub);
+            }
+          }
+        },
+      );
+      return dispose;
     };
 
     loadFirstBook().then(action(() => {
@@ -383,11 +401,14 @@ export const EpubView = observer((props: Props) => {
     const ro = new ResizeObserver(handleResize);
     ro.observe(state.renderBox.current!);
 
+    const watchGroupSyncDispose = watchGroupSync();
+
     return () => {
       state.book?.destroy();
       window.removeEventListener('keydown', handleKeydown);
       window.removeEventListener('mousemove', handleMouseMove);
       ro.disconnect();
+      watchGroupSyncDispose();
     };
   }, []);
 

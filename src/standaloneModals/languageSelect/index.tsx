@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, unmountComponentAtNode } from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import { action } from 'mobx';
 import { FormControl, Select, MenuItem } from '@mui/material';
@@ -12,12 +12,13 @@ import { lang } from '~/utils/lang';
 
 export const languageSelect = async () => new Promise<void>((rs) => {
   const div = document.createElement('div');
+  const root = createRoot(div);
   document.body.append(div);
   const unmount = () => {
-    unmountComponentAtNode(div);
+    root.unmount();
     div.remove();
   };
-  render(
+  root.render(
     (
       <ThemeRoot>
         <LanguageSelect
@@ -28,7 +29,6 @@ export const languageSelect = async () => new Promise<void>((rs) => {
         />
       </ThemeRoot>
     ),
-    div,
   );
 });
 

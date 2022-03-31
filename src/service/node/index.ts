@@ -14,6 +14,7 @@ import {
 } from '~/apis';
 import { PollingTask, sleep } from '~/utils';
 import { dbService } from '~/service/db';
+import { busService } from '../bus';
 
 const state = observable({
   groups: [] as Array<IGroup>,
@@ -65,7 +66,9 @@ const updateGroups = async (init = false) => {
     });
     state.groups = groups;
     if (init) {
-      state.activeGroupId = state.groups[0]?.group_id ?? '';
+      state.activeGroupId = state.groups.length
+        ? state.groups[0]?.group_id
+        : '';
     }
   });
 };
@@ -157,10 +160,19 @@ export const leaveGroup = async (group: string | IGroup) => {
     }
   });
 
+  busService.emit({
+    type: 'group_leave',
+    data: { groupId },
+  });
+
   // clear data
   dbService.db.transaction(
     'rw',
-    [dbService.db.book],
+    [
+      dbService.db.book,
+      dbService.db.highlights,
+      dbService.db.readingProgress,
+    ],
     async () => {
       await Promise.all([
         dbService.db.book.where({

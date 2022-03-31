@@ -1,8 +1,9 @@
 import { action, observable, runInAction } from 'mobx';
 import { postContent } from '~/apis';
-import { cachePromiseHof, promiseAllSettledThrottle, runLoading, sleep } from '~/utils';
+import { promiseAllSettledThrottle, runLoading, sleep } from '~/utils';
 import { dbService, HighlightItem, BookDatabaseItem } from '~/service/db';
 import { parseEpub, ParsedEpubBook, checkTrx, getAllEpubsFromTrx, EpubItem } from './helper';
+import { busService } from '../bus';
 
 export * from './helper';
 
@@ -23,7 +24,7 @@ const state = observable({
   uploadMap: new Map<string, GroupUploadState>(),
   bookMap: new Map<string, Array<EpubItem>>(),
   highlightMap: new Map<string, Map<string, Array<HighlightItem>>>(),
-  parseStatusMap: new Map<string, boolean>(),
+  parseAllTrxPromiseMap: new Map<string, null | Promise<unknown>>(),
 });
 
 const getOrInit = action((groupId: string, reset = false) => {
@@ -139,38 +140,40 @@ const doUpload = (groupId: string) => {
   );
 };
 
-const parseAllTrx = cachePromiseHof(async (groupId: string) => {
-  if (state.parseStatusMap.get(groupId)) {
-    return;
-  }
-  await runLoading(
-    (l) => { state.parseStatusMap.set(groupId, l); },
-    async () => {
-      const lastBook = await dbService.db.book.where({ groupId }).last();
-      const lastBookTrx = lastBook?.lastSegmentTrxId ?? '';
-      const newEpubs = await getAllEpubsFromTrx(groupId, lastBookTrx);
-      const items: Array<BookDatabaseItem> = newEpubs.map((v) => ({
-        bookTrx: v.trxId,
-        groupId,
-        fileInfo: v.fileInfo,
-        lastSegmentTrxId: v.lastSegmentTrxId,
-        date: v.date,
-        file: v.file,
-      }));
-      await dbService.db.book.bulkAdd(items);
+const parseAllTrx = action((groupId: string) => {
+  let p = state.parseAllTrxPromiseMap.get(groupId);
+  if (p) { return p; }
+  const run = async () => {
+    const lastBook = await dbService.db.book.where({ groupId }).last();
+    const lastBookTrx = lastBook?.lastSegmentTrxId ?? '';
+    const newEpubs = await getAllEpubsFromTrx(groupId, lastBookTrx);
+    const items: Array<BookDatabaseItem> = newEpubs.map((v) => ({
+      bookTrx: v.trxId,
+      groupId,
+      fileInfo: v.fileInfo,
+      lastSegmentTrxId: v.lastSegmentTrxId,
+      date: v.date,
+      file: v.file,
+    }));
+    await dbService.db.book.bulkAdd(items);
 
-      const allEpubs = await dbService.db.book.where({ groupId }).toArray();
-      const allBooks: Array<EpubItem> = allEpubs.map((v) => ({
-        cover: { type: 'notloaded', value: null } as const,
-        date: v.date,
-        file: Buffer.from(v.file),
-        fileInfo: v.fileInfo,
-        lastSegmentTrxId: v.lastSegmentTrxId,
-        trxId: v.bookTrx,
-      }));
-      state.bookMap.set(groupId, allBooks);
-    },
-  );
+    const allEpubs = await dbService.db.book.where({ groupId }).toArray();
+    const allBooks: Array<EpubItem> = allEpubs.map((v) => ({
+      cover: { type: 'notloaded', value: null } as const,
+      date: v.date,
+      file: Buffer.from(v.file),
+      fileInfo: v.fileInfo,
+      lastSegmentTrxId: v.lastSegmentTrxId,
+      trxId: v.bookTrx,
+    }));
+    state.bookMap.set(groupId, allBooks);
+    runInAction(() => {
+      state.parseAllTrxPromiseMap.set(groupId, null);
+    });
+  };
+  p = run();
+  state.parseAllTrxPromiseMap.set(groupId, p);
+  return p;
 });
 
 const parseCover = (groupId: string, bookTrxId: string) => {
@@ -256,8 +259,20 @@ const saveReadingProgress = async (groupId: string, bookTrx: string, readingProg
   });
 };
 
+export const init = () => {
+  const dispose = busService.on('group_leave', (v) => {
+    const groupId = v.data.groupId;
+    state.uploadMap.delete(groupId);
+    state.bookMap.delete(groupId);
+    state.highlightMap.delete(groupId);
+    state.parseAllTrxPromiseMap.delete(groupId);
+  });
+  return dispose;
+};
+
 export const epubService = {
   state,
+  init,
 
   getOrInit,
   selectFile,

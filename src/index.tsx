@@ -1,6 +1,6 @@
 import React from 'react';
 import { ipcRenderer } from 'electron';
-import { render } from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import { configure } from 'mobx';
 import { App } from './views';
 
@@ -22,4 +22,5 @@ configure({
   observableRequiresReaction: false,
 });
 
-render(<App />, document.getElementById('root'));
+const root = createRoot(document.getElementById('root')!);
+root.render(<App />);

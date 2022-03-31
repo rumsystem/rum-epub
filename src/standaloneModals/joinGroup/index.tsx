@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, unmountComponentAtNode } from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import fs from 'fs-extra';
 import { dialog, getCurrentWindow, shell } from '@electron/remote';
 import { observer, useLocalObservable } from 'mobx-react-lite';
@@ -18,12 +18,13 @@ import { nodeService } from '~/service/node';
 
 export const joinGroup = async () => new Promise<void>((rs) => {
   const div = document.createElement('div');
+  const root = createRoot(div);
   document.body.append(div);
   const unmount = () => {
-    unmountComponentAtNode(div);
+    root.unmount();
     div.remove();
   };
-  render(
+  root.render(
     (
       <ThemeRoot>
         <JoinGroup
@@ -34,7 +35,6 @@ export const joinGroup = async () => new Promise<void>((rs) => {
         />
       </ThemeRoot>
     ),
-    div,
   );
 });
 
