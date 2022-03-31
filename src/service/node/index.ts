@@ -11,6 +11,7 @@ import {
   INetworkGroup,
   getGroupConfigKeyList,
   getGroupConfigItem,
+  GroupStatus,
 } from '~/apis';
 import { PollingTask, sleep } from '~/utils';
 import { dbService } from '~/service/db';
@@ -198,7 +199,13 @@ export const syncGroup = async (group: string | IGroup) => {
     throw new Error(`try sync group ${groupId} that is not in it`);
   }
 
+  if (state.groupMap[groupId]?.group_status === GroupStatus.SYNCING) {
+    return;
+  }
+
   await syncGroupApi(groupId);
+  await sleep(500);
+  state.pollings.updateGroups?.runImmediately();
 };
 
 const changeActiveGroup = action((group: string | IGroup) => {

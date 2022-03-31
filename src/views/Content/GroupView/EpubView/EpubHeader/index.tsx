@@ -50,11 +50,11 @@ export const EpubHeader = observer(() => {
           fontSize={24}
           group={group}
         />
-        <div
-          className="font-bold text-18 tracking-wider truncate cursor-pointer max-w-[220px]"
-          onClick={() => handleOpenGroupInfo()}
-        >
-          <span className="text-gray-1e">
+        <div className="font-bold text-18 tracking-wider truncate max-w-[220px]">
+          <span
+            className="text-gray-1e cursor-pointer"
+            onClick={() => handleOpenGroupInfo()}
+          >
             {group.group_name}
           </span>
           <div className="mt-[2px] text-11 transform flex items-center opacity-90">
