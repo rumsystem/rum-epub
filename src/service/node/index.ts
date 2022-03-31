@@ -5,6 +5,7 @@ import {
   createGroup as createGroupApi,
   joinGroup as joinGroupApi,
   leaveGroup as leaveGroupApi,
+  syncGroup as syncGroupApi,
   fetchMyNodeInfo,
   fetchNetwork,
   INetworkGroup,
@@ -12,6 +13,7 @@ import {
   getGroupConfigItem,
 } from '~/apis';
 import { PollingTask, sleep } from '~/utils';
+import { dbService } from '~/service/db';
 
 const state = observable({
   groups: [] as Array<IGroup>,
@@ -154,6 +156,37 @@ export const leaveGroup = async (group: string | IGroup) => {
       state.activeGroupId = state.groups.at(0)?.group_id ?? '';
     }
   });
+
+  // clear data
+  dbService.db.transaction(
+    'rw',
+    [dbService.db.book],
+    async () => {
+      await Promise.all([
+        dbService.db.book.where({
+          groupId,
+        }).delete(),
+        dbService.db.highlights.where({
+          groupId,
+        }).delete(),
+        dbService.db.readingProgress.where({
+          groupId,
+        }).delete(),
+      ]);
+    },
+  );
+};
+
+export const syncGroup = async (group: string | IGroup) => {
+  const groupId = typeof group === 'string'
+    ? group
+    : group.group_id;
+
+  if (!state.groups.some((v) => v.group_id === groupId)) {
+    throw new Error(`try sync group ${groupId} that is not in it`);
+  }
+
+  await syncGroupApi(groupId);
 };
 
 const changeActiveGroup = action((group: string | IGroup) => {
@@ -199,6 +232,7 @@ export const nodeService = {
   createGroup,
   joinGroup,
   leaveGroup,
+  syncGroup,
   changeActiveGroup,
   updateGroups,
   updateNodeInfo,

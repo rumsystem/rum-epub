@@ -1,6 +1,8 @@
 import React from 'react';
+import classNames from 'classnames';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import { HiOutlineShare } from 'react-icons/hi';
+import { GoSync } from 'react-icons/go';
 import { Tooltip } from '@mui/material';
 
 import GroupMenu from '~/components/GroupMenu';
@@ -13,12 +15,9 @@ import { lang } from '~/utils/lang';
 import ago from '~/utils/ago';
 import { nodeService } from '~/service/node';
 
-import { EpubUploadButton } from './EpubUploadButton';
-import { GoSync } from 'react-icons/go';
-import classNames from 'classnames';
 import { GroupStatus } from '~/apis';
 
-export const EpubHeader = observer(() => {
+export const GenericHeader = observer(() => {
   const state = useLocalObservable(() => ({
     get peersCount() {
       const groups = nodeService.state.network.groups ?? [];
@@ -66,7 +65,7 @@ export const EpubHeader = observer(() => {
               enterDelay={800}
               enterNextDelay={800}
               placement="bottom"
-              title={group.group_status === GroupStatus.SYNCING ? lang.syncingContentTip : lang.clickToSync}
+              title={lang.syncingContentTip}
               arrow
             >
               <div
@@ -89,8 +88,6 @@ export const EpubHeader = observer(() => {
             )}
           </div>
         </div>
-
-        <EpubUploadButton className="ml-8" />
       </div>
 
       <div className="flex items-center gap-x-4">

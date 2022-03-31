@@ -21,7 +21,6 @@ export default observer(() => (
         onClick={() => joinGroup()}
         outline
       >
-        TODO:
         {lang.joinGroup}
       </Button>
     </div>
