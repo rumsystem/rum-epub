@@ -18,7 +18,7 @@ interface IProps {
   onBlur?: () => void
 }
 
-export default observer((props: IProps) => {
+export const SearchInput = observer((props: IProps) => {
   const state = useLocalObservable(() => ({
     value: '',
   }));

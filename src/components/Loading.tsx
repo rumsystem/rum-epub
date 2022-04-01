@@ -21,7 +21,7 @@ import { CircularProgress } from '@mui/material';
 //   },
 // }));
 
-export default (props: { size?: number, color?: string }) => {
+export const Loading = (props: { size?: number, color?: string }) => {
   const { size } = props;
   // const classes = useStyles({ color: props.color || '#999' });
   return (

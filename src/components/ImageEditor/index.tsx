@@ -9,7 +9,7 @@ import { RiZoomOutLine, RiZoomInLine } from 'react-icons/ri';
 import { Dialog, Slider } from '@mui/material';
 import { withStyles } from '@mui/styles';
 
-import Button from '~/components/Button';
+import { Button } from '~/components';
 import { sleep } from '~/utils';
 import MimeType from '~/utils/mimeType';
 import { lang } from '~/utils/lang';

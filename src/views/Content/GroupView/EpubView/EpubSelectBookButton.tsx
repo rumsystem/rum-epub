@@ -10,7 +10,7 @@ import { ArrowDropDown } from '@mui/icons-material';
 import BookContentIcon from 'boxicons/svg/regular/bx-book-content.svg?fill';
 import BookOpenIcon from 'boxicons/svg/regular/bx-book-open.svg?fill';
 
-import { BookCoverImgTooltip } from '~/components/BookCoverImgTooltip';
+import { BookCoverImgTooltip } from '~/components';
 import { EpubItem, epubService } from '~/service/epub';
 import { nodeService } from '~/service/node';
 import { readerSettingsService } from '~/service/readerSettings';

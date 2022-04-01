@@ -272,10 +272,10 @@ ms@2.1.2:
   resolved "https://registry.npm.taobao.org/ms/download/ms-2.1.2.tgz?cache=0&sync_timestamp=1607433842694&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fms%2Fdownload%2Fms-2.1.2.tgz#d09d1f357b443f493382a8eb3ccd183872ae6009"
   integrity sha1-0J0fNXtEP0kzgqjrPM0YOHKuYAk=
 
-node-watch@^0.7.2:
-  version "0.7.2"
-  resolved "https://registry.nlark.com/node-watch/download/node-watch-0.7.2.tgz#545f057da8500487eb8287adcb4cb5a7338d7e21"
-  integrity sha1-VF8FfahQBIfrgoety0y1pzONfiE=
+node-watch@^0.7.3:
+  version "0.7.3"
+  resolved "https://registry.npmmirror.com/node-watch/-/node-watch-0.7.3.tgz#6d4db88e39c8d09d3ea61d6568d80e5975abc7ab"
+  integrity sha512-3l4E8uMPY1HdMMryPRUAl+oIHtXtyiTlIiESNSVSNxcPfzAFzeTbXFQkZfAwBbo0B1qMSG8nUABx+Gd+YrbKrQ==
 
 onetime@^5.1.2:
   version "5.1.2"

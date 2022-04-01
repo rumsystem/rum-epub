@@ -11,7 +11,7 @@ import {
   Radio,
 } from '@mui/material';
 
-import Button from '~/components/Button';
+import { Button } from '~/components';
 
 import NotebookIcon from 'assets/template/template_icon_notebook.svg?react';
 

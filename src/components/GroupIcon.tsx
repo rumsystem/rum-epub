@@ -13,7 +13,7 @@ interface Props {
   colorClassName?: string
 }
 
-export default observer((props: Props) => {
+export const GroupIcon = observer((props: Props) => {
   // const groupIcon = props.groupIcon || (groupStore.configMap.get(props.groupId)?.[GROUP_CONFIG_KEY.GROUP_ICON] ?? '') as string;
   // TODO: groupIcon
   const groupIcon = null;

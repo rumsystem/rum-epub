@@ -18,7 +18,7 @@ import { EpubItem, epubService } from '~/service/epub';
 import { linkTheme, progressBarTheme, readerSettingsService, readerThemes } from '~/service/readerSettings';
 import { ReadingProgressItem } from '~/service/db';
 import { addLinkOpen, modifierKeys } from '~/utils';
-import { BookCoverImgTooltip } from '~/components/BookCoverImgTooltip';
+import { BookCoverImgTooltip } from '~/components';
 
 import BookImage from '~/assets/illustration_book.svg';
 import ArrowImage from '~/assets/arrow.svg';

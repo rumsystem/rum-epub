@@ -7,8 +7,7 @@ import { action, runInAction } from 'mobx';
 import { TextField, Tooltip } from '@mui/material';
 import { GoChevronRight } from 'react-icons/go';
 
-import Dialog from '~/components/Dialog';
-import Button from '~/components/Button';
+import { Dialog, Button } from '~/components';
 import { ICreateGroupsResult } from '~/apis';
 import { tooltipService } from '~/service/tooltip';
 import { sleep, runLoading } from '~/utils';

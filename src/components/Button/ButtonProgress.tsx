@@ -13,7 +13,7 @@ interface IProps {
   fixedDone?: boolean
 }
 
-const ButtonProgress = observer((props: IProps) => {
+export const ButtonProgress = observer((props: IProps) => {
   const state = useLocalObservable(() => ({
     isShowDone: false,
     isShowDoneTimer: 0,
@@ -55,5 +55,3 @@ const ButtonProgress = observer((props: IProps) => {
   }
   return null;
 });
-
-export default ButtonProgress;

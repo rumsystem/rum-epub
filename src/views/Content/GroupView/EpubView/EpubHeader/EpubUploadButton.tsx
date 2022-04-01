@@ -11,7 +11,7 @@ import scrollIntoView from 'scroll-into-view-if-needed';
 import UploadIcon from 'boxicons/svg/regular/bx-upload.svg?fill';
 import FileBlankIcon from 'boxicons/svg/regular/bx-file-blank.svg?fill';
 
-import Dialog from '~/components/Dialog';
+import { Dialog } from '~/components';
 
 import { epubService } from '~/service/epub';
 import { nodeService } from '~/service/node';

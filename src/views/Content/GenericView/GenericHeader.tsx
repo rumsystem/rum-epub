@@ -5,8 +5,8 @@ import { HiOutlineShare } from 'react-icons/hi';
 import { GoSync } from 'react-icons/go';
 import { Tooltip } from '@mui/material';
 
-import GroupMenu from '~/components/GroupMenu';
-import GroupIcon from '~/components/GroupIcon';
+import { GroupMenu } from '~/components/GroupMenu';
+import { GroupIcon } from '~/components';
 
 import { shareGroup } from '~/standaloneModals/shareGroup';
 import { groupInfo } from '~/standaloneModals/groupInfo';

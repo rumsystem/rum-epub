@@ -1,6 +1,6 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import Button from '~/components/Button';
+import { Button } from '~/components';
 import { joinGroup } from '~/standaloneModals/joinGroup';
 import { createGroup } from '~/standaloneModals/createGroup';
 import { lang } from '~/utils/lang';

@@ -20,7 +20,7 @@ export const UpdateContainer = observer(() => {
           value={percent}
         />
         正在下载{' '}
-        {percent}%
+        {Math.ceil(percent)}%
       </div>
     );
   }

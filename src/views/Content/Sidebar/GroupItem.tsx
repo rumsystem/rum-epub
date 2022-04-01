@@ -3,7 +3,7 @@ import classNames from 'classnames';
 import { action } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 
-import GroupIcon from '~/components/GroupIcon';
+import { GroupIcon } from '~/components';
 import { IGroup } from '~/apis';
 import { nodeService } from '~/service/node';
 import { splitByHighlightText } from '~/utils';

@@ -4,8 +4,7 @@ import { observer, useLocalObservable } from 'mobx-react-lite';
 import { action } from 'mobx';
 import { FormControl, Select, MenuItem } from '@mui/material';
 
-import Dialog from '~/components/Dialog';
-import Button from '~/components/Button';
+import { Dialog, Button } from '~/components';
 import { ThemeRoot } from '~/utils/theme';
 import { i18n, AllLanguages } from '~/service/i18n';
 import { lang } from '~/utils/lang';

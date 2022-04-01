@@ -4,8 +4,6 @@ import { createRoot } from 'react-dom/client';
 import { configure } from 'mobx';
 import { App } from './views';
 
-import 'easymde/dist/easymde.min.css';
-import './utils/highlightjs';
 import './styles/tailwind.sass';
 import './styles/tailwind-base.sass';
 import './styles/App.global.scss';

@@ -1,6 +1,8 @@
 import React from 'react';
 import classNames from 'classnames';
-import ButtonProgress from '~/components/ButtonProgress';
+import { ButtonProgress } from './ButtonProgress';
+
+export * from './ButtonProgress';
 
 interface Props {
   className?: string
@@ -19,7 +21,7 @@ interface Props {
   'data-test-id'?: string
 }
 
-const Button = React.forwardRef<HTMLButtonElement, Props>((props, ref) => {
+export const Button = React.forwardRef<HTMLButtonElement, Props>((props, ref) => {
   const {
     className,
     onClick,
@@ -137,5 +139,3 @@ const Button = React.forwardRef<HTMLButtonElement, Props>((props, ref) => {
     </button>
   );
 });
-
-export default Button;

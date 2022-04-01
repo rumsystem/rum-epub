@@ -1,15 +1,15 @@
 import React from 'react';
-import { Dialog, DialogProps } from '@mui/material';
+import { Dialog as MuiDialog, DialogProps } from '@mui/material';
 import { IoMdClose } from 'react-icons/io';
 
 interface IProps extends DialogProps {
   hideCloseButton?: boolean
 }
 
-export default (props: IProps) => {
+export const Dialog = (props: IProps) => {
   const { hideCloseButton, ...dialogProps } = props;
   return (
-    <Dialog {...dialogProps}>
+    <MuiDialog {...dialogProps}>
       <div className="relative">
         {!hideCloseButton && (
           <div
@@ -21,6 +21,6 @@ export default (props: IProps) => {
         )}
         {props.children}
       </div>
-    </Dialog>
+    </MuiDialog>
   );
 };

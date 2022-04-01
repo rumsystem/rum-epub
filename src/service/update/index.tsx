@@ -65,7 +65,7 @@ const actions: any = {
 };
 
 export const init = () => {
-  const handleUpdate = (e: IpcRendererEvent, a: any) => {
+  const handleUpdate = (_e: IpcRendererEvent, a: any) => {
     const { type, data } = a;
     if (type in actions) {
       actions[type](data);

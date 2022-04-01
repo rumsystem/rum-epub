@@ -12,7 +12,7 @@ import { ClickAwayListener, ClickAwayListenerProps } from '@mui/material';
 // import { getUser } from '~/hooks/useDatabase/models/person';
 // import { useLeaveGroup } from '~/hooks/useLeaveGroup';
 import { IGroup, IProfile } from '~/apis';
-import Avatar from '~/components/Avatar';
+import { Avatar } from '~/components';
 import { groupInfo } from '~/standaloneModals/groupInfo';
 
 import { lang } from '~/utils/lang';

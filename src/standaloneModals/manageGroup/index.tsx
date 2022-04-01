@@ -6,11 +6,8 @@ import { observer, useLocalObservable } from 'mobx-react-lite';
 import { MdEdit } from 'react-icons/md';
 import { FormControl, InputLabel, OutlinedInput } from '@mui/material';
 
-import Dialog from '~/components/Dialog';
-import Button from '~/components/Button';
-import Loading from '~/components/Loading';
+import { Dialog, Button, GroupIcon, Loading } from '~/components';
 import ImageEditor from '~/components/ImageEditor';
-import GroupIcon from '~/components/GroupIcon';
 
 import { sleep, runLoading } from '~/utils';
 import { GROUP_CONFIG_KEY } from '~/utils/constant';

@@ -6,9 +6,7 @@ import copy from 'copy-to-clipboard';
 import { app } from '@electron/remote';
 import { Tooltip } from '@mui/material';
 
-import Dialog from '~/components/Dialog';
-import Button from '~/components/Button';
-import MiddleTruncate from '~/components/MiddleTruncate';
+import { Dialog, Button, MiddleTruncate } from '~/components';
 
 import { lang } from '~/utils/lang';
 import { ThemeRoot } from '~/utils/theme';

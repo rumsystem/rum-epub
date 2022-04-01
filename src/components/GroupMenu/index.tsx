@@ -21,7 +21,7 @@ interface Props {
   className?: string
 }
 
-export default observer((props: Props) => {
+export const GroupMenu = observer((props: Props) => {
   const state = useLocalObservable(() => ({
     open: false,
     showMutedListModal: false,

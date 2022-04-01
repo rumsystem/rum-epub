@@ -1,5 +1,5 @@
 import React from 'react';
-import Loading from '~/components/Loading';
+import { Loading } from '~/components/Loading';
 import { Tooltip } from '@mui/material';
 
 interface IProps {
@@ -10,7 +10,7 @@ interface IProps {
   onClick?: () => void
 }
 
-export default (props: IProps) => {
+export const Avatar = (props: IProps) => {
   const size = props.size || 42;
   return (
     <div

@@ -6,7 +6,7 @@ interface IProps {
   length: number
 }
 
-export default (props: IProps) => {
+export const MiddleTruncate = (props: IProps) => {
   const { string, length } = props;
 
   if (!string) {
