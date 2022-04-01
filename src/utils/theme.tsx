@@ -29,23 +29,6 @@ const theme = createTheme({
       },
     },
   },
-  // overrides: {
-  //   MuiTypography: {
-  //     body1: {
-  //       fontFamily: 'inherit',
-  //     },
-  //   },
-  //   MuiInputLabel: {
-  //     outlined: {
-  //       fontSize: '14px',
-  //     },
-  //   },
-  //   MuiInputBase: {
-  //     input: {
-  //       fontSize: '14px',
-  //     },
-  //   },
-  // },
 });
 
 const cache = createCache({
