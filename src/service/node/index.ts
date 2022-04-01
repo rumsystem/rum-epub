@@ -169,23 +169,11 @@ export const leaveGroup = async (group: string | IGroup) => {
   // clear data
   dbService.db.transaction(
     'rw',
-    [
-      dbService.db.book,
-      dbService.db.highlights,
-      dbService.db.readingProgress,
-    ],
+    dbService.db.groupRelatedTables,
     async () => {
-      await Promise.all([
-        dbService.db.book.where({
-          groupId,
-        }).delete(),
-        dbService.db.highlights.where({
-          groupId,
-        }).delete(),
-        dbService.db.readingProgress.where({
-          groupId,
-        }).delete(),
-      ]);
+      await Promise.all(
+        dbService.db.groupRelatedTables.map((v) => v.where({ groupId }).delete()),
+      );
     },
   );
 };

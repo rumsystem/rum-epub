@@ -1,8 +1,8 @@
 import { action, observable, runInAction } from 'mobx';
-import { postContent } from '~/apis';
+import { fetchContents, postContent } from '~/apis';
 import { promiseAllSettledThrottle, runLoading, sleep } from '~/utils';
-import { dbService, HighlightItem, BookDatabaseItem } from '~/service/db';
-import { parseEpub, ParsedEpubBook, checkTrx, getAllEpubsFromTrx, EpubItem } from './helper';
+import { dbService, HighlightItem, FileInfo } from '~/service/db';
+import { parseEpub, ParsedEpubBook, checkTrx, EpubItem, hashBufferSha256 } from './helper';
 import { busService } from '../bus';
 
 export * from './helper';
@@ -25,6 +25,7 @@ const state = observable({
   bookMap: new Map<string, Array<EpubItem>>(),
   highlightMap: new Map<string, Map<string, Array<HighlightItem>>>(),
   parseAllTrxPromiseMap: new Map<string, null | Promise<unknown>>(),
+  bookBufferLRUCache: new Map<string, { buf: Uint8Array, time: number }>(),
 });
 
 const getOrInit = action((groupId: string, reset = false) => {
@@ -122,7 +123,7 @@ const doUpload = (groupId: string) => {
 
       changeStatus('trxcheck', 'uploading');
       for (let i = 0; i < 30; i += 1) {
-        await parseAllTrx(groupId);
+        await parseNewTrx(groupId);
         const theBook = state.bookMap.get(groupId)!.find((v) => v.trxId === fileInfoTrx.trx_id);
         await sleep(1000);
         if (theBook) {
@@ -140,51 +141,204 @@ const doUpload = (groupId: string) => {
   );
 };
 
-const parseAllTrx = action((groupId: string) => {
+const parseNewTrx = action((groupId: string) => {
   let p = state.parseAllTrxPromiseMap.get(groupId);
   if (p) { return p; }
   const run = async () => {
-    const lastBook = await dbService.db.book.where({ groupId }).last();
-    const lastBookTrx = lastBook?.lastSegmentTrxId ?? '';
-    const newEpubs = await getAllEpubsFromTrx(groupId, lastBookTrx);
-    const items: Array<BookDatabaseItem> = newEpubs.map((v) => ({
-      bookTrx: v.trxId,
-      groupId,
-      fileInfo: v.fileInfo,
-      lastSegmentTrxId: v.lastSegmentTrxId,
-      date: v.date,
-      file: v.file,
-    }));
-    await dbService.db.book.bulkAdd(items);
+    const [booksToCaculate, lastTrxItem] = await dbService.db.transaction(
+      'r',
+      [dbService.db.groupLatestParsedTrx, dbService.db.book, dbService.db.bookSegment],
+      async () => {
+        const [dbBooks, lastTrxItem] = await Promise.all([
+          dbService.db.book.where({ groupId, status: 'incomplete' }).toArray(),
+          dbService.db.groupLatestParsedTrx.where({ groupId }).last(),
+        ]);
 
-    const allEpubs = await dbService.db.book.where({ groupId }).toArray();
-    const allBooks: Array<EpubItem> = allEpubs.map((v) => ({
-      cover: { type: 'notloaded', value: null } as const,
-      date: v.date,
-      file: Buffer.from(v.file),
-      fileInfo: v.fileInfo,
-      lastSegmentTrxId: v.lastSegmentTrxId,
-      trxId: v.bookTrx,
+        const segments = await dbService.db.bookSegment.where({
+          groupId,
+        }).toArray();
+
+        const books = dbBooks.map((v) => ({
+          ...v,
+          file: null as null | Buffer,
+          segmentItem: segments.find((s) => s.bookTrx === v.bookTrx) ?? {
+            bookTrx: v.bookTrx,
+            segments: {},
+            groupId,
+          },
+        }));
+
+        return [books, lastTrxItem];
+      },
+    );
+
+    const lastTrx = lastTrxItem?.trxId ?? '';
+
+    let nextTrx = lastTrx;
+    for (;;) {
+      const res = await fetchContents(groupId, {
+        num: 100,
+        starttrx: nextTrx,
+        includestarttrx: !nextTrx,
+      });
+      if (!res || !res.length) { break; }
+      for (const trx of res) {
+        const isFileInfo = trx.Content.type === 'File' && trx.Content.name === 'fileinfo';
+        const isSegment = trx.Content.type === 'File'
+          && /^seg-\d+$/.test(trx.Content.name ?? '')
+          && trx.Content.file.mediaType === 'application/octet-stream';
+
+        if (isFileInfo) {
+          const fileData: FileInfo = JSON.parse(Buffer.from(trx.Content.file.content, 'base64').toString());
+          booksToCaculate.push({
+            bookTrx: trx.TrxId,
+            date: new Date(trx.TimeStamp / 1000000),
+            fileInfo: fileData,
+            status: 'incomplete',
+            file: null,
+            groupId,
+            segmentItem: {
+              bookTrx: trx.TrxId,
+              groupId,
+              segments: {},
+            },
+          });
+        }
+
+        if (isSegment) {
+          const name = trx.Content.name;
+          const buf = Buffer.from(trx.Content.file.content, 'base64');
+          booksToCaculate.forEach((book) => {
+            const segment = book.fileInfo.segments.find((v) => v.id === name);
+            if (!segment) { return; }
+            const sha256 = hashBufferSha256(buf);
+            if (segment.sha256 !== sha256) { return; }
+            book.segmentItem.segments[name] = {
+              id: name,
+              sha256,
+              buf,
+            };
+          });
+        }
+      }
+      nextTrx = res.at(-1)!.TrxId;
+    }
+
+    booksToCaculate
+      .filter((v) => v.fileInfo.segments.length === Object.keys(v.segmentItem.segments).length)
+      .forEach((book) => {
+        const segments = Object.values(book.segmentItem.segments).map((v) => ({
+          ...v,
+          num: Number(v.id.replace('seg-', '')),
+        }));
+        segments.sort((a, b) => a.num - b.num);
+        const file = Buffer.concat(segments.map((v) => v.buf));
+        const fileSha256 = hashBufferSha256(file);
+        if (fileSha256 === book.fileInfo.sha256) {
+          book.file = file;
+          book.status = 'complete';
+        } else {
+          book.status = 'broken';
+        }
+      });
+
+    const booksToWrite = booksToCaculate.map((v) => {
+      const { file, segmentItem, ...u } = v;
+      return u;
+    });
+    const segmentsToWrite = booksToCaculate.map((v) => v.segmentItem);
+    const bookBuffersToWrite = booksToCaculate.filter((v) => v.file).map((v) => ({
+      groupId: v.groupId,
+      bookTrx: v.bookTrx,
+      file: v.file!,
     }));
-    state.bookMap.set(groupId, allBooks);
+
+    await dbService.db.transaction(
+      'rw',
+      [
+        dbService.db.book,
+        dbService.db.bookSegment,
+        dbService.db.bookBuffer,
+        dbService.db.groupLatestParsedTrx,
+      ],
+      async () => Promise.all([
+        dbService.db.book.bulkPut(booksToWrite),
+        dbService.db.bookSegment.bulkPut(segmentsToWrite),
+        dbService.db.bookBuffer.bulkPut(bookBuffersToWrite),
+
+        dbService.db.groupLatestParsedTrx.where({
+          groupId,
+        }).delete().then(() => {
+          dbService.db.groupLatestParsedTrx.add({
+            groupId,
+            trxId: nextTrx,
+          });
+        }),
+      ]),
+    );
+
+    const currentBooks = state.bookMap.get(groupId) ?? [];
+    booksToCaculate
+      .filter((v) => v.file && currentBooks.every((u) => u.trxId !== v.bookTrx))
+      .forEach((v) => {
+        const item: EpubItem = {
+          cover: { type: 'notloaded', value: null } as const,
+          date: v.date,
+          fileInfo: v.fileInfo,
+          trxId: v.bookTrx,
+        };
+        currentBooks.push(item);
+      });
+
     runInAction(() => {
-      state.parseAllTrxPromiseMap.set(groupId, null);
+      state.bookMap.set(groupId, currentBooks);
     });
   };
-  p = run();
+
+  p = run().then(action(() => {
+    state.parseAllTrxPromiseMap.set(groupId, null);
+  }));
   state.parseAllTrxPromiseMap.set(groupId, p);
   return p;
 });
 
-const parseCover = (groupId: string, bookTrxId: string) => {
-  const item = state.bookMap.get(groupId)?.find((v) => v.trxId === bookTrxId);
+const tryLoadBookFromDB = async (groupId: string) => {
+  const books = await dbService.db.book.where({ groupId, status: 'complete' }).toArray();
+  const currentBooks = state.bookMap.get(groupId) ?? [];
+
+  books
+    .filter((v) => currentBooks.every((u) => u.trxId !== v.bookTrx))
+    .forEach((v) => {
+      const item: EpubItem = {
+        cover: { type: 'notloaded', value: null } as const,
+        date: v.date,
+        fileInfo: v.fileInfo,
+        trxId: v.bookTrx,
+      };
+      currentBooks.push(item);
+    });
+
+  runInAction(() => {
+    state.bookMap.set(groupId, currentBooks);
+  });
+};
+
+const parseCover = (groupId: string, bookTrx: string) => {
+  const item = state.bookMap.get(groupId)?.find((v) => v.trxId === bookTrx);
   if (!item) { return; }
   if (['loaded', 'loading', 'nocover'].includes(item.cover.type)) {
     return;
   }
   const doParse = async () => {
     try {
-      const epub = await parseEpub(item.fileInfo.name, item.file);
+      const bookBuffer = await dbService.db.bookBuffer.where({
+        groupId,
+        bookTrx,
+      }).last();
+      if (!bookBuffer) {
+        return;
+      }
+      const epub = await parseEpub(item.fileInfo.name, bookBuffer.file);
       const cover = epub.cover;
       runInAction(() => {
         if (!cover) {
@@ -203,6 +357,41 @@ const parseCover = (groupId: string, bookTrxId: string) => {
   runInAction(() => {
     item.cover = { type: 'loading', value: doParse() };
   });
+};
+
+const getBookBuffer = async (groupId: string, bookTrx: string) => {
+  const key = `${groupId}-${bookTrx}`;
+  const cacheItem = state.bookBufferLRUCache.get(key);
+  if (cacheItem) {
+    runInAction(() => [
+      state.bookBufferLRUCache.set(key, {
+        ...cacheItem,
+        time: Date.now(),
+      }),
+    ]);
+    return cacheItem.buf;
+  }
+  const bookBufferItem = await dbService.db.bookBuffer.where({
+    groupId,
+    bookTrx,
+  }).last();
+  const buffer = bookBufferItem?.file ?? null;
+  runInAction(() => {
+    if (buffer) {
+      state.bookBufferLRUCache.set(key, {
+        buf: buffer,
+        time: Date.now(),
+      });
+    }
+    const now = Date.now();
+    const hour = 1000 * 60 * 60;
+    [...state.bookBufferLRUCache.entries()].forEach(([k, v]) => {
+      if (now - v.time > hour) {
+        state.bookBufferLRUCache.delete(k);
+      }
+    });
+  });
+  return buffer;
 };
 
 const getHighlights = async (groupId: string, bookTrx: string) => {
@@ -277,8 +466,10 @@ export const epubService = {
   getOrInit,
   selectFile,
   doUpload,
-  parseAllTrx,
+  parseNewTrx,
+  tryLoadBookFromDB,
   parseCover,
+  getBookBuffer,
   getHighlights,
   saveHighlight,
   deleteHighlight,

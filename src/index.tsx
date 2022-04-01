@@ -16,7 +16,7 @@ if (process.env.IS_ELECTRON) {
 }
 
 configure({
-  enforceActions: 'never',
+  enforceActions: 'observed',
   computedRequiresReaction: false,
   reactionRequiresObservable: false,
   observableRequiresReaction: false,

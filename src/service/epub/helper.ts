@@ -3,7 +3,7 @@ import { createHash } from 'crypto';
 import { posix } from 'path';
 import { Entry, fromBuffer, ZipFile } from 'yauzl';
 
-import { fetchContents, fetchTrx, IContentItemBasic } from '~/apis';
+import { fetchTrx } from '~/apis';
 import { sleep } from '~/utils';
 import { FileInfo } from '~/service/db';
 
@@ -104,88 +104,13 @@ export const parseEpub = async (fileName: string, buffer: Buffer | Uint8Array): 
 export interface EpubItem {
   fileInfo: FileInfo
   trxId: string
-  lastSegmentTrxId: string
   cover: { type: 'notloaded', value: null }
   | { type: 'loading', value: Promise<unknown> }
   | { type: 'nocover', value: null }
   | { type: 'loaded', value: string }
   date: Date
-  file: Buffer
+  // file: Buffer
 }
-
-export const getAllEpubsFromTrx = async (groupId: string, starttrx = ''): Promise<Array<EpubItem>> => {
-  const arr = [] as Array<IContentItemBasic>;
-  for (;;) {
-    const nextTrx = arr.length ? arr.at(-1)?.TrxId : starttrx;
-    const res = await fetchContents(
-      groupId,
-      {
-        num: 100,
-        starttrx: nextTrx,
-        includestarttrx: !nextTrx,
-      },
-    );
-    if (!res || !res.length) { break; }
-    res.forEach((v) => arr.push(v));
-  }
-
-  const epubs = arr
-    .map((trx, i) => ({ trx, i }))
-    .filter((trx) => trx.trx.Content.type === 'File' && trx.trx.Content.name === 'fileinfo')
-    .map((fileinfoTrx) => {
-      const fileData: FileInfo = JSON.parse(Buffer.from(fileinfoTrx.trx.Content.file.content, 'base64').toString());
-      const segmentsTrxArr = arr.slice(fileinfoTrx.i + 1, fileinfoTrx.i + 1 + fileData.segments.length);
-      const isSegmentsValid = segmentsTrxArr.length && segmentsTrxArr.every((v) => {
-        const isSegment = v.Content.type === 'File'
-          && /^seg-\d+$/.test(v.Content.name ?? '')
-          && v.Content.file.mediaType === 'application/octet-stream';
-        return isSegment;
-      });
-
-      if (!isSegmentsValid) { return null; }
-      const segments = segmentsTrxArr.map((v) => ({
-        name: v.Content.name,
-        buf: Buffer.from(v.Content.file.content, 'base64'),
-        trxId: v.TrxId,
-      }));
-
-      const isSegmentIntegrityGood = segments.every((v) => {
-        const correctHash = fileData.segments.find((u: any) => u.id === v.name)?.sha256;
-        if (!correctHash) { return false; }
-        const hash = createHash('sha256');
-        hash.update(v.buf);
-        const sha256 = hash.digest('hex');
-        return sha256 === correctHash;
-      });
-      if (!isSegmentIntegrityGood) { return null; }
-
-      segments.sort((a, b) => {
-        const numA = Number(a.name.replace('seg-', ''));
-        const numB = Number(b.name.replace('seg-', ''));
-        return numA - numB;
-      });
-      const lastSegmentTrxId = segments.at(-1)!.trxId;
-      const file = Buffer.concat(segments.map((v) => v.buf));
-
-      const hash = createHash('sha256');
-      hash.update(file);
-      const sha256 = hash.digest('hex');
-
-      if (fileData.sha256 !== sha256) { return null; }
-
-      return {
-        fileInfo: fileData,
-        trxId: fileinfoTrx.trx.TrxId,
-        lastSegmentTrxId,
-        cover: { type: 'notloaded', value: null } as const,
-        date: new Date(fileinfoTrx.trx.TimeStamp / 1000000),
-        file,
-      };
-    })
-    .filter(<T>(v: T | null): v is T => !!v);
-
-  return epubs;
-};
 
 export const checkTrx = async (groupId: string, trxId: string) => {
   for (;;) {
@@ -237,4 +162,11 @@ const parseXML = (data: string) => {
   const parser = new DOMParser();
   const dom = parser.parseFromString(data, 'application/xml');
   return dom;
+};
+
+export const hashBufferSha256 = (b: Buffer) => {
+  const hash = createHash('sha256');
+  hash.update(b);
+  const sha256 = hash.digest('hex');
+  return sha256;
 };
