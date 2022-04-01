@@ -114,6 +114,7 @@ export const content = {
   failToLoad: '加载失败',
   idle: '空闲',
   syncing: '同步中',
+  synced: '已同步',
   syncFailed: '同步失败',
   require: (name: string) => `请输入${name}`,
   requireMinLength: (name: string, length: number) => `${name}至少要输入${length}个字哦`,

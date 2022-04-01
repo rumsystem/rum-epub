@@ -10,7 +10,6 @@ import { shareGroup } from '~/standaloneModals/shareGroup';
 import { groupInfo } from '~/standaloneModals/groupInfo';
 
 import { lang } from '~/utils/lang';
-import ago from '~/utils/ago';
 import { nodeService } from '~/service/node';
 
 import { EpubUploadButton } from './EpubUploadButton';
@@ -58,9 +57,22 @@ export const EpubHeader = observer(() => {
             {group.group_name}
           </span>
           <div className="mt-[2px] text-11 transform flex items-center opacity-90">
-            <span className="text-gray-9c leading-relaxed">
-              {ago(group.last_updated)}更新
-            </span>
+            {group.group_status === GroupStatus.SYNCING && (
+              <span className="text-gray-9c leading-relaxed">
+                {lang.syncing}
+              </span>
+            )}
+            {group.group_status === GroupStatus.IDLE && (
+              <span className="text-gray-9c leading-relaxed">
+                {lang.synced}
+              </span>
+            )}
+
+            {group.group_status === GroupStatus.SYNC_FAILED && (
+              <div className="flex items-center px-3 rounded-full bg-red-400 text-opacity-90 text-white text-12 font-bold">
+                {lang.syncFailed}
+              </div>
+            )}
 
             <Tooltip
               enterDelay={800}
@@ -81,12 +93,6 @@ export const EpubHeader = observer(() => {
                 />
               </div>
             </Tooltip>
-
-            {group.group_status === GroupStatus.SYNC_FAILED && (
-              <div className="flex items-center px-3 ml-3 rounded-full bg-red-400 text-opacity-90 text-white text-12 font-bold">
-                {lang.syncFailed}
-              </div>
-            )}
           </div>
         </div>
 

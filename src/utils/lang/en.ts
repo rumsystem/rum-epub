@@ -114,6 +114,7 @@ export const content = {
   failToLoad: 'Failed to load',
   idle: 'Idle',
   syncing: 'Syncing',
+  synced: 'Synced',
   syncFailed: 'Sync failed',
   require: (name: string) => `Please enter ${name}`,
   requireMinLength: (name: string, length: number) => `${name} must enter at least ${length} characters`,

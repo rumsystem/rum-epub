@@ -18,6 +18,7 @@ import { TitleBarItem } from './TitleBarItem';
 import './index.sass';
 import { nodeService } from '~/service/node';
 import { nodeInfoModal } from '~/standaloneModals/nodeInfo';
+import { dbService } from '~/service/db';
 
 interface Props {
   className?: string
@@ -86,13 +87,12 @@ export const TitleBar = observer((props: Props) => {
         //     getCurrentWindow().webContents.send('export-logs');
         //   },
         // },
-        // {
-        //   text: lang.clearCache,
-        //   action: () => {
-        //     // TODO:
-        //     // cleanLocalData();
-        //   },
-        // },
+        {
+          text: lang.clearCache,
+          action: () => {
+            dbService.db.delete();
+          },
+        },
         {
           text: lang.relaunch,
           action: () => {
