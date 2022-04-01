@@ -96,6 +96,7 @@ export const TitleBar = observer((props: Props) => {
             });
             if (result === 'confirm') {
               dbService.db.delete();
+              window.location.reload();
             }
           },
         },
