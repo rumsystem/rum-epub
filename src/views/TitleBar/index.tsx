@@ -19,6 +19,7 @@ import './index.sass';
 import { nodeService } from '~/service/node';
 import { nodeInfoModal } from '~/standaloneModals/nodeInfo';
 import { dbService } from '~/service/db';
+import { dialogService } from '~/service/dialog';
 
 interface Props {
   className?: string
@@ -89,8 +90,13 @@ export const TitleBar = observer((props: Props) => {
         // },
         {
           text: lang.clearCache,
-          action: () => {
-            dbService.db.delete();
+          action: async () => {
+            const result = await dialogService.open({
+              content: lang.confirmToClearCacheData,
+            });
+            if (result === 'confirm') {
+              dbService.db.delete();
+            }
           },
         },
         {
