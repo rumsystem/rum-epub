@@ -1,0 +1,59 @@
+productName: "Rum Epub"
+appId: "net.rumsystem.epub-app"
+artifactName: "RUM-epub-${version}-${platform}.${ext}"
+
+files:
+  - "dist/"
+  - "main_dist/"
+  - "main.js"
+
+afterSign: "electron-builder-notarize"
+
+mac:
+  artifactName: "RUM-epub-${version}.${ext}"
+  target:
+    - "zip"
+    - "dmg"
+  type: "distribution"
+  hardenedRuntime: true
+  entitlements: "assets/entitlements.mac.plist"
+  entitlementsInherit: "assets/entitlements.mac.plist"
+  gatekeeperAssess: false
+  extraResources:
+    - "./quorum_bin/quorum_darwin"
+
+dmg:
+  sign: false
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: "link"
+      path: "/Applications"
+
+win:
+  artifactName: "RUM-epub-${version}.${ext}"
+  verifyUpdateCodeSignature: false
+  target: "nsis"
+  extraResources:
+    - "./quorum_bin/quorum_win.exe"
+
+linux:
+  artifactName: "RUM-epub-${version}.linux.${ext}"
+  target:
+    - "zip"
+  category: "Development"
+  extraResources:
+    - "./quorum_bin/quorum_linux"
+
+
+directories:
+  app: "src"
+  buildResources: "assets"
+  output: "release"
+
+extraResources:
+  - "./assets/**"
+
+publish: "github"

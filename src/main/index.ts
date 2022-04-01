@@ -7,6 +7,7 @@ import { sleep } from './utils';
 import { MenuBuilder } from './menu';
 import { initQuorum, state as quorumState } from './quorum';
 import { createTray } from './tray';
+import { initUpdate } from './updater';
 
 initialize();
 
@@ -78,6 +79,14 @@ const main = () => {
           }
         } catch {}
       }
+    });
+
+    sleep(3000).then(() => {
+      initUpdate({
+        setCanQuit: () => {
+          state.canQuit = true;
+        },
+      });
     });
   };
 

@@ -2,6 +2,7 @@ import { nodeService } from './node';
 import { quorumService } from './quorum';
 import { epubService } from './epub';
 import { readerSettingsService } from './readerSettings';
+import { updateService } from './update';
 
 export const initService = () => {
   if (process.env.NODE_ENV === 'development') {
@@ -9,6 +10,7 @@ export const initService = () => {
       nodeService,
       quorumService,
       epubService,
+      updateService,
     }).forEach(([k, v]) => {
       (window as any)[k] = v;
     });
@@ -19,6 +21,7 @@ export const initService = () => {
     quorumService.init(),
     readerSettingsService.init(),
     epubService.init(),
+    updateService.init(),
   ];
 
   return () => disposes.forEach((v) => v());

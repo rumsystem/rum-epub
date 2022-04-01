@@ -9,6 +9,7 @@ import { initService } from '~/service';
 import { ConfirmDialogContainer } from '~/service/dialog/ConfirmDialogContainer';
 import { LoadingContainer } from '~/service/loading/LoadingContainer';
 import { TooltipContainer } from '~/service/tooltip/TooltipContainer';
+import { UpdateContainer } from '~/service/update/UpdateContainer';
 
 import { TitleBar } from './TitleBar';
 import { Init } from './Init';
@@ -52,6 +53,7 @@ export const App = () => {
       <ConfirmDialogContainer />
       <LoadingContainer />
       <TooltipContainer />
+      <UpdateContainer />
     </ThemeRoot>
   );
 };

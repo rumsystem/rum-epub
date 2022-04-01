@@ -3,23 +3,19 @@ import classNames from 'classnames';
 import { observer } from 'mobx-react-lite';
 import { getCurrentWindow, shell, app } from '@electron/remote';
 import { MenuItem } from '@mui/material';
-// import { useStore } from '~/store';
-// import { myGroup } from '~/standaloneModals/myGroup';
-// import { changeFontSize } from '~/standaloneModals/changeFontSize';
-// import { exportKeyData } from '~/standaloneModals/exportKeyData';
-// import { importKeyData } from '~/standaloneModals/importKeyData';
-// import { importKeyDataBrowser } from '~/standaloneModals/importKeyDataBrowser';
+
 import { lang } from '~/utils/lang';
 import { i18n, AllLanguages } from '~/service/i18n';
-// import useCleanLocalData from '~/hooks/useCleanLocalData';
-import IconLangLocal from 'assets/lang_local.svg';
-import { TitleBarItem } from './TitleBarItem';
-
-import './index.sass';
 import { nodeService } from '~/service/node';
 import { nodeInfoModal } from '~/standaloneModals/nodeInfo';
 import { dbService } from '~/service/db';
 import { dialogService } from '~/service/dialog';
+import { updateService } from '~/service/update';
+
+import IconLangLocal from 'assets/lang_local.svg';
+import { TitleBarItem } from './TitleBarItem';
+
+import './index.sass';
 
 interface Props {
   className?: string
@@ -49,18 +45,12 @@ export const TitleBar = observer((props: Props) => {
         }
       },
     },
-    // !!process.env.IS_ELECTRON && {
-    //   text: lang.checkForUpdate,
-    //   action: () => {
-    //     if (!process.env.IS_ELECTRON) {
-    //       // TODO:
-    //       // eslint-disable-next-line no-alert
-    //       alert('TODO');
-    //       return;
-    //     }
-    //     ipcRenderer.send('check-for-update-from-renderer');
-    //   },
-    // },
+    {
+      text: lang.checkForUpdate,
+      action: () => {
+        updateService.checkUpdate();
+      },
+    },
     {
       text: lang.dev,
       children: [
