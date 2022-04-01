@@ -158,6 +158,8 @@ export const EpubView = observer((props: Props) => {
 
   const loadBook = (bookItem: EpubItem, readingProgress?: ReadingProgressItem | null) => {
     unloadBook();
+    const renderBox = state.renderBox.current;
+    if (!renderBox) { return; }
     const buffer = bookItem.file;
     const book = Epub(buffer.buffer);
     runInAction(() => {
@@ -172,7 +174,7 @@ export const EpubView = observer((props: Props) => {
       state.spineLoaded = true;
     }));
     (window as any).book = book;
-    const rendition = book.renderTo(state.renderBox.current!, {
+    const rendition = book.renderTo(renderBox, {
       width: '100%',
       height: '100%',
       // flow: 'scrolled-doc',
