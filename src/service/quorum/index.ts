@@ -10,6 +10,8 @@ import { initQuorum } from './helper/request';
 const state = observable({
   up: false,
   port: 0,
+
+  serviceInited: false,
 });
 
 const updateStatus = async () => {

@@ -1,11 +1,13 @@
 import React from 'react';
 import classNames from 'classnames';
+import { action } from 'mobx';
+import { observer } from 'mobx-react-lite';
 
 import { ThemeRoot } from '~/utils/theme';
 import { preloadAvatars } from '~/utils/avatars';
 import { loadInspect } from '~/utils/inspect';
 
-import { initService } from '~/service';
+import { initService, quorumService } from '~/service';
 import { ConfirmDialogContainer } from '~/service/dialog/ConfirmDialogContainer';
 import { LoadingContainer } from '~/service/loading/LoadingContainer';
 import { TooltipContainer } from '~/service/tooltip/TooltipContainer';
@@ -15,9 +17,7 @@ import { TitleBar } from './TitleBar';
 import { Init } from './Init';
 import Content from './Content';
 
-export const App = () => {
-  const [inited, setInited] = React.useState(false);
-
+export const App = observer(() => {
   React.useEffect(() => {
     preloadAvatars();
     loadInspect();
@@ -28,23 +28,21 @@ export const App = () => {
   return (
     <ThemeRoot>
       <div className="flex flex-col h-screen w-screen">
-        {inited && (
-          <TitleBar />
-        )}
+        <TitleBar />
 
         <div
           className={classNames(
             'flex-1 h-0 relative',
           )}
         >
-          {!inited && (
+          {!quorumService.state.serviceInited && (
             <Init
-              onInitSuccess={() => {
-                setInited(true);
-              }}
+              onInitSuccess={action(() => {
+                quorumService.state.serviceInited = true;
+              })}
             />
           )}
-          {inited && (
+          {quorumService.state.serviceInited && (
             <Content />
           )}
         </div>
@@ -56,4 +54,4 @@ export const App = () => {
       <UpdateContainer />
     </ThemeRoot>
   );
-};
+});

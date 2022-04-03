@@ -83,9 +83,7 @@ const main = () => {
 
     sleep(3000).then(() => {
       initUpdate({
-        setCanQuit: () => {
-          state.canQuit = true;
-        },
+        setCanQuit: prepareQuit,
       });
     });
   };
@@ -151,6 +149,12 @@ const main = () => {
     }
   });
 
+  const prepareQuit = () => {
+    state.canQuit = true;
+  };
+
+  ipcMain.on('prepare-quit', prepareQuit);
+
   app.whenReady().then(() => {
     if (isDevelopment) {
       console.log('Starting main process...');
@@ -160,7 +164,7 @@ const main = () => {
       createTray({
         getWin: () => state.win,
         quit: () => {
-          state.canQuit = true;
+          prepareQuit();
           app.quit();
         },
       });
