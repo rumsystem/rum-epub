@@ -17,8 +17,7 @@ import { Help } from '@mui/icons-material';
 import { Annotation } from 'epubjs/types/annotations';
 import SliderAltIcon from 'boxicons/svg/regular/bx-slider-alt.svg?fill';
 
-import { readerSettingsService, ReaderThemes } from '~/service/readerSettings';
-import { nodeService } from '~/service/node';
+import { readerSettingsService, ReaderThemes, nodeService } from '~/service';
 import { highLightRange } from './helper';
 
 interface Props {

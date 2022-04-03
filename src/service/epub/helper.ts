@@ -2,6 +2,7 @@ import { Buffer } from 'buffer';
 import { createHash } from 'crypto';
 import { posix } from 'path';
 import { Entry, fromBuffer, ZipFile } from 'yauzl';
+import * as E from 'fp-ts/lib/Either';
 
 import { fetchTrx } from '~/apis';
 import { sleep } from '~/utils';
@@ -13,7 +14,7 @@ export interface ParsedEpubBook {
   segments: Array<{ id: string, sha256: string, buf: Buffer }>
 }
 
-export const parseEpub = async (fileName: string, buffer: Buffer | Uint8Array): Promise<ParsedEpubBook> => {
+export const parseEpub = async (fileName: string, buffer: Buffer | Uint8Array): Promise<E.Either<Error, ParsedEpubBook>> => {
   const fileBuffer = buffer instanceof Buffer
     ? buffer
     : Buffer.from(buffer);
@@ -22,10 +23,10 @@ export const parseEpub = async (fileName: string, buffer: Buffer | Uint8Array): 
   const mimetypeEntry = zipResult.entries.find((v) => v.fileName === 'mimetype');
   const containerEntry = zipResult.entries.find((v) => v.fileName === 'META-INF/container.xml');
   if (!mimetypeEntry) {
-    throw new Error('cant find mimetype');
+    return E.left(new Error('cant find mimetype'));
   }
   if (!containerEntry) {
-    throw new Error('cant find META-INF/container.xml');
+    return E.left(new Error('cant find META-INF/container.xml'));
   }
   const mimetype = (await readEntryFromZip(zipResult, mimetypeEntry)).toString().replace(/^\uFEFF/, '');
   const xmlContent = (await readEntryFromZip(zipResult, containerEntry)).toString().replace(/^\uFEFF/, '');
@@ -33,18 +34,18 @@ export const parseEpub = async (fileName: string, buffer: Buffer | Uint8Array): 
   const containerDom = parseXML(xmlContent);
   const contentEntryPath = containerDom.querySelector('container > rootfiles > rootfile')?.getAttribute('full-path');
   if (!contentEntryPath) {
-    throw new Error('cant find container path');
+    return E.left(new Error('cant find container path'));
   }
   const contentEntry = zipResult.entries.find((v) => v.fileName === contentEntryPath);
   if (!contentEntry) {
-    throw new Error('cant find content');
+    return E.left(new Error('cant find content'));
   }
   const container = (await readEntryFromZip(zipResult, contentEntry)).toString().replace(/^\uFEFF/, '');
 
   const contentDom = parseXML(container);
   const title = contentDom.querySelector('metadata > title')?.textContent;
   if (!title) {
-    throw new Error('cant find title');
+    return E.left(new Error('cant find title'));
   }
   let coverImage = null as null | Buffer;
   try {
@@ -59,9 +60,7 @@ export const parseEpub = async (fileName: string, buffer: Buffer | Uint8Array): 
         }
       }
     }
-  } catch (e) {
-
-  }
+  } catch (e) {}
 
   const hash = createHash('sha256');
   hash.update(fileBuffer);
@@ -94,11 +93,11 @@ export const parseEpub = async (fileName: string, buffer: Buffer | Uint8Array): 
     })),
   };
 
-  return {
+  return E.right({
     cover: coverImage,
     fileInfo,
     segments,
-  };
+  });
 };
 
 export interface EpubItem {

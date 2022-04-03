@@ -13,10 +13,7 @@ import FileBlankIcon from 'boxicons/svg/regular/bx-file-blank.svg?fill';
 
 import { Dialog } from '~/components';
 
-import { epubService } from '~/service/epub';
-import { nodeService } from '~/service/node';
-import { tooltipService } from '~/service/tooltip';
-import { dialogService } from '~/service/dialog';
+import { epubService, nodeService, tooltipService, dialogService } from '~/service';
 
 interface Props {
   className?: string
@@ -34,16 +31,17 @@ export const EpubUploadButton = observer((props: Props) => {
 
     scrollDebounceTimer: 0,
 
+    get groupItem() {
+      return epubService.getGroupItem(nodeService.state.activeGroupId);
+    },
+    get uploadState() {
+      return this.groupItem.upload;
+    },
     get uploadDone() {
-      return !!epubService.state.uploadMap.get(nodeService.state.activeGroupId)?.uploadDone;
+      return this.uploadState.uploadDone;
     },
-
-    get item() {
-      return epubService.state.uploadMap.get(nodeService.state.activeGroupId) ?? null;
-    },
-
     get progressPercentage() {
-      const items = this.item?.segments ?? [];
+      const items = this.uploadState?.progress ?? [];
       if (!items.length) { return 0; }
       const doneItems = items.filter((v) => v.status === 'done').length;
       const progress = doneItems / items.length;
@@ -85,16 +83,16 @@ export const EpubUploadButton = observer((props: Props) => {
     }
   };
 
-  const handleCancelFileSelect = () => {
-    epubService.getOrInit(nodeService.state.activeGroupId, true);
+  const handleReset = () => {
+    epubService.resetUploadState(nodeService.state.activeGroupId);
   };
 
   const setFile = async (fileName: string, buffer: Buffer) => {
     try {
       await epubService.selectFile(nodeService.state.activeGroupId, fileName, buffer);
-      const book = state.item?.epub;
+      const book = state.uploadState?.epub;
       if (book) {
-        const allBooks = epubService.state.bookMap.get(nodeService.state.activeGroupId) ?? [];
+        const allBooks = state.groupItem.books;
         if (allBooks.some((v) => v.fileInfo.sha256 === book.fileInfo.sha256)) {
           const result = await dialogService.open({
             content: (
@@ -113,7 +111,7 @@ export const EpubUploadButton = observer((props: Props) => {
           });
 
           if (result === 'cancel') {
-            handleCancelFileSelect();
+            handleReset();
           }
         }
       }
@@ -134,19 +132,13 @@ export const EpubUploadButton = observer((props: Props) => {
     state.open = false;
   });
 
-  const handleReset = action(() => {
-    epubService.getOrInit(nodeService.state.activeGroupId, true);
-  });
-
   const handleConfirmUpload = () => {
     epubService.doUpload(nodeService.state.activeGroupId);
   };
 
   const scrollProgressIntoView = () => {
-    const item = state.item?.segments?.find((v) => v.status === 'uploading');
-    if (!item) {
-      return;
-    }
+    const item = state.uploadState.progress.find((v) => v.status === 'uploading');
+    if (!item) { return; }
     const e = progressBox.current?.querySelector(`[data-upload-item-id="${item.name}"]`);
     if (e) {
       scrollIntoView(e, {
@@ -156,22 +148,15 @@ export const EpubUploadButton = observer((props: Props) => {
     }
   };
 
-  React.useEffect(() => {
-    epubService.getOrInit(nodeService.state.activeGroupId);
-  }, []);
-
   React.useEffect(reaction(
-    () => state.item?.segments.filter((v) => v.status === 'uploading'),
+    () => state.uploadState.progress.filter((v) => v.status === 'uploading'),
     () => {
       window.clearTimeout(state.scrollDebounceTimer);
       state.scrollDebounceTimer = window.setTimeout(scrollProgressIntoView, 300);
     },
   ), []);
 
-  if (!state.item) {
-    return null;
-  }
-
+  if (!state.uploadState) { return null; }
   return (<>
     <Button
       className={classNames('relative overflow-hidden', props.className)}
@@ -188,7 +173,7 @@ export const EpubUploadButton = observer((props: Props) => {
       <div
         className={classNames(
           'absolute left-0 top-0 h-full bg-white/30 duration-300',
-          (state.item.uploadDone || !state.item.uploading) && 'hidden',
+          (state.uploadState.uploadDone || !state.uploadState.uploading) && 'hidden',
         )}
         style={{ width: state.progressPercentage }}
       />
@@ -205,7 +190,7 @@ export const EpubUploadButton = observer((props: Props) => {
           上传Epub文件
         </DialogTitle>
 
-        {!state.item.epub && (
+        {!state.uploadState.epub && (
           <div className="px-8">
             <div
               className={classNames(
@@ -237,7 +222,7 @@ export const EpubUploadButton = observer((props: Props) => {
           </div>
         )}
 
-        {!!state.item.epub && (
+        {!!state.uploadState.epub && (
           <div className="px-8">
             <div
               className={classNames(
@@ -251,22 +236,22 @@ export const EpubUploadButton = observer((props: Props) => {
                 已选择：
               </div>
               <div className="text-18 text-gray-4a font-bold relative z-10">
-                {state.item.epub.fileInfo.name}
+                {state.uploadState.epub.fileInfo.name}
               </div>
               <div
                 className={classNames(
                   'absolute left-0 top-0 h-full bg-gray-ec duration-300',
                 )}
-                style={{ width: state.item.uploadDone ? '100%' : state.progressPercentage }}
+                style={{ width: state.uploadState.uploadDone ? '100%' : state.progressPercentage }}
               />
             </div>
 
             <div className="text-16 text-gray-70 mt-8 mx-4">
-              {state.item.epub.fileInfo.title}
+              {state.uploadState.epub.fileInfo.title}
             </div>
 
             <div className="grid grid-cols-3 gap-2 max-h-[210px] mt-4 mx-4 overflow-y-auto py-1" ref={progressBox}>
-              {state.item.segments.map((v) => (
+              {state.uploadState.progress.map((v) => (
                 <div
                   className={classNames(
                     'flex items-center gap-x-1',
@@ -293,18 +278,18 @@ export const EpubUploadButton = observer((props: Props) => {
               ))}
             </div>
 
-            {!state.item.uploading && state.item.uploadDone && (
+            {!state.uploadState.uploading && state.uploadState.uploadDone && (
               <div className="flex flex-center mt-8 text-gray-4a text-16">
                 上传成功！
               </div>
             )}
 
             <div className="flex flex-center gap-x-16 mt-12 mb-2">
-              {!state.item.uploading && !state.item.uploadDone && (<>
+              {!state.uploadState.uploading && !state.uploadState.uploadDone && (<>
                 <Button
                   className="text-16 px-12 rounded-full"
                   color="inherit"
-                  onClick={handleCancelFileSelect}
+                  onClick={handleReset}
                 >
                   返回
                 </Button>
@@ -315,7 +300,7 @@ export const EpubUploadButton = observer((props: Props) => {
                   确认上传
                 </Button>
               </>)}
-              {state.item.uploading && (
+              {state.uploadState.uploading && (
                 <Button
                   className="text-16 px-12 rounded-full"
                   color="inherit"
@@ -324,7 +309,7 @@ export const EpubUploadButton = observer((props: Props) => {
                   关闭窗口
                 </Button>
               )}
-              {!state.item.uploading && state.item.uploadDone && (<>
+              {!state.uploadState.uploading && state.uploadState.uploadDone && (<>
                 <Button
                   className="text-16 px-12 rounded-full"
                   color="inherit"

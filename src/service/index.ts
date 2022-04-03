@@ -4,6 +4,18 @@ import { epubService } from './epub';
 import { readerSettingsService } from './readerSettings';
 import { updateService } from './update';
 
+export * from './bus';
+export * from './db';
+export * from './dialog';
+export * from './epub';
+export * from './i18n';
+export * from './loading';
+export * from './node';
+export * from './quorum';
+export * from './readerSettings';
+export * from './tooltip';
+export * from './update';
+
 export const initService = () => {
   if (process.env.NODE_ENV === 'development') {
     Object.entries({

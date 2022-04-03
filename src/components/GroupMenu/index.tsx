@@ -9,10 +9,7 @@ import { IGroup } from '~/apis';
 import { manageGroup } from '~/standaloneModals/manageGroup';
 import { groupInfo } from '~/standaloneModals/groupInfo';
 import { lang } from '~/utils/lang';
-import { nodeService } from '~/service/node';
-import { dialogService } from '~/service/dialog';
-import { loadingService } from '~/service/loading';
-import { tooltipService } from '~/service/tooltip';
+import { nodeService, dialogService, loadingService, tooltipService } from '~/service';
 
 import IconSeednetManage from 'assets/icon_seednet_manage.svg';
 

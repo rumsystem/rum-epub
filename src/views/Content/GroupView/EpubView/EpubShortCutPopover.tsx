@@ -4,7 +4,7 @@ import { action } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import { Popover, Tooltip } from '@mui/material';
 import KeyboardIcon from 'boxicons/svg/solid/bxs-keyboard.svg?fill';
-import { readerSettingsService } from '~/service/readerSettings';
+import { readerSettingsService } from '~/service';
 
 interface Props {
   className?: string

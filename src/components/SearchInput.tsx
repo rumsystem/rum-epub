@@ -4,7 +4,7 @@ import { TextField } from '@mui/material';
 import { MdSearch, MdClose } from 'react-icons/md';
 import { sleep } from '~/utils';
 import { lang } from '~/utils/lang';
-import { tooltipService } from '~/service/tooltip';
+import { tooltipService } from '~/service';
 
 interface IProps {
   size?: string

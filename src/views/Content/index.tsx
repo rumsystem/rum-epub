@@ -1,6 +1,6 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { nodeService } from '~/service/node';
+import { nodeService } from '~/service';
 import Welcome from './Welcome';
 import Sidebar from './Sidebar';
 import { GroupView } from './GroupView';

@@ -5,12 +5,15 @@ import { getCurrentWindow, shell, app } from '@electron/remote';
 import { MenuItem } from '@mui/material';
 
 import { lang } from '~/utils/lang';
-import { i18n, AllLanguages } from '~/service/i18n';
-import { nodeService } from '~/service/node';
+import {
+  i18n,
+  AllLanguages,
+  nodeService,
+  dbService,
+  dialogService,
+  updateService,
+} from '~/service';
 import { nodeInfoModal } from '~/standaloneModals/nodeInfo';
-import { dbService } from '~/service/db';
-import { dialogService } from '~/service/dialog';
-import { updateService } from '~/service/update';
 
 import IconLangLocal from 'assets/lang_local.svg';
 import { TitleBarItem } from './TitleBarItem';

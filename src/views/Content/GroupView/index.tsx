@@ -1,6 +1,6 @@
 import classNames from 'classnames';
 import React from 'react';
-import { nodeService } from '~/service/node';
+import { nodeService } from '~/service';
 import { GROUP_TEMPLATE_TYPE } from '~/utils/constant';
 import { GenericView } from '../GenericView';
 import { EpubView } from './EpubView';

@@ -12,7 +12,7 @@ const state = observable({
   port: 0,
 });
 
-export const updateStatus = async () => {
+const updateStatus = async () => {
   const status = await Quorum.getStatus();
   runInAction(() => {
     state.up = status.data.up;
@@ -38,7 +38,7 @@ const ping = async (retries = 60) => {
   return 'failed';
 };
 
-export const up = async () => {
+const up = async () => {
   const password = '123123';
   const { data } = await Quorum.up({
     bootstraps: BOOTSTRAPS,
@@ -53,11 +53,11 @@ export const up = async () => {
   return result;
 };
 
-export const down = async () => {
+const down = async () => {
   await Quorum.down();
 };
 
-export const init = () => {
+const init = () => {
   initQuorum();
   return () => 1;
 };

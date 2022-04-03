@@ -12,8 +12,7 @@ import { ThemeRoot } from '~/utils/theme';
 import { lang } from '~/utils/lang';
 import { setClipboard } from '~/utils/setClipboard';
 import { fetchSeed } from '~/apis';
-import { nodeService } from '~/service/node';
-import { tooltipService } from '~/service/tooltip';
+import { nodeService, tooltipService } from '~/service';
 
 export const shareGroup = async (groupId: string) => new Promise<void>((rs) => {
   const div = document.createElement('div');

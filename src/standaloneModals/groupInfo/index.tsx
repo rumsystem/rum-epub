@@ -6,7 +6,7 @@ import { GroupStatus, IGroup } from '~/apis';
 import { Tooltip, Dialog } from '@mui/material';
 
 import ago from '~/utils/ago';
-import { i18n } from '~/service/i18n';
+import { i18n } from '~/service';
 import { lang } from '~/utils/lang';
 import { ThemeRoot } from '~/utils/theme';
 

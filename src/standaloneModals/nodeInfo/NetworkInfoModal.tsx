@@ -2,7 +2,7 @@ import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Dialog } from '~/components';
 import { lang } from '~/utils/lang';
-import { nodeService } from '~/service/node';
+import { nodeService } from '~/service';
 
 interface IProps {
   open: boolean

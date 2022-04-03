@@ -1,7 +1,7 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { CircularProgress } from '@mui/material';
-import { updateService } from '~/service/update';
+import { updateService } from '~/service';
 
 export const UpdateContainer = observer(() => {
   if (updateService.state.progress) {

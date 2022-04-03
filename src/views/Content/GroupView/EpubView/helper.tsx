@@ -1,9 +1,12 @@
 import React from 'react';
 import { Book } from 'epubjs';
-import { dialogService } from '~/service/dialog';
-import { highlightTheme, readerSettingsService } from '~/service/readerSettings';
-import { nodeService } from '~/service/node';
-import { epubService } from '~/service/epub';
+import {
+  dialogService,
+  highlightTheme,
+  readerSettingsService,
+  nodeService,
+  epubService,
+} from '~/service';
 
 interface HighLightRangeParams {
   groupId: string

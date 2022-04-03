@@ -10,7 +10,7 @@ import EditAltIcon from 'boxicons/svg/regular/bx-edit-alt.svg?fill';
 import TrashIcon from 'boxicons/svg/regular/bx-trash.svg?fill';
 
 import { modifierKeys, splitByHighlightText } from '~/utils';
-import { readerSettingsService } from '~/service/readerSettings';
+import { readerSettingsService } from '~/service';
 
 interface Props {
   className?: string

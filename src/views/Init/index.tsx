@@ -2,11 +2,8 @@ import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { CircularProgress } from '@mui/material';
 
-import { nodeService } from '~/service/node';
-import { quorumService } from '~/service/quorum';
-import { dialogService } from '~/service/dialog';
+import { nodeService, quorumService, dialogService, dbService } from '~/service';
 import { lang } from '~/utils/lang';
-import { dbService } from '~/service/db';
 
 interface Props {
   onInitSuccess: () => unknown

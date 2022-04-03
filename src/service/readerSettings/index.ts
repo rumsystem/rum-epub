@@ -15,9 +15,9 @@ const state = observable({
   },
 });
 
-export const THEME_STORAGE_KEY = 'RUM_EPUB_THEME_SETTING';
+const THEME_STORAGE_KEY = 'RUM_EPUB_THEME_SETTING';
 
-export const init = action(() => {
+const init = action(() => {
   try {
     const item = JSON.parse(localStorage.getItem(THEME_STORAGE_KEY) ?? '');
 

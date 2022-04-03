@@ -1,13 +1,16 @@
 import { action, observable, runInAction } from 'mobx';
-import { fetchContents, postContent } from '~/apis';
+import * as E from 'fp-ts/lib/Either';
+import * as O from 'fp-ts/lib/Option';
+import { fetchContents, IPostContentResult, postContent } from '~/apis';
 import { promiseAllSettledThrottle, runLoading, sleep } from '~/utils';
-import { dbService, HighlightItem, FileInfo } from '~/service/db';
+import { dbService, FileInfo } from '~/service/db';
 import { parseEpub, ParsedEpubBook, checkTrx, EpubItem, hashBufferSha256 } from './helper';
 import { busService } from '../bus';
+import { pipe } from 'fp-ts/lib/function';
 
 export * from './helper';
 
-interface SegmentUploadStatus {
+interface UploadStatusItem {
   name: string
   status: 'pending' | 'uploading' | 'done'
 }
@@ -16,63 +19,96 @@ interface GroupUploadState {
   epub: ParsedEpubBook | null
   uploading: boolean
   uploadDone: boolean
-  segments: Array<SegmentUploadStatus>
+  progress: Array<UploadStatusItem>
   recentUploadBook: EpubItem | null
 }
 
+interface GroupStateItem {
+  upload: GroupUploadState
+  books: Array<EpubItem>
+  trxParsinsPromise: null | Promise<unknown>
+}
+
 const state = observable({
-  uploadMap: new Map<string, GroupUploadState>(),
-  bookMap: new Map<string, Array<EpubItem>>(),
-  highlightMap: new Map<string, Map<string, Array<HighlightItem>>>(),
-  parseAllTrxPromiseMap: new Map<string, null | Promise<unknown>>(),
+  groupMap: new Map<string, GroupStateItem>(),
   bookBufferLRUCache: new Map<string, { buf: Uint8Array, time: number }>(),
 });
 
-const getOrInit = action((groupId: string, reset = false) => {
-  let item = state.uploadMap.get(groupId);
-  if (reset || !item) {
+const getGroupItem = action((groupId: string) => {
+  let item = state.groupMap.get(groupId);
+  if (!item) {
     item = observable({
-      epub: null,
-      uploading: false,
-      uploadDone: false,
-      segments: [],
-      recentUploadBook: item?.recentUploadBook ?? null,
+      upload: {
+        epub: null,
+        uploading: false,
+        uploadDone: false,
+        progress: [],
+        recentUploadBook: null,
+      },
+      books: [],
+      highlights: [],
+      trxParsinsPromise: null,
     });
-    state.uploadMap.set(groupId, item);
+    state.groupMap.set(groupId, item);
   }
   return item;
 });
 
-const selectFile = async (groupId: string, fileName: string, buf: Buffer) => {
-  const item = getOrInit(groupId);
-  const epub = await parseEpub(fileName, buf);
-  runInAction(() => {
-    item.epub = epub;
-    item.uploadDone = false;
-    item.segments = [
-      { name: 'fileinfo', status: 'pending' },
-      ...epub.fileInfo.segments.map((v) => ({
-        name: v.id,
-        status: 'pending',
-      } as SegmentUploadStatus)),
-      { name: 'trxcheck', status: 'pending' },
-    ];
-  });
+const resetUploadState = action((groupId: string) => {
+  const groupItem = getGroupItem(groupId);
+  groupItem.upload = {
+    epub: null,
+    uploading: false,
+    uploadDone: false,
+    progress: [],
+    recentUploadBook: groupItem.upload.recentUploadBook,
+  };
+  return groupItem.upload;
+});
+
+const selectFile = async (groupId: string, fileName: string, fileBuffer: Buffer) => {
+  const uploadState = getGroupItem(groupId).upload;
+  const epub = await parseEpub(fileName, fileBuffer);
+  return pipe(
+    epub,
+    E.map((epub) => {
+      runInAction(() => {
+        uploadState.epub = epub;
+        uploadState.uploading = false;
+        uploadState.uploadDone = false;
+        uploadState.progress = [
+          { name: 'fileinfo', status: 'pending' },
+          ...epub.fileInfo.segments.map((v) => ({
+            name: v.id,
+            status: 'pending',
+          } as UploadStatusItem)),
+          { name: 'trxcheck', status: 'pending' },
+        ];
+      });
+      return null;
+    }),
+  );
 };
 
 const doUpload = (groupId: string) => {
-  const item = getOrInit(groupId);
-
-  const epub = item?.epub;
-  if (item.uploading || !epub) {
-    return;
-  }
+  const groupItem = getGroupItem(groupId);
+  const uploadState = groupItem.upload;
+  const epub = uploadState?.epub;
+  if (uploadState.uploading || !epub) { return; }
 
   runLoading(
-    (l) => { item.uploading = l; },
+    (l) => { uploadState.uploading = l; },
     async () => {
+      const changeProgressStatus = action((name: string, status: UploadStatusItem['status']) => {
+        const progressItem = uploadState.progress.find((v) => v.name === name);
+        if (!progressItem) {
+          throw new Error(`trying setting progress for ${name} which doesn't exist`);
+        }
+        progressItem.status = status;
+      });
+
       const fileinfoContent = Buffer.from(JSON.stringify(epub.fileInfo));
-      const data = {
+      const fileInfoPostData = {
         type: 'Add',
         object: {
           type: 'File',
@@ -88,16 +124,18 @@ const doUpload = (groupId: string) => {
           type: 'Group',
         },
       };
-      const changeStatus = action((name: string, status: SegmentUploadStatus['status']) => {
-        item.segments.find((v) => v.name === name)!.status = status;
-      });
 
-      changeStatus('fileinfo', 'uploading');
-      const fileInfoTrx = await postContent(data as any);
-      await checkTrx(groupId, fileInfoTrx.trx_id);
-      changeStatus('fileinfo', 'done');
+      let fileInfoTrx: IPostContentResult;
 
-      const jobs = epub.segments.map((seg) => async () => {
+      await runLoading(
+        (l) => changeProgressStatus('fileinfo', l ? 'uploading' : 'done'),
+        async () => {
+          fileInfoTrx = await postContent(fileInfoPostData as any);
+          await checkTrx(groupId, fileInfoTrx.trx_id);
+        },
+      );
+
+      const segTasks = epub.segments.map((seg) => async () => {
         const segData = {
           type: 'Add',
           object: {
@@ -114,35 +152,43 @@ const doUpload = (groupId: string) => {
             type: 'Group',
           },
         };
-        changeStatus(seg.id, 'uploading');
-        const segTrx = await postContent(segData as any);
-        await checkTrx(groupId, segTrx.trx_id);
-        changeStatus(seg.id, 'done');
-      });
-      await promiseAllSettledThrottle(jobs, 20);
 
-      changeStatus('trxcheck', 'uploading');
-      for (let i = 0; i < 30; i += 1) {
-        await parseNewTrx(groupId);
-        const theBook = state.bookMap.get(groupId)!.find((v) => v.trxId === fileInfoTrx.trx_id);
-        await sleep(1000);
-        if (theBook) {
-          break;
-        }
-      }
-      changeStatus('trxcheck', 'done');
+        await runLoading(
+          (l) => changeProgressStatus(seg.id, l ? 'uploading' : 'done'),
+          async () => {
+            const segTrx = await postContent(segData as any);
+            await checkTrx(groupId, segTrx.trx_id);
+          },
+        );
+      });
+      await promiseAllSettledThrottle(segTasks, 20);
+
+      await runLoading(
+        (l) => changeProgressStatus('trxcheck', l ? 'uploading' : 'done'),
+        async () => {
+          for (let i = 0; i < 30; i += 1) {
+            await parseNewTrx(groupId);
+            const theBook = groupItem.books.find((v) => v.trxId === fileInfoTrx.trx_id);
+            await sleep(1000);
+            if (theBook) {
+              break;
+            }
+          }
+        },
+      );
 
       runInAction(() => {
-        item.uploadDone = true;
-        const epub = state.bookMap.get(groupId)!.find((v) => v.trxId === fileInfoTrx.trx_id);
-        item.recentUploadBook = epub ?? null;
+        uploadState.uploadDone = true;
+        const epub = groupItem.books.find((v) => v.trxId === fileInfoTrx.trx_id);
+        uploadState.recentUploadBook = epub ?? null;
       });
     },
   );
 };
 
 const parseNewTrx = action((groupId: string) => {
-  let p = state.parseAllTrxPromiseMap.get(groupId);
+  const groupItem = getGroupItem(groupId);
+  let p = groupItem.trxParsinsPromise;
   if (p) { return p; }
   const run = async () => {
     const [booksToCaculate, lastTrxItem] = await dbService.db.transaction(
@@ -277,9 +323,37 @@ const parseNewTrx = action((groupId: string) => {
       ]),
     );
 
-    const currentBooks = state.bookMap.get(groupId) ?? [];
-    booksToCaculate
-      .filter((v) => v.file && currentBooks.every((u) => u.trxId !== v.bookTrx))
+    const currentBooks = groupItem.books;
+    runInAction(() => {
+      booksToCaculate
+        .filter((v) => v.file && currentBooks.every((u) => u.trxId !== v.bookTrx))
+        .forEach((v) => {
+          const item: EpubItem = {
+            cover: { type: 'notloaded', value: null } as const,
+            date: v.date,
+            fileInfo: v.fileInfo,
+            trxId: v.bookTrx,
+          };
+          currentBooks.push(item);
+        });
+    });
+  };
+
+  p = run().then(action(() => {
+    groupItem.trxParsinsPromise = null;
+  }));
+  groupItem.trxParsinsPromise = p;
+  return p;
+});
+
+const tryLoadBookFromDB = async (groupId: string) => {
+  const groupItem = getGroupItem(groupId);
+  const books = await dbService.db.book.where({ groupId, status: 'complete' }).toArray();
+  const currentBooks = groupItem.books;
+
+  runInAction(() => {
+    books
+      .filter((v) => currentBooks.every((u) => u.trxId !== v.bookTrx))
       .forEach((v) => {
         const item: EpubItem = {
           cover: { type: 'notloaded', value: null } as const,
@@ -289,70 +363,32 @@ const parseNewTrx = action((groupId: string) => {
         };
         currentBooks.push(item);
       });
-
-    runInAction(() => {
-      state.bookMap.set(groupId, currentBooks);
-    });
-  };
-
-  p = run().then(action(() => {
-    state.parseAllTrxPromiseMap.set(groupId, null);
-  }));
-  state.parseAllTrxPromiseMap.set(groupId, p);
-  return p;
-});
-
-const tryLoadBookFromDB = async (groupId: string) => {
-  const books = await dbService.db.book.where({ groupId, status: 'complete' }).toArray();
-  const currentBooks = state.bookMap.get(groupId) ?? [];
-
-  books
-    .filter((v) => currentBooks.every((u) => u.trxId !== v.bookTrx))
-    .forEach((v) => {
-      const item: EpubItem = {
-        cover: { type: 'notloaded', value: null } as const,
-        date: v.date,
-        fileInfo: v.fileInfo,
-        trxId: v.bookTrx,
-      };
-      currentBooks.push(item);
-    });
-
-  runInAction(() => {
-    state.bookMap.set(groupId, currentBooks);
   });
 };
 
 const parseCover = (groupId: string, bookTrx: string) => {
-  const item = state.bookMap.get(groupId)?.find((v) => v.trxId === bookTrx);
+  const groupItem = getGroupItem(groupId);
+  const item = groupItem.books.find((v) => v.trxId === bookTrx);
   if (!item) { return; }
   if (['loaded', 'loading', 'nocover'].includes(item.cover.type)) {
     return;
   }
   const doParse = async () => {
-    try {
-      const bookBuffer = await dbService.db.bookBuffer.where({
-        groupId,
-        bookTrx,
-      }).last();
-      if (!bookBuffer) {
-        return;
-      }
-      const epub = await parseEpub(item.fileInfo.name, bookBuffer.file);
-      const cover = epub.cover;
-      runInAction(() => {
-        if (!cover) {
-          item.cover = { type: 'nocover', value: null };
-          return;
-        }
-        item.cover = { type: 'loaded', value: URL.createObjectURL(new Blob([cover.buffer])) };
-      });
-    } catch (e) {
-      console.error(e);
-      runInAction(() => {
-        item.cover = { type: 'nocover', value: null };
-      });
+    let cover: EpubItem['cover'];
+    const bookBuffer = await getBookBuffer(groupId, bookTrx);
+    if (O.isNone(bookBuffer)) { return; }
+    const epub = await parseEpub('', bookBuffer.value);
+    if (E.isLeft(epub)) {
+      console.error(epub.left);
     }
+    if (E.isLeft(epub) || !epub.right.cover) {
+      cover = { type: 'nocover', value: null };
+    } else {
+      cover = { type: 'loaded', value: URL.createObjectURL(new Blob([epub.right.cover.buffer])) };
+    }
+    runInAction(() => {
+      item.cover = cover;
+    });
   };
   runInAction(() => {
     item.cover = { type: 'loading', value: doParse() };
@@ -369,7 +405,7 @@ const getBookBuffer = async (groupId: string, bookTrx: string) => {
         time: Date.now(),
       }),
     ]);
-    return cacheItem.buf;
+    return O.some(cacheItem.buf);
   }
   const bookBufferItem = await dbService.db.bookBuffer.where({
     groupId,
@@ -391,7 +427,10 @@ const getBookBuffer = async (groupId: string, bookTrx: string) => {
       }
     });
   });
-  return buffer;
+  if (buffer) {
+    return O.some(buffer);
+  }
+  return O.none;
 };
 
 const getHighlights = async (groupId: string, bookTrx: string) => {
@@ -448,13 +487,10 @@ const saveReadingProgress = async (groupId: string, bookTrx: string, readingProg
   });
 };
 
-export const init = () => {
+const init = () => {
   const dispose = busService.on('group_leave', (v) => {
     const groupId = v.data.groupId;
-    state.uploadMap.delete(groupId);
-    state.bookMap.delete(groupId);
-    state.highlightMap.delete(groupId);
-    state.parseAllTrxPromiseMap.delete(groupId);
+    state.groupMap.delete(groupId);
   });
   return dispose;
 };
@@ -463,7 +499,8 @@ export const epubService = {
   state,
   init,
 
-  getOrInit,
+  getGroupItem,
+  resetUploadState,
   selectFile,
   doUpload,
   parseNewTrx,

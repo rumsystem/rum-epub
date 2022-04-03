@@ -15,9 +15,7 @@ import { Button } from '~/components';
 
 import NotebookIcon from 'assets/template/template_icon_notebook.svg?react';
 
-import { nodeService } from '~/service/node';
-import { tooltipService } from '~/service/tooltip';
-
+import { nodeService, tooltipService } from '~/service';
 import { lang } from '~/utils/lang';
 import { runLoading } from '~/utils';
 import { GROUP_TEMPLATE_TYPE } from '~/utils/constant';

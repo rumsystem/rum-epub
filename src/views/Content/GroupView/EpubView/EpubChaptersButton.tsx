@@ -5,7 +5,7 @@ import { observer, useLocalObservable } from 'mobx-react-lite';
 import { NavItem } from 'epubjs';
 import { Divider, MenuItem, Popover, Tooltip } from '@mui/material';
 import ListUlIcon from 'boxicons/svg/regular/bx-list-ul.svg?fill';
-import { readerSettingsService } from '~/service/readerSettings';
+import { readerSettingsService } from '~/service';
 import { modifierKeys } from '~/utils';
 
 interface Props {

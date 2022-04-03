@@ -9,11 +9,10 @@ import { GoChevronRight } from 'react-icons/go';
 
 import { Dialog, Button } from '~/components';
 import { ICreateGroupsResult } from '~/apis';
-import { tooltipService } from '~/service/tooltip';
+import { tooltipService, nodeService } from '~/service';
 import { sleep, runLoading } from '~/utils';
 import { ThemeRoot } from '~/utils/theme';
 import { lang } from '~/utils/lang';
-import { nodeService } from '~/service/node';
 
 export const joinGroup = async () => new Promise<void>((rs) => {
   const div = document.createElement('div');

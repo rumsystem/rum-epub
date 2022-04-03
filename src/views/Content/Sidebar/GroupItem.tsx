@@ -5,7 +5,7 @@ import { observer, useLocalObservable } from 'mobx-react-lite';
 
 import { GroupIcon } from '~/components';
 import { IGroup } from '~/apis';
-import { nodeService } from '~/service/node';
+import { nodeService } from '~/service';
 import { splitByHighlightText } from '~/utils';
 
 interface GroupItemProps {

@@ -14,9 +14,7 @@ import { GROUP_CONFIG_KEY } from '~/utils/constant';
 import { ThemeRoot } from '~/utils/theme';
 import { changeGroupConfig } from '~/apis';
 import { lang } from '~/utils/lang';
-
-import { tooltipService } from '~/service/tooltip';
-import { nodeService } from '~/service/node';
+import { tooltipService, nodeService } from '~/service';
 
 export const manageGroup = async (groudId: string, init = false) => new Promise<void>((rs) => {
   const div = document.createElement('div');

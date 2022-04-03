@@ -6,7 +6,7 @@ import { lang } from '~/utils/lang';
 import { dialogService } from '~/service/dialog';
 import { tooltipService } from '~/service/tooltip';
 
-export const state = observable({
+const state = observable({
   manuallyChecking: false,
   updating: false,
   progress: null as null | ProgressInfo,
@@ -64,7 +64,7 @@ const actions: any = {
   },
 };
 
-export const init = () => {
+const init = () => {
   const handleUpdate = (_e: IpcRendererEvent, a: any) => {
     const { type, data } = a;
     if (type in actions) {
@@ -78,7 +78,7 @@ export const init = () => {
   };
 };
 
-export const checkUpdate = action(() => {
+const checkUpdate = action(() => {
   if (process.env.NODE_ENV === 'development') {
     return;
   }

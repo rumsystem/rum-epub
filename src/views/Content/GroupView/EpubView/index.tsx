@@ -4,6 +4,7 @@ import classNames from 'classnames';
 import { action, observable, reaction, runInAction } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import Epub, { Book, Contents, Location, NavItem } from 'epubjs';
+import { isNone } from 'fp-ts/lib/Option';
 import Section from 'epubjs/types/section';
 import { Annotation } from 'epubjs/types/annotations';
 import { PackagingMetadataObject } from 'epubjs/types/packaging';
@@ -13,10 +14,16 @@ import FullscreenIcon from 'boxicons/svg/regular/bx-fullscreen.svg?fill';
 import ExitFullscreenIcon from 'boxicons/svg/regular/bx-exit-fullscreen.svg?fill';
 import EditAltIcon from 'boxicons/svg/regular/bx-edit-alt.svg?fill';
 
-import { nodeService } from '~/service/node';
-import { EpubItem, epubService } from '~/service/epub';
-import { linkTheme, progressBarTheme, readerSettingsService, readerThemes } from '~/service/readerSettings';
-import { ReadingProgressItem } from '~/service/db';
+import {
+  nodeService,
+  EpubItem,
+  epubService,
+  linkTheme,
+  progressBarTheme,
+  readerSettingsService,
+  readerThemes,
+  ReadingProgressItem,
+} from '~/service';
 import { addLinkOpen, modifierKeys } from '~/utils';
 import { BookCoverImgTooltip } from '~/components';
 
@@ -66,6 +73,9 @@ export const EpubView = observer((props: Props) => {
       const current = items.findIndex((v) => v.href.replace(/#.*/, '') === this.currentHref.replace(/#.*/, '')) + 1;
       return [current / total, current, total];
     },
+    get groupItem() {
+      return epubService.getGroupItem(nodeService.state.activeGroupId);
+    },
     get currentSpineItem() {
       if (!state.spineLoaded || !state.currentHref) {
         return null;
@@ -78,7 +88,7 @@ export const EpubView = observer((props: Props) => {
       return item;
     },
     get currentUploadItem() {
-      return epubService.state.uploadMap.get(nodeService.state.activeGroupId) ?? null;
+      return this.groupItem.upload;
     },
     get readerTheme() {
       return readerThemes[readerSettingsService.state.theme];
@@ -164,11 +174,11 @@ export const EpubView = observer((props: Props) => {
     const renderBox = state.renderBox.current;
     if (!renderBox) { return; }
     const buffer = await epubService.getBookBuffer(groupId, bookItem.trxId);
-    if (!buffer) {
+    if (isNone(buffer)) {
       console.error(new Error(`try load book ${bookItem.trxId} in group ${groupId} which doesn't exist`));
       return;
     }
-    const book = Epub(buffer.buffer);
+    const book = Epub(buffer.value.buffer);
     runInAction(() => {
       state.bookItem = bookItem;
       state.book = book;
@@ -307,7 +317,7 @@ export const EpubView = observer((props: Props) => {
 
   const handleLoadRecentUpload = () => {
     const book = state.currentUploadItem?.recentUploadBook;
-    epubService.getOrInit(nodeService.state.activeGroupId, true);
+    epubService.resetUploadState(nodeService.state.activeGroupId);
     if (book) {
       loadBook(book);
     }
@@ -343,7 +353,7 @@ export const EpubView = observer((props: Props) => {
       );
       const loadBookFromReadingProgress = async () => {
         await epubService.tryLoadBookFromDB(groupId);
-        const books = epubService.state.bookMap.get(groupId);
+        const books = state.groupItem.books;
         const book = books?.find((v) => v.trxId === readingProgress?.bookTrx) ?? books?.at(0);
         if (book) {
           loadBook(book, readingProgress);
@@ -357,8 +367,7 @@ export const EpubView = observer((props: Props) => {
         if (state.book) {
           return;
         }
-        const books = epubService.state.bookMap.get(groupId);
-
+        const books = state.groupItem.books;
         const book = books?.find((v) => v.trxId === readingProgress?.bookTrx) ?? books?.at(0);
         if (book) {
           loadBook(book, readingProgress);
@@ -375,7 +384,7 @@ export const EpubView = observer((props: Props) => {
       async () => {
         await epubService.parseNewTrx(groupId);
         if (!state.book && !state.currentUploadItem?.epub) {
-          const epub = epubService.state.bookMap.get(groupId)?.at(0);
+          const epub = state.groupItem.books.at(0);
           if (epub) {
             loadBook(epub);
           }

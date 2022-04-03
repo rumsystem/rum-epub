@@ -11,9 +11,7 @@ import BookContentIcon from 'boxicons/svg/regular/bx-book-content.svg?fill';
 import BookOpenIcon from 'boxicons/svg/regular/bx-book-open.svg?fill';
 
 import { BookCoverImgTooltip } from '~/components';
-import { EpubItem, epubService } from '~/service/epub';
-import { nodeService } from '~/service/node';
-import { readerSettingsService } from '~/service/readerSettings';
+import { EpubItem, epubService, nodeService, readerSettingsService } from '~/service';
 
 
 interface Props {
@@ -26,9 +24,11 @@ export const EpubSelectBookButton = observer((props: Props) => {
   const state = useLocalObservable(() => ({
     open: false,
 
+    get groupItem() {
+      return epubService.getGroupItem(nodeService.state.activeGroupId);
+    },
     get books() {
-      const item = epubService.state.bookMap.get(nodeService.state.activeGroupId);
-      return item ?? [];
+      return this.groupItem.books;
     },
   }));
   const buttonRef = React.useRef<HTMLDivElement>(null);

@@ -10,10 +10,7 @@ import { Dialog, Button, MiddleTruncate } from '~/components';
 
 import { lang } from '~/utils/lang';
 import { ThemeRoot } from '~/utils/theme';
-
-import { nodeService } from '~/service/node';
-import { quorumService } from '~/service/quorum';
-import { tooltipService } from '~/service/tooltip';
+import { nodeService, quorumService, tooltipService } from '~/service';
 
 import NetworkInfoModal from './NetworkInfoModal';
 
