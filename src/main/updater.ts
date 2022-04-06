@@ -48,6 +48,6 @@ export const initUpdate = (p: { setCanQuit: () => unknown }) => {
     setTimeout(autoUpdate, 5 * 60 * 1000);
   };
   autoUpdater.autoDownload = true;
-  autoUpdater.autoInstallOnAppQuit = false;
+  autoUpdater.autoInstallOnAppQuit = true;
   autoUpdate();
 };
