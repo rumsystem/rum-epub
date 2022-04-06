@@ -6,9 +6,7 @@ import { observer, useLocalObservable } from 'mobx-react-lite';
 import { MdEdit } from 'react-icons/md';
 import { FormControl, InputLabel, OutlinedInput } from '@mui/material';
 
-import { Dialog, Button, GroupIcon, Loading } from '~/components';
-import ImageEditor from '~/components/ImageEditor';
-
+import { Dialog, Button, GroupIcon, Loading, ImageEditor } from '~/components';
 import { sleep, runLoading } from '~/utils';
 import { GROUP_CONFIG_KEY } from '~/utils/constant';
 import { ThemeRoot } from '~/utils/theme';
@@ -177,7 +175,7 @@ const ManageGroup = observer((props: Props) => {
                     width={80}
                     height={80}
                     fontSize={48}
-                    group={group}
+                    groupName={group.group_name}
                     groupIcon={state.icon}
                   />
                   <div

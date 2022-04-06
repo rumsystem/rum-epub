@@ -2,21 +2,30 @@ import React from 'react';
 import { observer } from 'mobx-react-lite';
 import classNames from 'classnames';
 import { IGroup } from '~/apis';
+import { nodeService } from '~/service';
+import { GROUP_CONFIG_KEY } from '~/utils/constant';
 
-interface Props {
-  group: IGroup
+type Props = {
   width: number
   height: number
   fontSize: number
   groupIcon?: string
   className?: string
   colorClassName?: string
-}
+} & ({
+  groupName: string
+} | {
+  group: IGroup
+});
 
 export const GroupIcon = observer((props: Props) => {
-  // const groupIcon = props.groupIcon || (groupStore.configMap.get(props.groupId)?.[GROUP_CONFIG_KEY.GROUP_ICON] ?? '') as string;
-  // TODO: groupIcon
-  const groupIcon = null;
+  const groupIconFromConfig = 'group' in props
+    ? nodeService.state.configMap.get(props.group.group_id)?.[GROUP_CONFIG_KEY.GROUP_ICON] as string ?? ''
+    : '';
+  const groupIcon = props.groupIcon ?? groupIconFromConfig;
+  const groupName = 'group' in props
+    ? props.group.group_name
+    : props.groupName;
 
   if (!groupIcon) {
     return (
@@ -34,7 +43,7 @@ export const GroupIcon = observer((props: Props) => {
             fontFamily: "Varela Round, Nunito Sans, PingFang SC, Hiragino Sans GB, Heiti SC, '幼圆', '圆体-简', sans-serif",
           }}
         >
-          {props.group.group_name.trim().substring(0, 1)}
+          {groupName.trim().substring(0, 1)}
         </div>
       </div>
     );

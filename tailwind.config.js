@@ -4,23 +4,11 @@ module.exports = {
   content: ['./src/**/*.ts', './src/**/*.tsx'],
   theme: {
     extend: {
-      margin: {
+      spacing: {
         ...Object.fromEntries(
-          Array(10)
+          Array(60)
             .fill(0)
-            .map((_v, i) => [`${i + 1}-px`, `${i + 1}px`]),
-        ),
-        ...Object.fromEntries(
-          Array(10)
-            .fill(0)
-            .map((_v, i) => [`-${i + 1}-px`, `-${i + 1}px`]),
-        ),
-      },
-      padding: {
-        ...Object.fromEntries(
-          Array(10)
-            .fill(0)
-            .map((_v, i) => [`${i + 1}-px`, `${i + 1}px`]),
+            .map((_v, i) => [`${i + 1}`, `${(i + 1) / 4}rem`]),
         ),
       },
       opacity: {

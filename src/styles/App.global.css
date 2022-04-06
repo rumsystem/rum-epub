@@ -37,16 +37,3 @@ textarea,
   background-color: #777;
   color: #eee;
 }
-
-.flex-col {
-  display: flex;
-}
-
-.flex-center {
-  justify-content: center;
-  align-items: center;
-}
-
-.hidden {
-  display: none;
-}

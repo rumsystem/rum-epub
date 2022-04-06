@@ -1,7 +1,8 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Dialog } from '@mui/material';
-import { Button, Loading } from '~/components';
+import { Button } from '~/components/Button';
+import { Loading } from '~/components/Loading';
 import { lang } from '~/utils/lang';
 
 type MenuItemActions = 'openPresetImages' | 'upload' | 'openImageLib' | 'makeAvatar';

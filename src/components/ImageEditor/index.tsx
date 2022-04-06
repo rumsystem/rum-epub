@@ -9,7 +9,7 @@ import { RiZoomOutLine, RiZoomInLine } from 'react-icons/ri';
 import { Dialog, Slider } from '@mui/material';
 import { withStyles } from '@mui/styles';
 
-import { Button } from '~/components';
+import { Button } from '~/components/Button';
 import { sleep } from '~/utils';
 import MimeType from '~/utils/mimeType';
 import { lang } from '~/utils/lang';
@@ -35,7 +35,7 @@ interface IProps {
   getImageUrl: (url: string) => void
 }
 
-export default observer((props: IProps) => {
+export const ImageEditor = observer((props: IProps) => {
   const state = useLocalObservable(() => ({
     showMenu: false,
     showImageLib: false,
@@ -399,7 +399,7 @@ export default observer((props: IProps) => {
   );
 });
 
-export const AvatarScaleSlider = withStyles({
+const AvatarScaleSlider = withStyles({
   root: {
     height: 6,
   },
@@ -408,8 +408,6 @@ export const AvatarScaleSlider = withStyles({
     width: 20,
     backgroundColor: '#fff',
     border: '2px solid currentColor',
-    marginTop: -7,
-    marginLeft: -10,
     '&:focus,&:hover,&:active': {
       boxShadow: 'inherit',
     },
@@ -424,7 +422,7 @@ export const AvatarScaleSlider = withStyles({
   },
 })(Slider);
 
-export const getCroppedImg = (
+const getCroppedImg = (
   image: HTMLImageElement,
   crop: { x: number, y: number, width: number, height: number },
   width: number,

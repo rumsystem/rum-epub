@@ -4,7 +4,8 @@ import useInfiniteScroll from 'react-infinite-scroll-hook';
 import { Tooltip, Dialog } from '@mui/material';
 
 import pixabayApi from '~/apis/pixabay';
-import { Loading, SearchInput } from '~/components';
+import { Loading } from '~/components/Loading';
+import { SearchInput } from '~/components/SearchInput';
 import { sleep } from '~/utils';
 import { lang } from '~/utils/lang';
 
