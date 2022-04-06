@@ -10,7 +10,7 @@ interface CreateTrayParams {
 
 export const createTray = (params: CreateTrayParams) => {
   const iconMap = {
-    other: '../../assets/icons/pc_bar_icon.png',
+    other: '../../assets/pc_bar_icon.png',
     win32: '../../assets/icon.ico',
   };
   const platform = process.platform === 'win32'

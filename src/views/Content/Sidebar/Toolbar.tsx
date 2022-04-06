@@ -10,10 +10,10 @@ import { GROUP_TEMPLATE_TYPE } from '~/utils/constant';
 import { joinGroup } from '~/standaloneModals/joinGroup';
 import { createGroup } from '~/standaloneModals/createGroup';
 
-import IconSearchAllSeed from 'assets/icon_search_all_seed.svg';
-import IconAddSeed from 'assets/icon_add_seed.svg';
-import IconAddseed from 'assets/icon_addseed.svg';
-import IconAddanything from 'assets/icon_addanything.svg';
+import IconSearchAllSeed from '~/assets/icon_search_all_seed.svg';
+import IconAddSeedMenu from '~/assets/add_seed_menu.svg';
+import IconAddseed from '~/assets/icon_addseed.svg';
+import IconAddanything from '~/assets/icon_addanything.svg';
 import { sidebarService } from './service';
 
 interface Props {
@@ -96,7 +96,7 @@ export default observer((props: Props) => {
                 ref={menuButton}
                 data-test-id="sidebar-plus-button"
               >
-                <img src={IconAddSeed} alt="" width="26" height="26" />
+                <img src={IconAddSeedMenu} alt="" width="26" height="26" />
               </div>
             </div>
           </>)}

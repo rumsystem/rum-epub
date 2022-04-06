@@ -11,7 +11,7 @@ import { groupInfo } from '~/standaloneModals/groupInfo';
 import { lang } from '~/utils/lang';
 import { nodeService, dialogService, loadingService, tooltipService } from '~/service';
 
-import IconSeednetManage from 'assets/icon_seednet_manage.svg';
+import IconSeednetManage from '~/assets/icon_seednet_manage.svg';
 
 interface Props {
   group: IGroup

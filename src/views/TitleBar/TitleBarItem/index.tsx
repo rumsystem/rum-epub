@@ -1,20 +1,17 @@
 import React from 'react';
 import classNames from 'classnames';
 import { observer } from 'mobx-react-lite';
-import { MenuItem, MenuList, Popover, Tooltip } from '@mui/material';
-import IconCheck from 'assets/check.svg';
+import { MenuItem, MenuList, Popover } from '@mui/material';
 
 interface Props {
-  menu: MenuItem
+  menu: TitleBarMenuItem
 }
 
-interface MenuItem {
-  text: string
+export interface TitleBarMenuItem {
+  text: React.ReactNode
   action?: () => unknown
-  children?: Array<MenuItem>
+  children?: Array<TitleBarMenuItem>
   hidden?: boolean
-  icon?: string
-  checked?: boolean
   classNames?: string
 }
 
@@ -33,14 +30,7 @@ export const TitleBarItem = observer((props: Props) => {
         onClick={v.action ?? (() => setOpen(true))}
         ref={buttonRef}
       >
-        {v.icon ? (
-          <Tooltip
-            placement="bottom"
-            title={v.text}
-          >
-            <img src={v.icon || ''} alt="" />
-          </Tooltip>
-        ) : v.text}
+        {v.text}
       </button>
 
       {!!v.children && (
@@ -67,7 +57,7 @@ export const TitleBarItem = observer((props: Props) => {
             {v.children.filter((v) => !v.hidden).map((v, i) => (
               <MenuItem
                 className={classNames(
-                  'hover:bg-gray-4a duration-0 relative text-14',
+                  'hover:bg-gray-4a duration-0 text-14',
                   v.classNames || '',
                 )}
                 onClick={() => {
@@ -76,9 +66,6 @@ export const TitleBarItem = observer((props: Props) => {
                 }}
                 key={'menu-right-item-' + i}
               >
-                {v.checked && (
-                  <span className="absolute left-0"><img src={IconCheck} alt="" /></span>
-                )}
                 {v.text}
               </MenuItem>
             ))}

@@ -13,7 +13,7 @@ import {
 
 import { Button } from '~/components';
 
-import NotebookIcon from 'assets/template/template_icon_notebook.svg?react';
+import NotebookIcon from '~/assets/template/template_icon_notebook.svg?react';
 
 import { nodeService, tooltipService } from '~/service';
 import { lang } from '~/utils/lang';
@@ -267,15 +267,6 @@ const CreateGroup = observer((props: Props) => {
         </div>
 
         <div className="flex self-stretch justify-center items-center h-30 bg-white">
-          {/* <div className="flex flex-center text-gray-4a">
-            <img
-              className="mr-1 mt-px"
-              src={`${assetsBasePath}/logo_rumsystem.svg`}
-              alt=""
-              width="12"
-            />
-            配置费用：未知
-          </div> */}
           <div className="flex items-center gap-x-8 absolute left-0 ml-20">
             <Button
               className='w-40 h-12 border'

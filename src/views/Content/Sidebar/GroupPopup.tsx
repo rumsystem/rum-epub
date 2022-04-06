@@ -19,7 +19,7 @@ import { lang } from '~/utils/lang';
 import { sleep } from '~/utils';
 import { getGroupIcon } from '~/utils/getGroupIcon';
 
-import WalletIcon from 'assets/icon_wallet.svg?react';
+import WalletIcon from '~/assets/icon_wallet.svg?react';
 
 interface Props {
   group: IGroup

@@ -23,13 +23,12 @@
     "baseUrl": "./",
     "paths": {
       "~/*": ["./src/*"],
-      "~/assets/*": ["./assets/*"],
+      "@/assets/*": ["./src/assets/*"],
       "~/quorum_bin/*": ["./quorum_bin/*"]
     }
   },
   "include": [
-    "src",
-    "assets"
+    "src"
   ],
   "exclude": [
     "test",

@@ -7,7 +7,7 @@ import { lang } from '~/utils/lang';
 import { GROUP_TEMPLATE_TYPE } from '~/utils/constant';
 
 import { nodeService } from '~/service';
-import IconFold from 'assets/fold.svg';
+import IconFold from '~/assets/fold.svg';
 import GroupItem from './GroupItem';
 import { sidebarService } from './service';
 import Toolbar from './Toolbar';

@@ -1,4 +1,4 @@
-import TimelineIcon from 'assets/template/template_icon_timeline.svg?react';
+import TimelineIcon from '~/assets/template/template_icon_timeline.svg?react';
 
 import { GROUP_TEMPLATE_TYPE } from './constant';
 

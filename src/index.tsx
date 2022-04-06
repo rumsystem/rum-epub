@@ -6,7 +6,7 @@ import { App } from './views';
 
 import './styles/tailwind.sass';
 import './styles/tailwind-base.sass';
-import './styles/App.global.scss';
+import './styles/App.global.css';
 import './styles/rendered-markdown.sass';
 
 if (process.env.IS_ELECTRON) {
