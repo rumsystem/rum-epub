@@ -28,7 +28,7 @@ import { runLoading } from '~/utils';
 import { GROUP_CONFIG_KEY, GROUP_TEMPLATE_TYPE } from '~/utils/constant';
 import { ThemeRoot } from '~/utils/theme';
 import { GroupIcon, ImageEditor } from '~/components';
-import { changeGroupConfig } from '~/apis';
+import { AuthType, changeGroupConfig, setChainConfig } from '~/apis';
 
 import { StepBox } from './StepBox';
 
@@ -67,7 +67,7 @@ const CreateGroup = observer((props: Props) => {
     desc: '',
     icon: '',
     type: GROUP_TEMPLATE_TYPE.EPUB,
-    permission: 'readonly',
+    authType: 'FOLLOW_ALW_LIST' as AuthType,
 
     consensusType: 'poa',
     encryptionType: 'public',
@@ -81,8 +81,8 @@ const CreateGroup = observer((props: Props) => {
     state.type = type;
   });
 
-  const handleChangePermission = action((permission: string) => {
-    state.permission = permission;
+  const handleChangeAuthType = action((type: AuthType) => {
+    state.authType = type;
   });
 
   const handlePrevStep = action(() => {
@@ -143,9 +143,35 @@ const CreateGroup = observer((props: Props) => {
     });
     nodeService.changeActiveGroup(createGroupResult.right);
     handleClose();
-
     const groupId = createGroupResult.right.group_id;
-    const groupConfigResult = await TE.tryCatch(
+
+    const changeAuthTypeResult = TE.tryCatch(
+      async () => {
+        if (state.authType === 'FOLLOW_ALW_LIST') {
+          await setChainConfig({
+            group_id: groupId,
+            type: 'set_trx_auth_mode',
+            config: {
+              trx_type: 'POST',
+              trx_auth_mode: 'follow_alw_list',
+              memo: '',
+            },
+          });
+          await setChainConfig({
+            group_id: groupId,
+            type: 'upd_alw_list',
+            config: {
+              action: 'add',
+              pubkey: createGroupResult.right.user_pubkey,
+              trx_type: ['POST'],
+              memo: '',
+            },
+          });
+        }
+      },
+      (v) => v as Error,
+    )();
+    const groupConfigResult = TE.tryCatch(
       async () => {
         // it take several second to sync
         await Promise.all([
@@ -168,12 +194,23 @@ const CreateGroup = observer((props: Props) => {
       (v) => v as Error,
     )();
 
-    if (E.isLeft(groupConfigResult)) {
-      tooltipService.show({
-        content: lang.somethingWrong,
-        type: 'error',
-      });
-    }
+    changeAuthTypeResult.then((v) => {
+      if (E.isLeft(v)) {
+        tooltipService.show({
+          content: lang.somethingWrong,
+          type: 'error',
+        });
+      }
+    });
+
+    groupConfigResult.then((v) => {
+      if (E.isLeft(v)) {
+        tooltipService.show({
+          content: lang.somethingWrong,
+          type: 'error',
+        });
+      }
+    });
   };
 
   const handleClose = action(() => {
@@ -318,18 +355,18 @@ const CreateGroup = observer((props: Props) => {
 
                 <div className="flex justify-center gap-x-8 mt-12">
                   {([
-                    ['write', '新成员默认可写', PermissionWriteIcon],
+                    ['FOLLOW_DNY_LIST', '新成员默认可写', PermissionWriteIcon],
                     // ['comment', '新成员仅可评论', PermissionCommentIcon],
-                    ['readonly', '新成员默认只读', PermissionReadOnlyIcon],
-                  ] as const).map(([permission, desc, Icon], i) => (
+                    ['FOLLOW_ALW_LIST', '新成员默认只读', PermissionReadOnlyIcon],
+                  ] as const).map(([authType, desc, Icon], i) => (
                     <div
                       className={classNames(
                         'relative flex flex-col items-center w-45 p-5 pt-3 border border-black rounded-md select-none cursor-pointer',
-                        state.permission === permission && 'bg-gray-f7',
+                        state.authType === authType && 'bg-gray-f7',
                         // type === 'post' && 'pointer-events-none opacity-60',
                       )}
-                      data-test-id={`group-type-${permission}`}
-                      onClick={() => handleChangePermission(permission)}
+                      data-test-id={`group-type-${authType}`}
+                      onClick={() => handleChangeAuthType(authType)}
                       key={i}
                     >
                       <Icon />
@@ -337,7 +374,7 @@ const CreateGroup = observer((props: Props) => {
                         {desc}
                       </div>
 
-                      {state.permission === permission && (
+                      {state.authType === authType && (
                         <div
                           className="absolute right-[-1px] top-[-1px] w-10 h-10"
                           style={{
@@ -352,7 +389,7 @@ const CreateGroup = observer((props: Props) => {
                 </div>
 
                 <div className="text-14 text-gray-64 mt-8 px-10">
-                  {state.permission === 'write' && (
+                  {state.authType === 'FOLLOW_DNY_LIST' && (
                     <div className="">
                       新加入成员默认拥有可写权限，包括发表主帖，评论主贴，回复评论，点赞等操作。管理员可以对某一成员作禁言处理。
                       <br />
@@ -360,15 +397,15 @@ const CreateGroup = observer((props: Props) => {
                       新加入成员默认可写的权限设置，适用于时间线呈现的微博客类社交应用。
                     </div>
                   )}
-                  {state.permission === 'comment' && (
+                  {/* {state.authType === 'comment' && (
                     <div className="">
                       新加入成员默认只允许评论，没有权限进行发表主帖的操作。管理员可以对某一成员开放权限，或者禁言。
                       <br />
                       <br />
                       新加入成员默认只评的权限设置，适用于开放讨论的博客、内容订阅、知识分享等内容发布应用。
                     </div>
-                  )}
-                  {state.permission === 'readonly' && (
+                  )} */}
+                  {state.authType === 'FOLLOW_ALW_LIST' && (
                     <div className="">
                       新加入成员默认只读，没有权限进行发表主帖、评论主贴、回复评论、点赞等操作
                       <Tooltip

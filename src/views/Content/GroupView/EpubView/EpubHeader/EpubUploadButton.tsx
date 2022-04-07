@@ -6,7 +6,7 @@ import { action, reaction } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import { dialog, getCurrentWindow } from '@electron/remote';
 import { Rendition } from 'epubjs';
-import { Button, CircularProgress, DialogTitle } from '@mui/material';
+import { Button, CircularProgress, DialogTitle, Tooltip } from '@mui/material';
 import scrollIntoView from 'scroll-into-view-if-needed';
 import UploadIcon from 'boxicons/svg/regular/bx-upload.svg?fill';
 import FileBlankIcon from 'boxicons/svg/regular/bx-file-blank.svg?fill';
@@ -46,6 +46,20 @@ export const EpubUploadButton = observer((props: Props) => {
       const doneItems = items.filter((v) => v.status === 'done').length;
       const progress = doneItems / items.length;
       return `${(progress * 100).toFixed(2)}%`;
+    },
+    get hasWritePermission() {
+      const groupId = nodeService.state.activeGroupId;
+      const postAuthType = nodeService.state.trxAuthTypeMap.get(groupId)?.POST;
+      const allowList = nodeService.state.allowListMap.get(groupId) ?? [];
+      const denyList = nodeService.state.denyListMap.get(groupId) ?? [];
+      const userPublicKey = nodeService.state.activeGroup?.user_pubkey ?? '';
+      if (postAuthType === 'FOLLOW_ALW_LIST' && allowList.every((v) => v.Pubkey !== userPublicKey)) {
+        return false;
+      }
+      if (postAuthType === 'FOLLOW_DNY_LIST' && denyList.some((v) => v.Pubkey === userPublicKey)) {
+        return false;
+      }
+      return true;
     },
   }));
   // const { snackbarStore } = useStore();
@@ -158,26 +172,31 @@ export const EpubUploadButton = observer((props: Props) => {
 
   if (!state.uploadState) { return null; }
   return (<>
-    <Button
-      className={classNames('relative overflow-hidden', props.className)}
-      onClick={handleOpen}
-      ref={buttonRef}
-    >
-      <div className="flex flex-center gap-x-2 relative z-10">
-        <UploadIcon />
-        <span>
-          上传书籍
-        </span>
-      </div>
+    <Tooltip title={state.hasWritePermission ? '上传书籍' : '你没有权限在这个种子网络上传内容'}>
+      <div className={props.className}>
+        <Button
+          className="relative overflow-hidden"
+          onClick={handleOpen}
+          ref={buttonRef}
+          disabled={!state.hasWritePermission}
+        >
+          <div className="flex flex-center gap-x-2 relative z-10">
+            <UploadIcon />
+            <span>
+              上传书籍
+            </span>
+          </div>
 
-      <div
-        className={classNames(
-          'absolute left-0 top-0 h-full bg-white/30 duration-300',
-          (state.uploadState.uploadDone || !state.uploadState.uploading) && 'hidden',
-        )}
-        style={{ width: state.progressPercentage }}
-      />
-    </Button>
+          <div
+            className={classNames(
+              'absolute left-0 top-0 h-full bg-white/30 duration-300',
+              (state.uploadState.uploadDone || !state.uploadState.uploading) && 'hidden',
+            )}
+            style={{ width: state.progressPercentage }}
+          />
+        </Button>
+      </div>
+    </Tooltip>
 
     <Dialog
       open={state.open}

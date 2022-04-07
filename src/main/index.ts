@@ -8,6 +8,7 @@ import { MenuBuilder } from './menu';
 import { initQuorum, state as quorumState } from './quorum';
 import { createTray } from './tray';
 import { initUpdate } from './updater';
+import { appIcon } from './icon';
 
 initialize();
 
@@ -34,6 +35,7 @@ const main = () => {
       height: 900,
       minWidth: 768,
       minHeight: 780,
+      icon: appIcon,
       webPreferences: {
         contextIsolation: false,
         // enableRemoteModule: true,

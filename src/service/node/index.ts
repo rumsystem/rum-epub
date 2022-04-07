@@ -12,10 +12,18 @@ import {
   getGroupConfigKeyList,
   getGroupConfigItem,
   GroupStatus,
+  getTrxAuthType,
+  TrxType,
+  AuthType,
+  getAllowList,
+  AllowOrDenyListItem,
+  getDenyList,
 } from '~/apis';
 import { PollingTask, sleep } from '~/utils';
 import { dbService } from '~/service/db';
-import { busService } from '../bus';
+import { busService } from '~/service/bus';
+
+export type GroupTrxAuthRecord = Partial<Record<TrxType, AuthType | undefined>>;
 
 const state = observable({
   groups: [] as Array<IGroup>,
@@ -36,6 +44,9 @@ const state = observable({
     peerid: '',
     node: null,
   },
+  trxAuthTypeMap: new Map<string, GroupTrxAuthRecord>(),
+  allowListMap: new Map<string, Array<AllowOrDenyListItem>>(),
+  denyListMap: new Map<string, Array<AllowOrDenyListItem>>(),
   configMap: new Map<string, Record<string, string | boolean | number>>(),
 
   get activeGroup() {
@@ -51,6 +62,7 @@ const state = observable({
     updateNodeInfo: null as null | PollingTask,
     updateNetworkInfo: null as null | PollingTask,
     updateAllGroupConfig: null as null | PollingTask,
+    updateAllGroupTrxAuthType: null as null | PollingTask,
   },
 });
 
@@ -106,6 +118,38 @@ const updateGroupConfig = async (groupId: string) => {
 const updateAllGroupConfig = async () => {
   for (const group of state.groups) {
     await updateGroupConfig(group.group_id);
+  }
+};
+
+const updateTrxAuthType = async (groupId: string) => {
+  const groupItem = state.trxAuthTypeMap.get(groupId) ?? observable({} as GroupTrxAuthRecord);
+  if (!state.trxAuthTypeMap.has(groupId)) {
+    runInAction(() => {
+      state.trxAuthTypeMap.set(groupId, groupItem);
+    });
+  }
+  const postAuthType = await getTrxAuthType(groupId, 'POST');
+  runInAction(() => {
+    groupItem.POST = postAuthType.AuthType;
+  });
+
+  if (postAuthType.AuthType === 'FOLLOW_ALW_LIST') {
+    const allowList = await getAllowList(groupId);
+    runInAction(() => {
+      state.allowListMap.set(groupId, allowList ?? []);
+    });
+  }
+  if (postAuthType.AuthType === 'FOLLOW_DNY_LIST') {
+    const denyList = await getDenyList(groupId);
+    runInAction(() => {
+      state.denyListMap.set(groupId, denyList ?? []);
+    });
+  }
+};
+
+const updateAllGroupTrxAuthType = async () => {
+  for (const group of state.groups) {
+    await updateTrxAuthType(group.group_id);
   }
 };
 
@@ -221,6 +265,7 @@ const startPolling = (restart = false) => {
   state.pollings.updateNodeInfo = new PollingTask(updateNodeInfo, 10000, true, true);
   state.pollings.updateNetworkInfo = new PollingTask(updateNetworkInfo, 10000, true, true);
   state.pollings.updateAllGroupConfig = new PollingTask(updateAllGroupConfig, 20000, true, true);
+  state.pollings.updateAllGroupTrxAuthType = new PollingTask(updateAllGroupTrxAuthType, 30000, true, true);
 };
 
 const stopPolling = action(() => {
@@ -245,4 +290,6 @@ export const nodeService = {
   updateNodeInfo,
   updateGroupConfig,
   updateAllGroupConfig,
+  updateTrxAuthType,
+  updateAllGroupTrxAuthType,
 };

@@ -175,13 +175,13 @@ export const changeGroupConfig = (params: {
   jwt: true,
 })!;
 
-export const getGroupConfigKeyList = (groupId: string) => request(`/api/v1/group/${groupId}/config/keylist`, {
+export const getGroupConfigKeyList = (groupId: string) => request(`/api/v1/group/${groupId}/appconfig/keylist`, {
   method: 'GET',
   quorum: true,
   jwt: true,
 }) as Promise<GroupConfigKeyListResult>;
 
-export const getGroupConfigItem = (groupId: string, key: string) => request(`/api/v1/group/${groupId}/config/${key}`, {
+export const getGroupConfigItem = (groupId: string, key: string) => request(`/api/v1/group/${groupId}/appconfig/${key}`, {
   method: 'GET',
   quorum: true,
   jwt: true,

@@ -1,6 +1,8 @@
 import React from 'react';
+import classNames from 'classnames';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import { HiOutlineShare } from 'react-icons/hi';
+import { GoSync } from 'react-icons/go';
 import { Tooltip } from '@mui/material';
 
 import { GroupMenu } from '~/components/GroupMenu';
@@ -9,13 +11,11 @@ import { GroupIcon } from '~/components';
 import { shareGroup } from '~/standaloneModals/shareGroup';
 import { groupInfo } from '~/standaloneModals/groupInfo';
 
+import { GroupStatus } from '~/apis';
 import { lang } from '~/utils/lang';
 import { nodeService } from '~/service';
 
 import { EpubUploadButton } from './EpubUploadButton';
-import { GoSync } from 'react-icons/go';
-import classNames from 'classnames';
-import { GroupStatus } from '~/apis';
 
 export const EpubHeader = observer(() => {
   const state = useLocalObservable(() => ({
@@ -33,7 +33,10 @@ export const EpubHeader = observer(() => {
   };
 
   const group = nodeService.state.activeGroup;
-  // const syncing = group?.group_status === GroupStatus.SYNCING;
+
+  React.useEffect(() => {
+    nodeService.updateTrxAuthType(nodeService.state.activeGroupId);
+  }, []);
 
   if (!group) {
     return null;

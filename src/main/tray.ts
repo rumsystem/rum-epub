@@ -1,5 +1,5 @@
 import { BrowserWindow, Menu, Tray } from 'electron';
-import { join } from 'path';
+import { appIcon } from './icon';
 
 let tray: Tray;
 
@@ -9,17 +9,7 @@ interface CreateTrayParams {
 }
 
 export const createTray = (params: CreateTrayParams) => {
-  const iconMap = {
-    other: '../../assets/pc_bar_icon.png',
-    win32: '../../assets/icon.ico',
-  };
-  const platform = process.platform === 'win32'
-    ? 'win32'
-    : 'other';
-
-  const icon = join(__dirname, iconMap[platform]);
-
-  tray = new Tray(icon);
+  tray = new Tray(appIcon);
   const showApp = () => {
     params.getWin()?.show();
   };

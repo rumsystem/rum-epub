@@ -20,19 +20,19 @@ export interface AllowOrDenyListItem {
   Memo: string
 }
 
-export interface FollowingRule {
+export interface TrxAuthTypeResult {
   'TrxType': TrxType
   'AuthType': AuthType
 }
 
-export const getFollowingRule = async (groupId: string, trxType: TrxType) => request(
+export const getTrxAuthType = async (groupId: string, trxType: TrxType) => request(
   `/api/v1/group/${groupId}/trx/auth/${trxType.toLowerCase()}`,
   {
     method: 'GET',
     quorum: true,
     jwt: true,
   },
-) as Promise<FollowingRule>;
+) as Promise<TrxAuthTypeResult>;
 
 export interface ChainAuthModeParams {
   group_id: string
