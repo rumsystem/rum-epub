@@ -5,4 +5,4 @@
 *.jpeg  binary
 *.ico   binary
 *.icns  binary
-/assets/font/**/*   binary
+*.ttf   binary
