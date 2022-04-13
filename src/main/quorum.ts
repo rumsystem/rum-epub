@@ -14,6 +14,8 @@ const store = new ElectronStore({
 
 const quorumLog = create('quorum');
 quorumLog.transports.file.fileName = 'quorum.log';
+quorumLog.transports.console = (() => {}) as any;
+quorumLog.transports.ipc = null;
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 const isProduction = !isDevelopment;
@@ -116,6 +118,13 @@ const actions = {
     console.log('spawn quorum: ');
     console.log(state);
     console.log(args);
+
+    quorumLog.log('');
+    quorumLog.log('');
+    quorumLog.log('');
+    quorumLog.log('spawn quorum:');
+    quorumLog.log(state);
+    quorumLog.log(args);
 
     const peerProcess = childProcess.spawn(cmd, args, {
       cwd: quorumBaseDir,

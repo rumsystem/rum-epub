@@ -1,17 +1,18 @@
 import { configure } from 'mobx';
-import { functions, log, transports } from 'electron-log';
+import { create } from 'electron-log';
 
-transports.file.maxSize = 10 * 1024 ** 2;
-
+const rendererLog = create('renderer');
+rendererLog.transports.file.maxSize = 10 * 1024 ** 2;
+rendererLog.transports.ipc = null;
 // eslint-disable-next-line no-console
 const defaultLog = console.log.bind(console);
 
-Object.assign(console, functions);
+Object.assign(console, rendererLog.functions);
 
 if (process.env.NODE_ENV === 'development') {
   // eslint-disable-next-line no-console
   console.log = (...args: Array<any>) => {
-    log(...args);
+    rendererLog.log(...args);
     const stack = new Error().stack!;
     const matchedStack = /at console.log.*\n.*?\((.*)\)/.exec(stack);
     const location = matchedStack ? matchedStack[1].trim() : '';
@@ -30,7 +31,7 @@ configure({
   observableRequiresReaction: false,
 });
 
-log('');
-log('');
-log('');
-log('app renderer started');
+rendererLog.log('');
+rendererLog.log('');
+rendererLog.log('');
+rendererLog.log('app renderer started');
