@@ -447,6 +447,7 @@ export const EpubView = observer((props: Props) => {
     };
   }, []);
 
+  const isOwner = nodeService.state.activeGroup?.user_pubkey === nodeService.state.activeGroup?.owner_pubkey;
   const noBook = !state.currentUploadItem?.uploading && !state.currentUploadItem?.recentUploadBook;
   const uploading = !!state.currentUploadItem?.uploading;
   const uploadDone = !state.currentUploadItem?.uploading && !!state.currentUploadItem?.recentUploadBook;
@@ -566,9 +567,14 @@ export const EpubView = observer((props: Props) => {
                 'outline outline-2 w-[500px] outline-dashed outline-gray-c4 outline-offset-4',
               )}
             >
-              {noBook && (<>
+              {isOwner && noBook && (<>
                 <p>种子网络还没有书籍</p>
                 <p>点击上方的上传书籍按钮上传第一本书</p>
+              </>)}
+
+              {!isOwner && noBook && (<>
+                <p>种子网络还没有书籍</p>
+                <p>等待种子网络上传/同步第一本书</p>
               </>)}
 
               {uploading && (<>
