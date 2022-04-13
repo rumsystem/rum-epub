@@ -1,7 +1,7 @@
 import { join } from 'path';
 
 const iconMap = {
-  other: '../../assets/pc_bar_icon.png',
+  other: '../../assets/icon_lib.png',
   win32: '../../assets/icon.ico',
 };
 const platform = process.platform === 'win32'
