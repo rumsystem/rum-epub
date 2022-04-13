@@ -23,8 +23,7 @@ import PermissionWriteIcon from '~/assets/permission/write.svg?react';
 import PermissionReadOnlyIcon from '~/assets/permission/readonly.svg?react';
 
 import { dialogService, nodeService, tooltipService } from '~/service';
-import { lang } from '~/utils/lang';
-import { runLoading } from '~/utils';
+import { lang, runLoading } from '~/utils';
 import { GROUP_CONFIG_KEY, GROUP_TEMPLATE_TYPE } from '~/utils/constant';
 import { ThemeRoot } from '~/utils/theme';
 import { GroupIcon, ImageEditor } from '~/components';

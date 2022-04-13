@@ -5,7 +5,7 @@ import { observer, useLocalObservable } from 'mobx-react-lite';
 import { MdClose } from 'react-icons/md';
 import { MenuItem, MenuList, Popover, Input } from '@mui/material';
 
-import { lang } from '~/utils/lang';
+import { lang } from '~/utils';
 import { GROUP_TEMPLATE_TYPE } from '~/utils/constant';
 import { joinGroup } from '~/standaloneModals/joinGroup';
 import { createGroup } from '~/standaloneModals/createGroup';

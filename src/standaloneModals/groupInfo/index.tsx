@@ -5,9 +5,8 @@ import { observer, useLocalObservable } from 'mobx-react-lite';
 import { GroupStatus, IGroup } from '~/apis';
 import { Tooltip, Dialog } from '@mui/material';
 
-import ago from '~/utils/ago';
 import { i18n } from '~/service';
-import { lang } from '~/utils/lang';
+import { lang, ago } from '~/utils';
 import { ThemeRoot } from '~/utils/theme';
 
 export const groupInfo = async (group: IGroup) => new Promise<void>((rs) => {

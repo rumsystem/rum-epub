@@ -12,7 +12,7 @@ import { shareGroup } from '~/standaloneModals/shareGroup';
 import { groupInfo } from '~/standaloneModals/groupInfo';
 
 import { GroupStatus } from '~/apis';
-import { lang } from '~/utils/lang';
+import { lang } from '~/utils';
 import { nodeService } from '~/service';
 
 import { EpubUploadButton } from './EpubUploadButton';

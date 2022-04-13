@@ -1,4 +1,5 @@
 import './processLock';
+import './setupLog';
 import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import ElectronStore from 'electron-store';
 import { initialize, enable } from '@electron/remote/main';

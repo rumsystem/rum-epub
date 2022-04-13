@@ -7,9 +7,8 @@ import { dialog } from '@electron/remote';
 import { OutlinedInput } from '@mui/material';
 import { IoMdCopy } from 'react-icons/io';
 import { Dialog, Button } from '~/components';
-import { sleep, runLoading } from '~/utils';
+import { sleep, runLoading, lang } from '~/utils';
 import { ThemeRoot } from '~/utils/theme';
-import { lang } from '~/utils/lang';
 import { setClipboard } from '~/utils/setClipboard';
 import { fetchSeed } from '~/apis';
 import { nodeService, tooltipService } from '~/service';
@@ -81,7 +80,7 @@ const ShareGroup = observer((props: Props) => {
       const seed = JSON.stringify(state.seed, null, 2);
       const seedName = `seed.${state.groupName}.json`;
       if (!process.env.IS_ELECTRON) {
-        // TODO: remove any in ts4.6
+        // TODO: remove any in future
         const handle = await (window as any).showSaveFilePicker({
           suggestedName: seedName,
           types: [{

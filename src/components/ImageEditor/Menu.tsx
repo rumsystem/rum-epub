@@ -3,7 +3,7 @@ import { observer } from 'mobx-react-lite';
 import { Dialog } from '@mui/material';
 import { Button } from '~/components/Button';
 import { Loading } from '~/components/Loading';
-import { lang } from '~/utils/lang';
+import { lang } from '~/utils';
 
 type MenuItemActions = 'openPresetImages' | 'upload' | 'openImageLib' | 'makeAvatar';
 

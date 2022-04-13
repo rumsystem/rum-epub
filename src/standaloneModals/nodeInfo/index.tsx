@@ -8,7 +8,7 @@ import { Tooltip } from '@mui/material';
 
 import { Dialog, Button, MiddleTruncate } from '~/components';
 
-import { lang } from '~/utils/lang';
+import { lang } from '~/utils';
 import { ThemeRoot } from '~/utils/theme';
 import { nodeService, quorumService, tooltipService } from '~/service';
 

@@ -6,8 +6,7 @@ import { Tooltip, Dialog } from '@mui/material';
 import pixabayApi from '~/apis/pixabay';
 import { Loading } from '~/components/Loading';
 import { SearchInput } from '~/components/SearchInput';
-import { sleep } from '~/utils';
-import { lang } from '~/utils/lang';
+import { sleep, lang } from '~/utils';
 
 const LIMIT = 24;
 

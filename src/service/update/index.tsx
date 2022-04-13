@@ -2,7 +2,7 @@ import React from 'react';
 import { action, observable } from 'mobx';
 import { ipcRenderer, IpcRendererEvent } from 'electron';
 import type { ProgressInfo, UpdateInfo } from 'electron-updater';
-import { lang } from '~/utils/lang';
+import { lang } from '~/utils';
 import { dialogService } from '~/service/dialog';
 import { tooltipService } from '~/service/tooltip';
 

@@ -1,6 +1,5 @@
-import { sendRequest } from './request';
-
 import { sleep } from '~/utils';
+import { sendRequest } from './request';
 
 export interface ProcessStatus {
   up: boolean
@@ -16,9 +15,9 @@ export const getStatus = () =>
     action: 'status',
   });
 
-export const getLogs = () =>
-  sendRequest<{ logs: string }>({
-    action: 'logs',
+export const getLogPath = () =>
+  sendRequest<Array<string>>({
+    action: 'log_path',
   });
 
 export interface UpParam {

@@ -1,7 +1,8 @@
-import path from 'path';
+import path, { join, parse } from 'path';
 import fs from 'fs';
 import childProcess, { ChildProcess } from 'child_process';
 import { app, ipcMain } from 'electron';
+import { create } from 'electron-log';
 import getPort from 'get-port';
 import watch from 'node-watch';
 import ElectronStore from 'electron-store';
@@ -10,6 +11,9 @@ import toml from 'toml';
 const store = new ElectronStore({
   name: 'quorum_port_store',
 });
+
+const quorumLog = create('quorum');
+quorumLog.transports.file.fileName = 'quorum.log';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 const isProduction = !isDevelopment;
@@ -34,7 +38,6 @@ export const state = {
   bootstraps: '',
   port: 0,
   storagePath: '',
-  logs: '',
   cert: '',
   type: '',
   userInputCert: '',
@@ -55,13 +58,7 @@ const actions = {
       storagePath: state.storagePath,
       port: state.port,
       cert: state.cert,
-      logs: state.logs,
       quorumUpdating: state.quorumUpdating,
-    };
-  },
-  logs() {
-    return {
-      logs: state.logs,
     };
   },
   async up(param: any) {
@@ -111,7 +108,6 @@ const actions = {
     });
 
     state.type = param.type;
-    state.logs = '';
     state.userInputCert = '';
     state.bootstraps = bootstraps;
     state.storagePath = storagePath;
@@ -134,10 +130,7 @@ const actions = {
     state.process = peerProcess;
 
     const handleData = (data: string) => {
-      state.logs += data;
-      if (state.logs.length > 1.5 * 1024 ** 2) {
-        state.logs = state.logs.slice(1.5 * 1024 ** 2 - state.logs.length);
-      }
+      quorumLog.log(String(data));
     };
 
     peerProcess.stdout.on('data', handleData);
@@ -197,6 +190,14 @@ const actions = {
         resovle('success');
       });
     });
+  },
+  log_path() {
+    const file = quorumLog.transports.file.getFile();
+    const filePath = file.path;
+    const inf = parse(filePath);
+    const oldPath = join(inf.dir, inf.name + '.old' + inf.ext);
+
+    return [filePath, oldPath];
   },
 };
 

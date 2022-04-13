@@ -7,11 +7,10 @@ import { MdEdit } from 'react-icons/md';
 import { FormControl, InputLabel, OutlinedInput } from '@mui/material';
 
 import { Dialog, Button, GroupIcon, Loading, ImageEditor } from '~/components';
-import { sleep, runLoading } from '~/utils';
+import { sleep, runLoading, lang } from '~/utils';
 import { GROUP_CONFIG_KEY } from '~/utils/constant';
 import { ThemeRoot } from '~/utils/theme';
 import { changeGroupConfig } from '~/apis';
-import { lang } from '~/utils/lang';
 import { tooltipService, nodeService } from '~/service';
 
 export const manageGroup = async (groudId: string, init = false) => new Promise<void>((rs) => {

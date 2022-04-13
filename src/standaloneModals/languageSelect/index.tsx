@@ -7,7 +7,7 @@ import { FormControl, Select, MenuItem } from '@mui/material';
 import { Dialog, Button } from '~/components';
 import { ThemeRoot } from '~/utils/theme';
 import { i18n, AllLanguages } from '~/service';
-import { lang } from '~/utils/lang';
+import { lang } from '~/utils';
 
 export const languageSelect = async () => new Promise<void>((rs) => {
   const div = document.createElement('div');

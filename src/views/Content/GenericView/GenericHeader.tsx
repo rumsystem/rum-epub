@@ -11,7 +11,7 @@ import { GroupIcon } from '~/components';
 import { shareGroup } from '~/standaloneModals/shareGroup';
 import { groupInfo } from '~/standaloneModals/groupInfo';
 
-import { lang } from '~/utils/lang';
+import { lang } from '~/utils';
 import { nodeService } from '~/service';
 
 import { GroupStatus } from '~/apis';

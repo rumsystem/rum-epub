@@ -8,7 +8,7 @@ import { Menu, MenuItem } from '@mui/material';
 import { IGroup } from '~/apis';
 import { manageGroup } from '~/standaloneModals/manageGroup';
 import { groupInfo } from '~/standaloneModals/groupInfo';
-import { lang } from '~/utils/lang';
+import { lang } from '~/utils';
 import { nodeService, dialogService, loadingService, tooltipService } from '~/service';
 
 import IconSeednetManage from '~/assets/icon_seednet_manage.svg';

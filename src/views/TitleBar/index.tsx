@@ -6,7 +6,7 @@ import { getCurrentWindow, shell, app } from '@electron/remote';
 import { Tooltip } from '@mui/material';
 import { Check } from '@mui/icons-material';
 
-import { lang } from '~/utils/lang';
+import { lang } from '~/utils';
 import {
   i18n,
   AllLanguages,
@@ -16,9 +16,9 @@ import {
   updateService,
 } from '~/service';
 import { nodeInfoModal } from '~/standaloneModals/nodeInfo';
-
 import IconLangLocal from '~/assets/lang_local.svg';
 import { TitleBarItem, TitleBarMenuItem } from './TitleBarItem';
+import { exportLog } from './helper';
 
 import './index.sass';
 
@@ -58,27 +58,15 @@ export const TitleBar = observer((props: Props) => {
         {
           text: lang.devtools,
           action: () => {
-            if (!process.env.IS_ELECTRON) {
-              // TODO:
-              // eslint-disable-next-line no-alert
-              alert('TODO');
-              return;
-            }
             getCurrentWindow().webContents.toggleDevTools();
           },
         },
-        // {
-        //   text: lang.exportLogs,
-        //   action: () => {
-        //     if (!process.env.IS_ELECTRON) {
-        //       // TODO:
-        //       // eslint-disable-next-line no-alert
-        //       alert('TODO');
-        //       return;
-        //     }
-        //     getCurrentWindow().webContents.send('export-logs');
-        //   },
-        // },
+        {
+          text: lang.exportLogs,
+          action: () => {
+            exportLog();
+          },
+        },
         {
           text: lang.clearCache,
           action: async () => {
@@ -134,40 +122,6 @@ export const TitleBar = observer((props: Props) => {
         nodeInfoModal();
       },
     },
-    // nodeStore.connected && {
-    //   text: lang.accountAndSettings,
-    //   children: [
-    //     {
-    //       text: lang.myGroup,
-    //       action: () => {
-    //         // TODO:
-    //         // myGroup();
-    //       },
-    //     },
-    //     {
-    //       text: lang.changeFontSize,
-    //       action: () => {
-    //         // TODO:
-    //         // changeFontSize();
-    //       },
-    //     },
-    //     {
-    //       text: lang.exportKey,
-    //       action: () => {
-    //         // TODO:
-    //         // exportKeyData();
-    //       },
-    //       hidden: !nodeStore.connected,
-    //     },
-    //     {
-    //       text: lang.importKey,
-    //       action: () => {
-    //         // TODO:
-    //         // importKeyData();
-    //       },
-    //     },
-    //   ],
-    // },
     {
       text: (
         <Tooltip

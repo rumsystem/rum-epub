@@ -3,6 +3,8 @@ import escapeStringRegexp from 'escape-string-regexp';
 import { runInAction } from 'mobx';
 
 export * from './PollingTask';
+export * from './ago';
+export * from './lang';
 
 export const setIntervalAsTimeout = (fn: (...a: Array<any>) => any, interval?: number) => {
   let timerId = 0;

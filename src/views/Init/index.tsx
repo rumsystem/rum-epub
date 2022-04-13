@@ -3,7 +3,7 @@ import { observer } from 'mobx-react-lite';
 import { CircularProgress } from '@mui/material';
 
 import { nodeService, quorumService, dialogService, dbService } from '~/service';
-import { lang } from '~/utils/lang';
+import { lang } from '~/utils';
 
 interface Props {
   onInitSuccess: () => unknown

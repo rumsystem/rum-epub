@@ -3,7 +3,7 @@ import { observer } from 'mobx-react-lite';
 import { Button } from '~/components';
 import { joinGroup } from '~/standaloneModals/joinGroup';
 import { createGroup } from '~/standaloneModals/createGroup';
-import { lang } from '~/utils/lang';
+import { lang } from '~/utils';
 
 export default observer(() => (
   <div className="-mt-12 text-18 text-gray-9b" data-test-id="welcome-page">

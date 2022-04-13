@@ -257,6 +257,7 @@ const startPolling = (restart = false) => {
   if (!restart && Object.values(state.pollings).some(Boolean)) {
     throw new Error('can\'t start polling twice');
   }
+
   if (restart) {
     stopPolling();
   }
