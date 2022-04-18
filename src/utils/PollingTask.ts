@@ -13,7 +13,7 @@ export class PollingTask {
     this.task = async () => {
       if (this.stopFlag) { return; }
       this.taskRunning = true;
-      await Promise.resolve(task()).catch(() => 1);
+      await Promise.resolve(task()).catch((e) => console.error(e));
       this.taskRunning = false;
       if (this.stopFlag) { return; }
       this.timerId = window.setTimeout(() => {

@@ -1,12 +1,12 @@
 import { action, observable, runInAction } from 'mobx';
 import * as E from 'fp-ts/lib/Either';
 import * as O from 'fp-ts/lib/Option';
+import { pipe } from 'fp-ts/lib/function';
 import { fetchContents, IPostContentResult, postContent } from '~/apis';
 import { promiseAllSettledThrottle, runLoading, sleep } from '~/utils';
 import { dbService, FileInfo } from '~/service/db';
-import { parseEpub, ParsedEpubBook, checkTrx, EpubItem, hashBufferSha256 } from './helper';
-import { busService } from '../bus';
-import { pipe } from 'fp-ts/lib/function';
+import { busService } from '~/service/bus';
+import { parseEpub, ParsedEpubBook, checkTrxAndAck, EpubItem, hashBufferSha256 } from './helper';
 
 export * from './helper';
 
@@ -131,7 +131,7 @@ const doUpload = (groupId: string) => {
         (l) => changeProgressStatus('fileinfo', l ? 'uploading' : 'done'),
         async () => {
           fileInfoTrx = await postContent(fileInfoPostData as any);
-          await checkTrx(groupId, fileInfoTrx.trx_id);
+          await checkTrxAndAck(groupId, fileInfoTrx.trx_id);
         },
       );
 
@@ -157,7 +157,7 @@ const doUpload = (groupId: string) => {
           (l) => changeProgressStatus(seg.id, l ? 'uploading' : 'done'),
           async () => {
             const segTrx = await postContent(segData as any);
-            await checkTrx(groupId, segTrx.trx_id);
+            await checkTrxAndAck(groupId, segTrx.trx_id);
           },
         );
       });

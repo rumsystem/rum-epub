@@ -3,6 +3,7 @@ import { quorumService } from './quorum';
 import { epubService } from './epub';
 import { readerSettingsService } from './readerSettings';
 import { updateService } from './update';
+import { trxAckService } from './trxAck';
 
 export * from './bus';
 export * from './db';
@@ -14,6 +15,7 @@ export * from './node';
 export * from './quorum';
 export * from './readerSettings';
 export * from './tooltip';
+export * from './trxAck';
 export * from './update';
 
 export const initService = () => {
@@ -34,6 +36,7 @@ export const initService = () => {
     readerSettingsService.init(),
     epubService.init(),
     updateService.init(),
+    trxAckService.init(),
   ];
 
   return () => disposes.forEach((v) => v());

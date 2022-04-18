@@ -7,6 +7,7 @@ import * as E from 'fp-ts/lib/Either';
 import { fetchTrx } from '~/apis';
 import { sleep } from '~/utils';
 import { FileInfo } from '~/service/db';
+import { trxAckService } from '~/service/trxAck';
 
 export interface ParsedEpubBook {
   fileInfo: FileInfo
@@ -111,7 +112,7 @@ export interface EpubItem {
   // file: Buffer
 }
 
-export const checkTrx = async (groupId: string, trxId: string) => {
+const checkTrx = async (groupId: string, trxId: string) => {
   for (;;) {
     try {
       const trx = await fetchTrx(groupId, trxId);
@@ -125,6 +126,11 @@ export const checkTrx = async (groupId: string, trxId: string) => {
     }
   }
 };
+
+export const checkTrxAndAck = (groupId: string, trxId: string) => Promise.all([
+  trxAckService.awaitAck(groupId, trxId),
+  checkTrx(groupId, trxId),
+]);
 
 export interface ZipResult { zip: ZipFile, entries: Array<Entry> }
 
