@@ -115,7 +115,7 @@ const MyNodeInfo = observer((props: Props) => {
 
               <div
                 className="flex items-center hover:font-bold cursor-pointer"
-                onClick={() => { state.showNetworkInfoModal = true; }}
+                onClick={action(() => { state.showNetworkInfoModal = true; })}
               >
                 {lang.networkStatus}
               </div>
@@ -132,7 +132,7 @@ const MyNodeInfo = observer((props: Props) => {
         </div>
         <NetworkInfoModal
           open={state.showNetworkInfoModal}
-          onClose={() => { state.showNetworkInfoModal = false; }}
+          onClose={action(() => { state.showNetworkInfoModal = false; })}
         />
       </div>
     </Dialog>
