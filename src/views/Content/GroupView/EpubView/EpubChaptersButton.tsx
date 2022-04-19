@@ -134,7 +134,7 @@ interface EpubChaptersProps {
 const EpubChapters = (props: EpubChaptersProps) => (
   <div className={classNames(props.className)}>
     {!props.chapters.length && !props.nonRoot && (
-      <MenuItem className="">
+      <MenuItem className="flex flex-center">
         暂无章节
       </MenuItem>
     )}
