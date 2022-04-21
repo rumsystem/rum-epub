@@ -114,7 +114,20 @@ const ImageLib = observer((props: any) => {
           }}
           ref={rootRef}
         >
-          <div className="grid-container">
+          <div
+            className="grid-container"
+            style={{
+              padding: '10px 4px',
+              width: '100%',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gridAutoRows: 'minmax(62px, 62px)',
+              rowGap: '24px',
+              columnGap: '0',
+              alignItems: 'center',
+              justifyItems: 'center',
+            }}
+          >
             {state.images.map((image: any) => (
               <div key={image.id} id={image.id}>
                 <Tooltip
@@ -142,6 +155,8 @@ const ImageLib = observer((props: any) => {
                   <div
                     className="rounded image cursor-pointer"
                     style={{
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center center',
                       backgroundImage: `url(${image.webformatURL.replace(
                         '_640',
                         '_180',
@@ -186,30 +201,6 @@ const ImageLib = observer((props: any) => {
           )}
           <div ref={sentryRef} />
         </div>
-        <style jsx>
-          {`
-            .image {
-              background-size: cover;
-              background-position: center center;
-            }
-            .grid-container {
-              padding: 10px 4px;
-              width: 100%;
-              display: grid;
-              grid-template-columns: repeat(4, 1fr);
-              grid-auto-rows: minmax(62px, 62px);
-              row-gap: 24px;
-              column-gap: 0;
-              align-items: center;
-              justify-items: center;
-            }
-            .grid-container.sm {
-              padding: 10px 12px;
-              grid-template-columns: repeat(2, 1fr);
-              row-gap: 38px;
-            }
-          `}
-        </style>
       </div>
     </div>
   );

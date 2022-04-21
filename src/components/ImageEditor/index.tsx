@@ -175,6 +175,7 @@ export const ImageEditor = observer((props: IProps) => {
             <div
               className="top-0 canvas-container absolute"
               style={{
+                transformOrigin: 'top',
                 transform: `translateX(-50%) scale(${editorPlaceholderScale})`,
                 left: '50%',
               }}
@@ -190,7 +191,7 @@ export const ImageEditor = observer((props: IProps) => {
             </div>
           </div>
 
-          <div className="slider-box flex items-center py-1 pl-4 pr-2 mt-[0px] text-xl text-gray-500 relative">
+          <div className="slider-box flex items-center text-gray-500 relative mt-[0px]  py-[14px] px-0 text-28">
             <div className="text-20 opacity-50 absolute top-0 left-0 mt-[9px] -ml-6">
               <RiZoomOutLine />
             </div>
@@ -220,11 +221,6 @@ export const ImageEditor = observer((props: IProps) => {
             </Button>
           </div>
         </div>
-        <style jsx>{`
-          .canvas-container {
-            transform-origin: top;
-          }
-        `}</style>
       </div>
     </div>
   );
@@ -347,53 +343,6 @@ export const ImageEditor = observer((props: IProps) => {
       >
         {Content()}
       </Dialog>
-      <style jsx>{`
-        .shift-hidden {
-          position: absolute;
-          top: 0;
-          left: -2999px;
-        }
-        .form-item {
-          max-width: 320px;
-        }
-        .slider-box {
-          padding: 14px 0;
-          display: flex;
-          align-items: center;
-          font-size: 28px;
-        }
-        .slider-box .zoom-icon {
-          font-size: 26px !important;
-        }
-        .save-button {
-          margin: 14px;
-          align-self: center;
-        }
-        .avatar-edit-box {
-          cursor: pointer;
-          overflow: hidden;
-          position: relative;
-          border: 2px solid hsl(212, 12%, 90%);
-        }
-        .avatar-edit-box img {
-          height: 100%;
-          width: 100%;
-        }
-        .avatar-edit-box .edit-button-wrap {
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          width: 100%;
-          z-index: 2;
-        }
-        .avatar-edit-box .edit-button {
-          color: white;
-          padding: 5px 8px;
-          background: #262b32;
-          opacity: 0.9;
-          width: 100%;
-        }
-      `}</style>
     </div>
   );
 });

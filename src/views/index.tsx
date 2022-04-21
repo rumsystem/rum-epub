@@ -4,7 +4,6 @@ import { action } from 'mobx';
 import { observer } from 'mobx-react-lite';
 
 import { ThemeRoot } from '~/utils/theme';
-import { preloadAvatars } from '~/utils/avatars';
 import { loadInspect } from '~/utils/inspect';
 
 import { initService, quorumService } from '~/service';
@@ -19,7 +18,6 @@ import Content from './Content';
 
 export const App = observer(() => {
   React.useEffect(() => {
-    preloadAvatars();
     loadInspect();
     const dispose = initService();
     return dispose;

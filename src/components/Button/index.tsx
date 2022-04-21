@@ -43,6 +43,7 @@ export const Button = React.forwardRef<HTMLButtonElement, Props>((props, ref) =>
       className={classNames(
         'button',
         className,
+
         {
           'w-full': fullWidth,
           [size]: size,
@@ -66,6 +67,19 @@ export const Button = React.forwardRef<HTMLButtonElement, Props>((props, ref) =>
           'rounded-full': !noRound,
         },
         'outline-none leading-none',
+        size === 'tiny' && 'min-w-[45px] text-12 py-[5px] px-[7px]',
+        size === 'tiny' && outline && 'py-[4px] px-[6px]',
+        size === 'mini' && 'min-w-[45px] text-12 py-[6px] px-[12px]',
+        size === 'mini' && outline && 'py-[5px] px-[11px]',
+        size === 'small' && 'min-w-[60px] text-13 py-[7px] px-[14px]',
+        size === 'small' && outline && 'py-[6px] px-[13px]',
+        size === 'normal' && 'text-14 py-[9px] px-[24px]',
+        size === 'normal' && fullWidth && 'text-15 py-[11px] px-[24px]',
+        size === 'normal' && outline && 'py-[8px] px-[23px]',
+        size === 'large' && 'text-14 py-[11px] px-[24px]',
+        size === 'large' && fullWidth && 'text-15 py-[11px] px-[24px]',
+        size === 'large' && outline && 'py-[10px] px-[23px]',
+        disabled && 'text-[rgba(0,0,0,0.26)] bg-[rgba(0,0,0,0.12)]',
       )}
       ref={ref}
       onClick={() => {
@@ -84,58 +98,6 @@ export const Button = React.forwardRef<HTMLButtonElement, Props>((props, ref) =>
           size={hideText ? 15 : 12}
         />
       </div>
-      <style jsx>{`
-        .button.tiny {
-          min-width: 45px;
-          font-size: 12px;
-          padding: 5px 7px;
-        }
-        .button.tiny.outline {
-          padding: 4px 6px;
-        }
-        .button.mini {
-          min-width: 45px;
-          font-size: 12px;
-          padding: 6px 12px;
-        }
-        .button.mini.outline {
-          padding: 5px 11px;
-        }
-        .button.small {
-          min-width: 60px;
-          font-size: 13px;
-          padding: 7px 14px;
-        }
-        .button.small.outline {
-          padding: 6px 13px;
-        }
-        .button.normal {
-          font-size: 14px;
-          padding: 9px 24px;
-        }
-        .button.normal.w-full {
-          font-size: 15px;
-          padding: 11px 24px;
-        }
-        .button.normal.outline {
-          padding: 8px 23px;
-        }
-        .button.large {
-          font-size: 14px;
-          padding: 11px 24px;
-        }
-        .button.large.w-full {
-          font-size: 15px;
-          padding: 11px 24px;
-        }
-        .button.large.outline {
-          padding: 10px 23px;
-        }
-        .button[disabled] {
-          color: rgba(0, 0, 0, 0.26);
-          background-color: rgba(0, 0, 0, 0.12);
-        }
-      `}</style>
     </button>
   );
 });

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Rum</title>
+    <!-- preflight-injection-point -->
+    <!-- mui-insertion-point -->
+  </head>
+  <body>
+    <div id="root">
+      <div class="loading"></div>
+      <style>
+        body {
+          margin: 0;
+        }
+        #root {
+          display: flex;
+          flex-flow: column;
+          width: 100vw;
+          height: 100vh;
+        }
+        .loading {
+          flex: 1;
+          height: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #afafaf;
+          font-size: 16px;
+          margin-top: -30px;
+        }
+      </style>
+    </div>
+    <script>
+      if (typeof process === 'object' && process.env.NODE_ENV === 'development') {
+        const loadingElement = document.querySelector('.loading');
+        loadingElement.innerHTML = 'loading...';
+      }
+    </script>
+    <script>
+      (() => {
+        const injectStyleTo = (comment, style) => {
+          const commentNode = Array.from(document.head.childNodes)
+            .filter((v) => v.nodeType === 8)
+            .find((v) => v.textContent?.includes(comment));
+          document.head.insertBefore(style, commentNode);
+        };
+        const originalAppendChild = document.head.appendChild
+        document.head.appendChild = (node) => {
+          if (node.nodeType === 1 && node.tagName === 'STYLE') {
+            if (node.innerHTML.startsWith('.tailwind-base-style')) {
+              injectStyleTo('preflight-injection-point', node);
+              return
+            }
+          }
+          originalAppendChild.call(document.head, node)
+        }
+      })()
+    </script>
+    <script type="module" src="/src/index.tsx"></script>
+  </body>
+</html>

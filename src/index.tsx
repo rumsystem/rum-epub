@@ -1,5 +1,4 @@
 import './utils/bootstrap';
-import React from 'react';
 import { ipcRenderer } from 'electron';
 import { createRoot } from 'react-dom/client';
 import { App } from './views';

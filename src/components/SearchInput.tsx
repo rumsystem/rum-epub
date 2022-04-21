@@ -4,6 +4,7 @@ import { TextField } from '@mui/material';
 import { MdSearch, MdClose } from 'react-icons/md';
 import { sleep, lang } from '~/utils';
 import { tooltipService } from '~/service';
+import classNames from 'classnames';
 
 interface IProps {
   size?: string
@@ -56,28 +57,50 @@ export const SearchInput = observer((props: IProps) => {
 
   return (
     <div className="relative">
-      <div className="text-20 text-gray-af flex items-center absolute top-0 left-0 z-10 mt-7-px ml-10-px">
+      <div className="text-20 text-gray-af flex items-center absolute top-0 left-0 h-full z-10 ml-[10px]">
         <MdSearch />
       </div>
-      {state.value && (
-        <div className="flex items-center absolute top-0 right-0 z-10 mr-10-px mt-7-px cursor-pointer">
+      {state.value && !props.disabledClearButton && (
+        <div className="flex items-center absolute top-0 right-0 z-10 h-full mr-[10px] mt-7-px cursor-pointer">
           <div
-            className="flex items-center h-5 w-5 justify-center bg-gray-f7 text-black rounded-full text-18"
+            className="flex items-center justify-center bg-gray-f7 text-black rounded-full text-18"
             onClick={async () => {
               state.value = '';
               await sleep(200);
               props.search('');
             }}
           >
-            {!props.disabledClearButton && <MdClose />}
+            <MdClose />
           </div>
         </div>
       )}
       <form action="/">
         <TextField
-          className={`search-input ${props.className || 'w-72'} ${
-            props.size || ''
-          }`}
+          className={classNames(
+            'search-input',
+            props.className,
+          )}
+          classes={{
+            root: '',
+          }}
+          InputLabelProps={{
+            classes: {
+              outlined: '',
+            },
+          }}
+          inputProps={{
+            className: classNames(
+              'text-gray-88',
+              props.size !== 'small' && 'pt-[10px] pr-[10px] pb-[9px] pl-[34px]',
+              props.size === 'small' && 'pt-[8px] pr-[11px] pb-[7px] pl-[36px]',
+            ),
+          }}
+          InputProps={{
+            className: 'rounded-full',
+            classes: {
+              notchedOutline: 'border-2 border-gray-33',
+            },
+          }}
           placeholder={props.placeholder || '搜索'}
           size="small"
           autoFocus={props.autoFocus || false}
@@ -90,22 +113,6 @@ export const SearchInput = observer((props: IProps) => {
           type="search"
         />
       </form>
-      <style jsx global>{`
-        .search-input .MuiOutlinedInput-notchedOutline {
-          border-width: 2px;
-          border-color: #333;
-        }
-        .search-input .MuiOutlinedInput-root {
-          border-radius: 30px !important;
-        }
-        .search-input .MuiOutlinedInput-input {
-          color: #888888 !important;
-          padding: 10px 10px 9px 34px;
-        }
-        .search-input.small .MuiOutlinedInput-input {
-          padding: 8px 11px 7px 36px;
-        }
-      `}</style>
     </div>
   );
 });

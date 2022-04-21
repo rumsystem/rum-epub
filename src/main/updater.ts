@@ -15,7 +15,6 @@ const events = [
 events.forEach((eventName) => {
   autoUpdater.on(eventName, (data) => {
     BrowserWindow.getAllWindows().forEach((win) => {
-      console.log('send', data);
       win.webContents.send('rum-updater', {
         type: eventName,
         data,

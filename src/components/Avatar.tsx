@@ -25,6 +25,7 @@ export const Avatar = (props: IProps) => {
         <img
           className="rounded-full border-shadow overflow-hidden w-full h-full"
           src={props.url}
+          style={{ border: '2px solid hsl(212, 12%, 90%)' }}
           alt="avatar"
         />
         {props.loading && (
@@ -38,11 +39,6 @@ export const Avatar = (props: IProps) => {
             </div>
           </Tooltip>
         )}
-        <style jsx>{`
-          .border-shadow {
-            border: 2px solid hsl(212, 12%, 90%);
-          }
-        `}</style>
       </div>
     </div>
   );

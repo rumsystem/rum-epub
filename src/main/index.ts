@@ -50,7 +50,7 @@ const main = () => {
 
     const port = process.env.PORT || 31521;
     if (isDevelopment) {
-      state.win.loadURL(`http://localhost:${port}/dist/index.html`);
+      state.win.loadURL(`http://localhost:${port}/index.html`);
     } else {
       state.win.loadFile('dist/index.html');
     }
@@ -178,3 +178,9 @@ const main = () => {
 if (app.hasSingleInstanceLock()) {
   main();
 }
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.log('unhandledRejection');
+  console.log(reason);
+  console.log(promise);
+});
