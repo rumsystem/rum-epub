@@ -6,6 +6,8 @@ const config = require('./webpack.config.base');
 config.devtool(process.env.DEBUG_PROD === 'true' ? 'source-map' : false);
 config.mode('production');
 
+config.cache(false);
+
 config.performance.maxEntrypointSize((1024 ** 2) * 50);
 config.performance.maxAssetSize((1024 ** 2) * 50);
 

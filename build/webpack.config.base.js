@@ -1,17 +1,14 @@
-const os = require('os');
 const path = require('path');
 const webpack = require('webpack');
 const Config = require('webpack-chain');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
-const workers = Math.min(2, os.cpus().length - 1);
 const config = new Config();
+const resolve = (p) => path.join(__dirname, '..', p);
 
 config.entry('index')
-  .add(path.join(__dirname, '../src/index.tsx'));
-
-config.output.path(path.join(__dirname, '../../src'));
+  .add(resolve('src/index.tsx'));
 
 if (process.env.WEBPACK_BROWSER) {
   config.target('web');
@@ -42,7 +39,8 @@ config.resolve
   .end()
   .alias
   .set('lodash', 'lodash-es')
-  .set('~/assets', path.join(__dirname, '../assets'))
+  .set('react', resolve('node_modules/react'))
+  .set('~/assets', resolve('assets'))
   .end();
 
 config.resolve.set('fallback', {
@@ -51,10 +49,10 @@ config.resolve.set('fallback', {
 
 config.module.rule('js')
   .test(/\.jsx?$/)
-  .use('thread-loader')
-  .loader('thread-loader')
-  .options({ workers })
-  .end()
+  // .use('thread-loader')
+  // .loader('thread-loader')
+  // .options({ workers })
+  // .end()
   .use('babel')
   .loader('babel-loader')
   .end()
@@ -62,10 +60,10 @@ config.module.rule('js')
 
 config.module.rule('ts')
   .test(/\.tsx?$/)
-  .use('thread-loader')
-  .loader('thread-loader')
-  .options({ workers })
-  .end()
+  // .use('thread-loader')
+  // .loader('thread-loader')
+  // .options({ workers })
+  // .end()
   .use('babel')
   .loader('babel-loader')
   .end()
@@ -186,7 +184,7 @@ if (process.env.WEBPACK_BROWSER) {
     .test((p) => /[\\/]assets[\\/]/.test(p) && /\.(jpe?g|png|ico|gif|jpeg|webp)$/.test(p))
     .type('javascript/auto')
     .use('assets-custom-lodaer')
-    .loader(path.join(__dirname, '../src/utils/assets-custom-loader.js'))
+    .loader(resolve('src/utils/assets-custom-loader.js'))
     .end();
 }
 
@@ -212,7 +210,7 @@ config.module.rule('wasm')
 
 config.plugin('html-webpack-plugin')
   .use(HtmlWebpackPlugin, [{
-    template: path.join(__dirname, '../src/template.html'),
+    template: resolve('src/template.html'),
     minify: false,
   }]);
 
