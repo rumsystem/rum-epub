@@ -21,6 +21,7 @@ import NotebookIcon from '~/assets/template/template_icon_notebook.svg?react';
 // import PermissionCommentIcon from '~/assets/permission/comment.svg?react';
 import PermissionWriteIcon from '~/assets/permission/write.svg?react';
 import PermissionReadOnlyIcon from '~/assets/permission/readonly.svg?react';
+import SeedNoopenIcon from '~/assets/icon_seed_noopen.svg?react';
 
 import { dialogService, nodeService, tooltipService } from '~/service';
 import { lang, runLoading } from '~/utils';
@@ -57,6 +58,8 @@ interface Props {
   rs: () => unknown
 }
 
+const TOTAL_STEPS = 2;
+
 const CreateGroup = observer((props: Props) => {
   const state = useLocalObservable(() => ({
     open: false,
@@ -90,7 +93,7 @@ const CreateGroup = observer((props: Props) => {
   });
 
   const handleNextStep = action(() => {
-    if (state.step < 2) {
+    if (state.step < TOTAL_STEPS - 1) {
       state.step += 1;
     } else {
       handleConfirm();
@@ -108,10 +111,17 @@ const CreateGroup = observer((props: Props) => {
     }
 
     const confirmResult = await dialogService.open({
-      title: `确定新建种子网络：${state.name}`,
-      content: '种子网络建立后，将无法修改种子网络的名称，默认权限设置，以及种子网络的模板。',
+      title: '确定新建种子网络：书籍 Epub',
+      content: (
+        <div className="text-center">
+          <p className="mb-4">《{state.name}》</p>
+          <p className="text-14">
+            种子网络建立后，将无法修改种子网络的名称，默认权限设置，以及种子网络的模板。
+          </p>
+        </div>
+      ),
       cancel: '返回修改',
-      confirm: '确认建立种子网络',
+      confirm: '确认创建，上传文件',
     });
     if (confirmResult === 'cancel') { return; }
 
@@ -277,18 +287,21 @@ const CreateGroup = observer((props: Props) => {
                   模板会决定你所创建的产品分发信息及内容呈现的形态。 每一个模板都针对使用场景做了专门的设计和功能优化， 对发布功能、经济系统、社交关系、管理员权限、成员管理等功能的支持会有所不同。*种子网络建立后，无法修改模版。
                 </div>
 
-                <div className="flex justify-center gap-x-20 mt-12">
+                <div className="flex justify-center gap-x-8 mt-12">
                   {([
+                    ['placeholder', null, SeedNoopenIcon],
                     ['epub', GROUP_TEMPLATE_TYPE.EPUB, NotebookIcon],
-                  ] as const).map(([_name, type, GroupIcon], i) => (
+                    ['placeholder', null, SeedNoopenIcon],
+                  ] as const).map(([name, type, GroupIcon], i) => (
                     <div
                       className={classNames(
-                        'relative flex flex-col items-center w-45 p-3 border border-black rounded-md select-none cursor-pointer',
+                        'relative flex flex-col flex-center w-45 px-3 py-4 border rounded-md select-none',
+                        name === 'placeholder' && 'border-gray-af cursor-pointer',
+                        name !== 'placeholder' && 'border-black',
                         state.type === type && 'bg-gray-f7',
-                        // type === 'post' && 'pointer-events-none opacity-60',
                       )}
                       data-test-id={`group-type-${type}`}
-                      onClick={() => handleChangeType(type)}
+                      onClick={() => type && handleChangeType(type)}
                       key={i}
                     >
                       <GroupIcon
@@ -297,12 +310,19 @@ const CreateGroup = observer((props: Props) => {
                           strokeWidth: 2,
                         }}
                       />
-                      <div className="text-16 text-black">
-                        电子书
-                      </div>
-                      <div className="text-14 text-gray-6f">
-                        Epub
-                      </div>
+                      {name === 'placeholder' && (
+                        <div className="mt-2 text-16 text-gray-9c">
+                          未开放
+                        </div>
+                      )}
+                      {name === 'epub' && (<>
+                        <div className="text-16 text-black">
+                          书籍
+                        </div>
+                        <div className="text-14 text-gray-6f">
+                          Epub
+                        </div>
+                      </>)}
 
                       {state.type === type && (
                         <div
@@ -319,21 +339,6 @@ const CreateGroup = observer((props: Props) => {
                 </div>
 
                 <div className="text-14 mt-7 px-5">
-                  {/* {state.type === GROUP_TEMPLATE_TYPE.TIMELINE && (
-                    <div className="animate-fade-in text-center">
-                      {lang.snsDesc}
-                    </div>
-                  )}
-                  {state.type === GROUP_TEMPLATE_TYPE.POST && (
-                    <div className="animate-fade-in text-center">
-                      {lang.forumDesc}
-                    </div>
-                  )}
-                  {state.type === GROUP_TEMPLATE_TYPE.NOTE && (
-                    <div className="animate-fade-in text-center">
-                      {lang.noteDesc}
-                    </div>
-                  )} */}
                   {state.type === GROUP_TEMPLATE_TYPE.EPUB && (
                     <div className="animate-fade-in text-center">
                       epub desc
@@ -343,7 +348,8 @@ const CreateGroup = observer((props: Props) => {
                   )}
                 </div>
               </>)}
-              {state.step === 1 && (<>
+
+              {state.step === 9 && (<>
                 <div className="text-18 font-medium -ml-9">
                   发布类种子网络 - 成员权限设置
                 </div>
@@ -425,7 +431,8 @@ const CreateGroup = observer((props: Props) => {
                   )}
                 </div>
               </>)}
-              {state.step === 2 && (<>
+
+              {state.step === 1 && (<>
                 <div className="text-18 font-medium -ml-9">
                   Epub类种子网络 - 基本信息
                 </div>
@@ -501,7 +508,7 @@ const CreateGroup = observer((props: Props) => {
                 </Button>
                 <StepBox
                   className=""
-                  total={3}
+                  total={TOTAL_STEPS}
                   value={state.step}
                 />
                 <Button
@@ -509,14 +516,14 @@ const CreateGroup = observer((props: Props) => {
                   onClick={handleNextStep}
                   disabled={state.creating}
                 >
-                  {state.step === 2 && '新建种子网络'}
+                  {state.step === TOTAL_STEPS - 1 && '新建种子网络'}
                   {state.creating && (
                     <CircularProgress
                       className="ml-2 -mr-2 text-inherit"
                       size={16}
                     />
                   )}
-                  {state.step !== 2 && '下一步'}
+                  {state.step !== TOTAL_STEPS - 1 && '下一步'}
                 </Button>
               </div>
             </div>

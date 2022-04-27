@@ -5,7 +5,6 @@ import { observer, useLocalObservable } from 'mobx-react-lite';
 import { MdClose } from 'react-icons/md';
 import { MenuItem, MenuList, Popover, Input } from '@mui/material';
 
-import { lang } from '~/utils';
 import { GROUP_TEMPLATE_TYPE } from '~/utils/constant';
 import { joinGroup } from '~/standaloneModals/joinGroup';
 import { createGroup } from '~/standaloneModals/createGroup';
@@ -15,6 +14,7 @@ import IconAddSeedMenu from '~/assets/add_seed_menu.svg';
 import IconAddseed from '~/assets/icon_addseed.svg';
 import IconAddanything from '~/assets/icon_addanything.svg';
 import { sidebarService } from './service';
+import { nodeService } from '~/service';
 
 interface Props {
   groupTypeFilter: 'all' | GROUP_TEMPLATE_TYPE
@@ -66,7 +66,7 @@ export default observer((props: Props) => {
       >
         <div className="flex items-center justify-between h-[70px] border-b border-gray-ec">
           {!state.searchMode && (<>
-            <div className="px-4 text-16 text-gray-4a">全部种子网络</div>
+            <div className="px-4 text-16 text-gray-4a">共{nodeService.state.groups.length}个</div>
             <div className="flex-1" />
             {/* <div className="flex items-center text-16 ml-4">
               <div
@@ -150,7 +150,7 @@ export default observer((props: Props) => {
             src={IconAddseed}
             alt=""
           />
-          <span className="text-16">{lang.joinGroup}</span>
+          <span className="text-16">添加内容种子</span>
         </MenuItem>
         <MenuItem
           className="py-3 px-6 hover:bg-gray-4a"
@@ -165,7 +165,7 @@ export default observer((props: Props) => {
             src={IconAddanything}
             alt=""
           />
-          <span className="text-16">{lang.createGroup}</span>
+          <span className="text-16">创建种子</span>
         </MenuItem>
       </MenuList>
     </Popover>
