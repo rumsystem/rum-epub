@@ -17,11 +17,16 @@ export default async () => {
     const cp = spawn('node', [
       'node_modules/eslint-watch/bin/esw',
       '--color',
+      '--ext',
+      '.js,.jsx,.ts,.tsx',
       '-w',
       'src',
     ]);
     cp.stdout.pipe(process.stdout);
     cp.stderr.pipe(process.stderr);
+    cp.on('error', (err) => {
+      console.error(err);
+    });
   }
 
   const ignores = [

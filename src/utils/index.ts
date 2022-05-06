@@ -4,7 +4,10 @@ import { runInAction } from 'mobx';
 
 export * from './PollingTask';
 export * from './ago';
+export * from './enum';
+export * from './fallback';
 export * from './lang';
+export * from './setClipboard';
 
 export const setIntervalAsTimeout = (fn: (...a: Array<any>) => any, interval?: number) => {
   let timerId = 0;

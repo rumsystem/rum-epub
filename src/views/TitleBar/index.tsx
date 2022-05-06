@@ -44,6 +44,26 @@ export const TitleBar = observer((props: Props) => {
           },
         },
         {
+          text: lang.manual,
+          action: () => {
+            if (process.env.IS_ELECTRON) {
+              shell.openExternal('https://docs.prsdev.club/#/rum-app/');
+            } else {
+              window.open('https://docs.prsdev.club/#/rum-app/');
+            }
+          },
+        },
+        {
+          text: lang.report,
+          action: () => {
+            if (process.env.IS_ELECTRON) {
+              shell.openExternal('https://github.com/noe132/rum-epub/issues');
+            } else {
+              window.open('https://github.com/noe132/rum-epub/issues');
+            }
+          },
+        },
+        {
           text: '退出',
           action: () => {
             ipcRenderer.send('prepare-quit');
@@ -85,31 +105,6 @@ export const TitleBar = observer((props: Props) => {
             ipcRenderer.send('prepare-quit');
             app.relaunch();
             app.quit();
-          },
-        },
-      ],
-    },
-    {
-      text: lang.help,
-      children: [
-        {
-          text: lang.manual,
-          action: () => {
-            if (process.env.IS_ELECTRON) {
-              shell.openExternal('https://docs.prsdev.club/#/rum-app/');
-            } else {
-              window.open('https://docs.prsdev.club/#/rum-app/');
-            }
-          },
-        },
-        {
-          text: lang.report,
-          action: () => {
-            if (process.env.IS_ELECTRON) {
-              shell.openExternal('https://github.com/noe132/rum-epub/issues');
-            } else {
-              window.open('https://github.com/noe132/rum-epub/issues');
-            }
           },
         },
       ],

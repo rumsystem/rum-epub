@@ -1,18 +1,18 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { action } from 'mobx';
+import { action, runInAction } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import copy from 'copy-to-clipboard';
 import { app } from '@electron/remote';
 import { Tooltip } from '@mui/material';
-
 import { Dialog, Button, MiddleTruncate } from '~/components';
 
 import { lang } from '~/utils';
 import { ThemeRoot } from '~/utils/theme';
-import { nodeService, quorumService, tooltipService } from '~/service';
+import { dialogService, nodeService, NODE_TYPE, quorumService, tooltipService } from '~/service';
 
 import NetworkInfoModal from './NetworkInfoModal';
+import NodeParamsModal from './NodeParamsModal';
 
 export const nodeInfoModal = async () => new Promise<void>((rs) => {
   const div = document.createElement('div');
@@ -43,6 +43,7 @@ interface Props {
 const MyNodeInfo = observer((props: Props) => {
   const state = useLocalObservable(() => ({
     open: true,
+    showNodeParamsModal: false,
     showNetworkInfoModal: false,
 
     get port() {
@@ -54,6 +55,39 @@ const MyNodeInfo = observer((props: Props) => {
     state.open = false;
     props.rs();
   });
+
+  const handleExitNode = async () => {
+    const result = await dialogService.open({
+      content: lang.confirmToExitNode,
+      confirm: lang.yes,
+      danger: true,
+    });
+
+    if (result === 'cancel') {
+      return;
+    }
+
+    nodeService.state.nodeInfoConfig = {
+      ...nodeService.state.nodeInfoConfig,
+      type: NODE_TYPE.UNKNOWN,
+      internalNode: null,
+      externalNode: null,
+      historyExtenralNodes: [],
+    };
+
+    runInAction(() => {
+      tooltipService.show({
+        content: '正在退出节点...',
+        type: 'default',
+        timeout: 10000,
+      });
+    });
+
+    await nodeService.saveNodeConfig();
+    await quorumService.internal.down();
+
+    window.location.reload();
+  };
 
   return (
     <Dialog
@@ -103,15 +137,13 @@ const MyNodeInfo = observer((props: Props) => {
               </Tooltip>
               <div className="px-4">|</div>
 
-              {/* {process.env.IS_ELECTRON && (<>
-                <div
-                  className="flex items-center hover:font-bold cursor-pointer"
-                  onClick={() => { state.showNodeParamsModal = true; }}
-                >
-                  {lang.nodeParams}
-                </div>
-                <div className="px-4">|</div>
-              </>)} */}
+              <div
+                className="flex items-center hover:font-bold cursor-pointer"
+                onClick={action(() => { state.showNodeParamsModal = true; })}
+              >
+                {lang.nodeParams}
+              </div>
+              <div className="px-4">|</div>
 
               <div
                 className="flex items-center hover:font-bold cursor-pointer"
@@ -122,17 +154,19 @@ const MyNodeInfo = observer((props: Props) => {
             </div>
           </div>
 
-          {/* {process.env.IS_ELECTRON && (
-            <div className="mt-8">
-              <Button fullWidth color="red" outline onClick={handleExitNode}>
-                {lang.exitNode}
-              </Button>
-            </div>
-          )} */}
+          <div className="mt-8">
+            <Button fullWidth color="red" outline onClick={handleExitNode}>
+              {lang.exitNode}
+            </Button>
+          </div>
         </div>
         <NetworkInfoModal
           open={state.showNetworkInfoModal}
           onClose={action(() => { state.showNetworkInfoModal = false; })}
+        />
+        <NodeParamsModal
+          open={state.showNodeParamsModal}
+          onClose={action(() => { state.showNodeParamsModal = false; })}
         />
       </div>
     </Dialog>

@@ -235,29 +235,33 @@ const parseNewTrx = action((groupId: string) => {
           && trx.Content.file.mediaType === 'application/octet-stream';
 
         if (isFileInfo) {
-          const fileData: FileInfo = JSON.parse(Buffer.from(trx.Content.file.content, 'base64').toString());
-          booksToCaculate.push({
-            bookTrx: trx.TrxId,
-            date: new Date(trx.TimeStamp / 1000000),
-            fileInfo: fileData,
-            status: 'incomplete',
-            file: null,
-            groupId,
-            segmentItem: {
+          try {
+            const fileData: FileInfo = JSON.parse(Buffer.from(trx.Content.file.content, 'base64').toString());
+            booksToCaculate.push({
               bookTrx: trx.TrxId,
+              date: new Date(trx.TimeStamp / 1000000),
+              fileInfo: fileData,
+              status: 'incomplete',
+              file: null,
               groupId,
-              segments: {},
-            },
-          });
+              segmentItem: {
+                bookTrx: trx.TrxId,
+                groupId,
+                segments: {},
+              },
+            });
+          } catch (e) {
+            console.error(e);
+          }
         }
 
         if (isSegment) {
           const name = trx.Content.name;
           const buf = Buffer.from(trx.Content.file.content, 'base64');
+          const sha256 = hashBufferSha256(buf);
           booksToCaculate.forEach((book) => {
             const segment = book.fileInfo.segments.find((v) => v.id === name);
             if (!segment) { return; }
-            const sha256 = hashBufferSha256(buf);
             if (segment.sha256 !== sha256) { return; }
             book.segmentItem.segments[name] = {
               id: name,

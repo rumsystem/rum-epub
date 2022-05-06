@@ -76,6 +76,7 @@ const actions = {
     const peerWsPort = await getPort({ port: store.get('peerWsPort') as number ?? 0 });
     const apiPort = await getPort({ port: store.get('apiPort') as number ?? 0 });
     store.set('peerPort', peerPort);
+    store.set('peerWsPort', peerWsPort);
     store.set('apiPort', apiPort);
 
     const quorumConfig = await getQuorumConfig(`${storagePath}/peerConfig/peer_options.toml`);
@@ -139,7 +140,8 @@ const actions = {
     state.process = peerProcess;
 
     const handleData = (data: string) => {
-      quorumLog.log(String(data));
+      const text = String(data);
+      quorumLog.log(text);
     };
 
     peerProcess.stdout.on('data', handleData);

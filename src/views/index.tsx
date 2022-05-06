@@ -1,7 +1,7 @@
 import React from 'react';
 import classNames from 'classnames';
 import { action } from 'mobx';
-import { observer } from 'mobx-react-lite';
+import { observer, useLocalObservable } from 'mobx-react-lite';
 
 import { ThemeRoot } from '~/utils/theme';
 import { loadInspect } from '~/utils/inspect';
@@ -17,11 +17,23 @@ import { Init } from './Init';
 import Content from './Content';
 
 export const App = observer(() => {
-  React.useEffect(() => {
-    loadInspect();
+  const state = useLocalObservable(() => ({
+    inited: false,
+  }));
+
+  React.useEffect(action(() => {
+    const disposeInspect = loadInspect();
     const dispose = initService();
-    return dispose;
-  }, []);
+    state.inited = true;
+    return () => {
+      dispose();
+      disposeInspect();
+    };
+  }), []);
+
+  if (!state.inited) {
+    return null;
+  }
 
   return (
     <ThemeRoot>

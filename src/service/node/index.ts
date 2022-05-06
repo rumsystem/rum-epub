@@ -1,4 +1,5 @@
-import { action, observable, runInAction } from 'mobx';
+import { action, observable, reaction, runInAction } from 'mobx';
+import * as E from 'fp-ts/Either';
 import {
   IGroup,
   fetchMyGroups,
@@ -22,12 +23,19 @@ import {
 import { PollingTask, sleep } from '~/utils';
 import { dbService } from '~/service/db';
 import { busService } from '~/service/bus';
+import { GROUP_TEMPLATE_TYPE } from '~/utils/constant';
+import { getConfig, NodeInfoStore, NODE_TYPE, writeConfig } from './helper';
+
+export { NODE_TYPE } from './helper';
+export type { NodeInfoStore } from './helper';
 
 export type GroupTrxAuthRecord = Partial<Record<TrxType, AuthType | undefined>>;
+export const GROUP_ORDER_STORAGE_KEY = 'GROUP_ORDER_STORAGE_KEY';
 
 const state = observable({
   groups: [] as Array<IGroup>,
   activeGroupId: '',
+  nodeInfoConfig: null as null | NodeInfoStore,
   nodeInfo: {
     node_id: '',
     node_publickey: '',
@@ -49,12 +57,20 @@ const state = observable({
   denyListMap: new Map<string, Array<AllowOrDenyListItem>>(),
   configMap: new Map<string, Record<string, string | boolean | number>>(),
 
+  groupOrder: [] as Array<string>,
+
   get activeGroup() {
     return this.groups.find((v) => v.group_id === this.activeGroupId) ?? null;
   },
 
   get groupMap() {
     return Object.fromEntries(this.groups.map((v) => [v.group_id, v])) as Record<string, IGroup | undefined>;
+  },
+
+  get filteredGroups() {
+    const filteredGroups = nodeService.state.groups
+      .filter((v) => v.app_key === GROUP_TEMPLATE_TYPE.EPUB);
+    return filteredGroups;
   },
 
   pollings: {
@@ -251,7 +267,64 @@ const changeActiveGroup = action((group: string | IGroup) => {
   state.activeGroupId = groupId;
 });
 
-const init = () => stopPolling;
+const init = action(() => {
+  const orderArr = E.tryCatch(
+    () => JSON.parse(localStorage.getItem(GROUP_ORDER_STORAGE_KEY) ?? ''),
+    (v) => v as Error,
+  );
+
+  if (E.isRight(orderArr) && Array.isArray(orderArr.right)) {
+    state.groupOrder = orderArr.right;
+  }
+
+  const dispose = reaction(
+    () => state.activeGroupId,
+    action(() => {
+      const index = state.groupOrder.indexOf(state.activeGroupId);
+      if (index !== -1) {
+        state.groupOrder.splice(index, 1);
+      }
+      state.groupOrder.unshift(state.activeGroupId);
+      const newOrder = state.groupOrder.filter((v) => state.groups.some((u) => u.group_id === v));
+      state.groups.forEach((v) => {
+        if (!newOrder.includes(v.group_id)) {
+          newOrder.push(v.group_id);
+        }
+      });
+      state.groupOrder = newOrder;
+      localStorage.setItem(GROUP_ORDER_STORAGE_KEY, JSON.stringify(newOrder));
+    }),
+  );
+
+  return () => {
+    dispose();
+    stopPolling();
+  };
+});
+
+const loadNodeConfig = async () => {
+  const config = await getConfig();
+  runInAction(() => {
+    state.nodeInfoConfig = config;
+  });
+};
+
+const saveNodeConfig = async () => {
+  if (!state.nodeInfoConfig) {
+    return;
+  }
+  await writeConfig(state.nodeInfoConfig)();
+};
+
+const resetNodeConfig = async () => {
+  nodeService.state.nodeInfoConfig = {
+    type: NODE_TYPE.UNKNOWN,
+    externalNode: null,
+    internalNode: null,
+    historyExtenralNodes: [],
+  };
+  await saveNodeConfig();
+};
 
 const startPolling = (restart = false) => {
   if (!restart && Object.values(state.pollings).some(Boolean)) {
@@ -293,4 +366,7 @@ export const nodeService = {
   updateAllGroupConfig,
   updateTrxAuthType,
   updateAllGroupTrxAuthType,
+  loadNodeConfig,
+  saveNodeConfig,
+  resetNodeConfig,
 };

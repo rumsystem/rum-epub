@@ -1,7 +1,7 @@
 import React from 'react';
+import { action, reaction } from 'mobx';
 import classNames from 'classnames';
 import { observer, useLocalObservable } from 'mobx-react-lite';
-import escapeStringRegexp from 'escape-string-regexp';
 
 import { lang } from '~/utils';
 import { GROUP_TEMPLATE_TYPE } from '~/utils/constant';
@@ -18,23 +18,29 @@ interface Props {
 
 export default observer((props: Props) => {
   const state = useLocalObservable(() => ({
+    mode: 'recent-open' as 'recent-open' | 'recent-add',
     groupTypeFilter: 'all' as 'all' | GROUP_TEMPLATE_TYPE,
     search: '',
 
-    get groups() {
-      const filteredGroups = nodeService.state.groups.filter((v) => {
-        if (state.search) {
-          const reg = new RegExp(escapeStringRegexp(state.search), 'i');
-          return reg.test(v.group_name);
-        }
-        if (state.groupTypeFilter === 'all') {
-          return true;
-        }
-        return v.app_key === state.groupTypeFilter;
-      });
-      return filteredGroups;
+    order: [] as Array<string>,
+    /** ordered by last open */
+    get orderedGroups() {
+      return [
+        ...this.order
+          .map((v) => nodeService.state.groupMap[v])
+          .filter(<T extends unknown>(v: T | undefined): v is T => !!v),
+        ...nodeService.state.groups.filter((v) => !nodeService.state.groupOrder.includes(v.group_id)),
+      ];
     },
   }));
+
+  React.useEffect(() => reaction(
+    () => state.mode,
+    action(() => {
+      state.order = [...nodeService.state.groupOrder];
+    }),
+    { fireImmediately: true },
+  ), []);
 
   return (
     <div
@@ -94,9 +100,17 @@ export default observer((props: Props) => {
             }}
           />
         )} */}
+        <div className="flex">
+          {['recent-open', 'recent-add'].map((v) => (
+            <button className="flex-1 py-2 text-14" key={v}>
+              {v === 'recent-open' && '最近打开'}
+              {v === 'recent-add' && '最近添加'}
+            </button>
+          ))}
+        </div>
 
         <div className="flex-1 overflow-y-auto">
-          {state.groups.map((v) => (
+          {state.orderedGroups.map((v) => (
             <GroupItem
               group={v}
               highlight=""

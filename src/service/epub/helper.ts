@@ -142,9 +142,9 @@ const readFromZip = async (buffer: Buffer) => new Promise<ZipResult>(
         return;
       }
       const entries: Array<Entry> = [];
-      res!.on('error', (e) => rj(e));
-      res!.on('entry', (e) => entries.push(e));
-      res!.on('end', () => rs({ zip: res!, entries }));
+      res.on('error', (e) => rj(e));
+      res.on('entry', (e) => entries.push(e));
+      res.on('end', () => rs({ zip: res, entries }));
     });
   },
 );
@@ -156,9 +156,9 @@ const readEntryFromZip = async (zipResult: ZipResult, entry: Entry) => new Promi
         rj(err);
       }
       const bufArr: Array<Buffer> = [];
-      stream!.on('data', (c) => bufArr.push(c));
-      stream!.on('end', () => rs(Buffer.concat(bufArr)));
-      stream!.on('error', (e) => rj(e));
+      stream.on('data', (c) => bufArr.push(c));
+      stream.on('end', () => rs(Buffer.concat(bufArr)));
+      stream.on('error', (e) => rj(e));
     });
   },
 );
