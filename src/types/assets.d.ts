@@ -14,6 +14,17 @@ declare module '*.svg?fill' {
   export default content;
 }
 
+declare module '*.svg?fill-icon' {
+  const content: React.FunctionComponent<React.SVGProps<SVGSVGElement>>;
+  export default content;
+}
+
+
+declare module '*.svg?icon' {
+  const content: React.FunctionComponent<React.SVGProps<SVGSVGElement>>;
+  export default content;
+}
+
 declare module '*.png' {
   const content: any;
   export default content;

@@ -3,6 +3,7 @@ import classNames from 'classnames';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import { HiOutlineShare } from 'react-icons/hi';
 import { GoSync } from 'react-icons/go';
+import LockIcon from 'boxicons/svg/regular/bx-lock.svg?fill-icon';
 import { Tooltip } from '@mui/material';
 
 import { GroupMenu } from '~/components/GroupMenu';
@@ -23,6 +24,11 @@ export const EpubHeader = observer(() => {
       const groups = nodeService.state.network.groups ?? [];
       const item = groups.find((v) => v.GroupId === nodeService.state.activeGroupId);
       return item?.Peers?.length ?? 0;
+    },
+    get isPublicGroup() {
+      const groupId = nodeService.state.activeGroupId;
+      const postAuthType = nodeService.state.trxAuthTypeMap.get(groupId)?.POST;
+      return postAuthType === 'FOLLOW_ALW_LIST';
     },
   }));
 
@@ -98,6 +104,10 @@ export const EpubHeader = observer(() => {
             </Tooltip>
           </div>
         </div>
+
+        {!state.isPublicGroup && (
+          <LockIcon className="text-20 text-bright-orange ml-6" />
+        )}
 
         <EpubUploadButton className="ml-8" />
       </div>

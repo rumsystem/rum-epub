@@ -175,7 +175,7 @@ export const EpubUploadButton = observer((props: Props) => {
     <Tooltip title={state.hasWritePermission ? '上传书籍' : '你没有权限在这个种子网络上传内容'}>
       <div className={props.className}>
         <Button
-          className="relative overflow-hidden"
+          className="relative overflow-hidden rounded-none"
           onClick={handleOpen}
           ref={buttonRef}
           disabled={!state.hasWritePermission}
