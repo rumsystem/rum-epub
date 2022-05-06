@@ -11,6 +11,7 @@ import IconFold from '~/assets/fold.svg';
 import GroupItem from './GroupItem';
 import { sidebarService } from './service';
 import Toolbar from './Toolbar';
+import escapeStringRegexp from 'escape-string-regexp';
 
 interface Props {
   className?: string
@@ -27,12 +28,15 @@ export default observer((props: Props) => {
       const orderArr = state.mode === 'recent-add'
         ? nodeService.state.groupJoinOrder
         : state.clickOrder;
+      const reg = this.search
+        ? new RegExp(escapeStringRegexp(this.search))
+        : null;
       return [
         ...orderArr
           .map((v) => nodeService.state.groupMap[v])
           .filter(<T extends unknown>(v: T | undefined): v is T => !!v),
         ...nodeService.state.groups.filter((v) => !orderArr.includes(v.group_id)),
-      ];
+      ].filter((v) => !reg || reg.test(v.group_name));
     },
   }));
 
