@@ -1,4 +1,5 @@
 import { action, observable, reaction, runInAction } from 'mobx';
+import * as J from 'fp-ts/Json';
 import * as E from 'fp-ts/Either';
 import {
   IGroup,
@@ -25,12 +26,14 @@ import { dbService } from '~/service/db';
 import { busService } from '~/service/bus';
 import { GROUP_TEMPLATE_TYPE } from '~/utils/constant';
 import { getConfig, NodeInfoStore, NODE_TYPE, writeConfig } from './helper';
+import { pipe } from 'fp-ts/lib/function';
 
 export { NODE_TYPE } from './helper';
 export type { NodeInfoStore } from './helper';
 
 export type GroupTrxAuthRecord = Partial<Record<TrxType, AuthType | undefined>>;
 export const GROUP_ORDER_STORAGE_KEY = 'GROUP_ORDER_STORAGE_KEY';
+export const GROUP_JOIN_ORDER_STORAGE_KEY = 'GROUP_JOIN_ORDER_STORAGE_KEY';
 
 const state = observable({
   groups: [] as Array<IGroup>,
@@ -58,6 +61,7 @@ const state = observable({
   configMap: new Map<string, Record<string, string | boolean | number>>(),
 
   groupOrder: [] as Array<string>,
+  groupJoinOrder: [] as Array<string>,
 
   get activeGroup() {
     return this.groups.find((v) => v.group_id === this.activeGroupId) ?? null;
@@ -84,15 +88,21 @@ const state = observable({
 
 const updateGroups = async (init = false) => {
   const data = await fetchMyGroups();
+  const groups = data.groups ?? [];
+  groups.sort((a, b) => {
+    if (a.group_name > b.group_name) return 1;
+    if (a.group_name < b.group_name) return -1;
+    if (a.group_id > b.group_id) return 1;
+    if (a.group_id < b.group_id) return -1;
+    return 0;
+  });
   runInAction(() => {
-    const groups = data.groups ?? [];
-    groups.sort((a, b) => {
-      if (a.group_name > b.group_name) return 1;
-      if (a.group_name < b.group_name) return -1;
-      if (a.group_id > b.group_id) return 1;
-      if (a.group_id < b.group_id) return -1;
-      return 0;
+    groups.forEach((v) => {
+      if (!state.groupJoinOrder.includes(v.group_id)) {
+        state.groupJoinOrder.push(v.group_id);
+      }
     });
+    state.groupJoinOrder = state.groupJoinOrder.filter((v) => groups.some((u) => u.group_id === v));
     state.groups = groups;
     if (init) {
       state.activeGroupId = state.groups.length
@@ -268,36 +278,48 @@ const changeActiveGroup = action((group: string | IGroup) => {
 });
 
 const init = action(() => {
-  const orderArr = E.tryCatch(
-    () => JSON.parse(localStorage.getItem(GROUP_ORDER_STORAGE_KEY) ?? ''),
-    (v) => v as Error,
+  state.groupOrder = pipe(
+    J.parse(localStorage.getItem(GROUP_ORDER_STORAGE_KEY) ?? ''),
+    E.map((v) => (Array.isArray(v) ? v as Array<string> : [])),
+    E.getOrElse(() => [] as Array<string>),
   );
 
-  if (E.isRight(orderArr) && Array.isArray(orderArr.right)) {
-    state.groupOrder = orderArr.right;
-  }
+  state.groupJoinOrder = pipe(
+    J.parse(localStorage.getItem(GROUP_JOIN_ORDER_STORAGE_KEY) ?? ''),
+    E.map((v) => (Array.isArray(v) ? v as Array<string> : [])),
+    E.getOrElse(() => [] as Array<string>),
+  );
 
-  const dispose = reaction(
-    () => state.activeGroupId,
-    action(() => {
-      const index = state.groupOrder.indexOf(state.activeGroupId);
-      if (index !== -1) {
-        state.groupOrder.splice(index, 1);
-      }
-      state.groupOrder.unshift(state.activeGroupId);
-      const newOrder = state.groupOrder.filter((v) => state.groups.some((u) => u.group_id === v));
-      state.groups.forEach((v) => {
-        if (!newOrder.includes(v.group_id)) {
-          newOrder.push(v.group_id);
+  const disposes = [
+    reaction(
+      () => state.activeGroupId,
+      action(() => {
+        const index = state.groupOrder.indexOf(state.activeGroupId);
+        if (index !== -1) {
+          state.groupOrder.splice(index, 1);
         }
-      });
-      state.groupOrder = newOrder;
-      localStorage.setItem(GROUP_ORDER_STORAGE_KEY, JSON.stringify(newOrder));
-    }),
-  );
+        state.groupOrder.unshift(state.activeGroupId);
+        const newOrder = state.groupOrder.filter((v) => state.groups.some((u) => u.group_id === v));
+        state.groups.forEach((v) => {
+          if (!newOrder.includes(v.group_id)) {
+            newOrder.push(v.group_id);
+          }
+        });
+        state.groupOrder = newOrder;
+        localStorage.setItem(GROUP_ORDER_STORAGE_KEY, JSON.stringify(newOrder));
+      }),
+    ),
+    reaction(
+      () => JSON.stringify(state.groupJoinOrder),
+      action(() => {
+        localStorage.setItem(GROUP_JOIN_ORDER_STORAGE_KEY, JSON.stringify(state.groupJoinOrder));
+      }),
+    ),
+  ];
+
 
   return () => {
-    dispose();
+    disposes.forEach((v) => v());
     stopPolling();
   };
 });

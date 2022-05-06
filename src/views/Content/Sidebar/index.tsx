@@ -22,22 +22,28 @@ export default observer((props: Props) => {
     groupTypeFilter: 'all' as 'all' | GROUP_TEMPLATE_TYPE,
     search: '',
 
-    order: [] as Array<string>,
-    /** ordered by last open */
+    clickOrder: [] as Array<string>,
     get orderedGroups() {
+      const orderArr = state.mode === 'recent-add'
+        ? nodeService.state.groupJoinOrder
+        : state.clickOrder;
       return [
-        ...this.order
+        ...orderArr
           .map((v) => nodeService.state.groupMap[v])
           .filter(<T extends unknown>(v: T | undefined): v is T => !!v),
-        ...nodeService.state.groups.filter((v) => !nodeService.state.groupOrder.includes(v.group_id)),
+        ...nodeService.state.groups.filter((v) => !orderArr.includes(v.group_id)),
       ];
     },
   }));
 
+  const handleSwitchFilter = action((v: 'recent-open' | 'recent-add') => {
+    state.mode = v;
+  });
+
   React.useEffect(() => reaction(
     () => state.mode,
     action(() => {
-      state.order = [...nodeService.state.groupOrder];
+      state.clickOrder = [...nodeService.state.groupOrder];
     }),
     { fireImmediately: true },
   ), []);
@@ -100,9 +106,16 @@ export default observer((props: Props) => {
             }}
           />
         )} */}
-        <div className="flex">
-          {['recent-open', 'recent-add'].map((v) => (
-            <button className="flex-1 py-2 text-14" key={v}>
+        <div className="flex p-1 pb-0">
+          {(['recent-open', 'recent-add'] as const).map((v) => (
+            <button
+              className={classNames(
+                'flex-1 py-1 text-12 leading-relaxed',
+                state.mode !== v && 'bg-gray-ec',
+              )}
+              key={v}
+              onClick={() => handleSwitchFilter(v)}
+            >
               {v === 'recent-open' && '最近打开'}
               {v === 'recent-add' && '最近添加'}
             </button>
