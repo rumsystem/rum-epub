@@ -160,6 +160,9 @@ const EditEpubMetadata = observer((props: Props) => {
             // eslint-disable-next-line @typescript-eslint/ban-types
             ...(metaData.metadata as {}),
           };
+          if (!state.form.languages.length) {
+            state.form.languages = [''];
+          }
         });
       },
     );
