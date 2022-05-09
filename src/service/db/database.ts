@@ -58,6 +58,12 @@ export interface BookSegmentItem {
     buf: Uint8Array
   }>
 }
+export interface BookMetadataItem {
+  id?: number
+  groupId: string
+  bookTrx: string
+  metadata: any
+}
 
 export class Database extends Dexie {
   public book: Dexie.Table<BookDatabaseItem, number>;
@@ -66,12 +72,13 @@ export class Database extends Dexie {
   public highlights: Dexie.Table<HighlightItem, number>;
   public readingProgress: Dexie.Table<ReadingProgressItem, number>;
   public groupLatestParsedTrx: Dexie.Table<GroupLatestParsedTrxItem, number>;
+  public bookMetadata: Dexie.Table<BookMetadataItem, number>;
 
   public constructor(name: string) {
     super(name);
     applyOldVersions(this);
 
-    this.version(6).stores({
+    this.version(7).stores({
       book: [
         '++id',
         'groupId',
@@ -111,6 +118,12 @@ export class Database extends Dexie {
         'bookTrx',
         '[groupId+bookTrx]',
       ].join(','),
+      bookMetadata: [
+        '++id',
+        'groupId',
+        'bookTrx',
+        '[groupId+bookTrx]',
+      ].join(','),
     }).upgrade(async () => {
       await this.table('book').clear();
     });
@@ -122,6 +135,7 @@ export class Database extends Dexie {
 
     this.highlights = this.table('highlights');
     this.readingProgress = this.table('readingProgress');
+    this.bookMetadata = this.table('bookMetadata');
   }
 
   public get bookRelatedTables() {

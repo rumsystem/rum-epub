@@ -23,6 +23,7 @@ module.exports = {
       colors: {
         'link-blue': '#2492ff',
         'producer-blue': '#0080ff',
+        'nice-blue': '#48a4ff',
         'bright-orange': '#ff931e',
         'owner-cyan': '#3af3af',
         'highlight-green': '#00aa28',

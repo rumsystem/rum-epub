@@ -15,7 +15,7 @@ if (process.env.NODE_ENV === 'development') {
   console.log = (...args: Array<any>) => {
     rendererLog.log(...args);
     const stack = new Error().stack!;
-    const matchedStack = /at console.log.*\n.*?\((.*)\)/.exec(stack);
+    const matchedStack = /at console.log.+?\n.+? at (.+?)\n/.exec(stack);
     const location = matchedStack ? matchedStack[1].trim() : '';
     if (location.includes('node_modules')) {
       defaultLog(...args);

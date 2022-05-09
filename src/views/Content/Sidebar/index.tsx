@@ -7,7 +7,7 @@ import { lang } from '~/utils';
 import { GROUP_TEMPLATE_TYPE } from '~/utils/constant';
 
 import { nodeService } from '~/service';
-import IconFold from '~/assets/fold.svg';
+import IconFold from '~/assets/fold.svg?react';
 import GroupItem from './GroupItem';
 import { sidebarService } from './service';
 import Toolbar from './Toolbar';
@@ -61,24 +61,32 @@ export default observer((props: Props) => {
     >
       <div
         className={classNames(
-          'sidebar-toggle flex justify-center items-center h-15',
-          'absolute right-0 translate-x-full -translate-y-10 top-1/2',
-          'bg-white z-10 rounded-r-xl cursor-pointer',
-          'w-[20px]',
+          'sidebar-toggle flex-col justify-center items-center gap-y-2 py-4',
+          'absolute right-0 translate-x-full -translate-y-1/2 -mt-4 top-1/2',
+          'z-10 rounded-r-xl cursor-pointer',
+          'w-[22px] min-h-[60px]',
+          sidebarService.state.collapsed && 'text-white bg-black',
+          !sidebarService.state.collapsed && 'text-black bg-white',
         )}
         style={{
           boxShadow: '0 1px 6px 0 rgba(0, 0, 0, 0.16)',
         }}
         onClick={sidebarService.toggleSidebar}
       >
-        <img
+        <IconFold
           className={classNames(
+            '',
             !sidebarService.state.collapsed && 'rotate-180',
           )}
-          width="8"
-          src={IconFold}
-          alt=""
         />
+        {sidebarService.state.collapsed && (
+          <div className="leading-tight">
+            最<br />
+            近<br />
+            阅<br />
+            读
+          </div>
+        )}
       </div>
 
       <div

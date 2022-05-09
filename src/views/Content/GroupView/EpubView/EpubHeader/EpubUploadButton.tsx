@@ -9,7 +9,7 @@ import { Rendition } from 'epubjs';
 import { Button, CircularProgress, DialogTitle, Tooltip } from '@mui/material';
 import scrollIntoView from 'scroll-into-view-if-needed';
 import UploadIcon from 'boxicons/svg/regular/bx-upload.svg?fill';
-import FileBlankIcon from 'boxicons/svg/regular/bx-file-blank.svg?fill';
+import FileBlankIcon from 'boxicons/svg/regular/bx-file-blank.svg?fill-icon';
 
 import { Dialog } from '~/components';
 
@@ -175,7 +175,7 @@ export const EpubUploadButton = observer((props: Props) => {
     <Tooltip title={state.hasWritePermission ? '上传书籍' : '你没有权限在这个种子网络上传内容'}>
       <div className={props.className}>
         <Button
-          className="relative overflow-hidden rounded-none"
+          className="relative overflow-hidden"
           onClick={handleOpen}
           ref={buttonRef}
           disabled={!state.hasWritePermission}
@@ -281,13 +281,13 @@ export const EpubUploadButton = observer((props: Props) => {
                 >
                   <div className="flex flex-center w-6 h-6 pt-px">
                     {v.status === 'pending' && (
-                      <FileBlankIcon width="18" className="text-gray-af" />
+                      <FileBlankIcon className="text-gray-af text-22" />
                     )}
                     {v.status === 'uploading' && (
                       <CircularProgress size={14} className="text-blue-400" />
                     )}
                     {v.status === 'done' && (
-                      <FileBlankIcon className="text-blue-400 text-18" />
+                      <FileBlankIcon className="text-blue-400 text-22" />
                     )}
                   </div>
                   <div className="text-14 text-gray-70">

@@ -4,21 +4,25 @@ import { observer, useLocalObservable } from 'mobx-react-lite';
 import { HiOutlineShare } from 'react-icons/hi';
 import { GoSync } from 'react-icons/go';
 import LockIcon from 'boxicons/svg/regular/bx-lock.svg?fill-icon';
-import { Tooltip } from '@mui/material';
+import { Button, Tooltip } from '@mui/material';
 
 import { GroupMenu } from '~/components/GroupMenu';
-import { GroupIcon } from '~/components';
+import { BookCoverImg, BookCoverImgTooltip } from '~/components';
 
 import { shareGroup } from '~/standaloneModals/shareGroup';
 import { groupInfo } from '~/standaloneModals/groupInfo';
 
 import { GroupStatus } from '~/apis';
 import { lang } from '~/utils';
-import { nodeService } from '~/service';
+import { EpubItem, nodeService } from '~/service';
 
 import { EpubUploadButton } from './EpubUploadButton';
 
-export const EpubHeader = observer(() => {
+interface Props {
+  book?: EpubItem | null
+}
+
+export const EpubHeader = observer((props: Props) => {
   const state = useLocalObservable(() => ({
     get peersCount() {
       const groups = nodeService.state.network.groups ?? [];
@@ -51,13 +55,20 @@ export const EpubHeader = observer(() => {
   return (
     <div className="flex items-center justify-between flex-none border-b border-gray-200 h-[70px] pr-6">
       <div className="flex self-stretch items-center flex-1 w-0">
-        <GroupIcon
+        <div className="mx-4 flex-none h-full">
+          <BookCoverImgTooltip book={props.book} placement="bottom">
+            <div className="h-full">
+              <BookCoverImg className="h-full w-auto" book={props.book} />
+            </div>
+          </BookCoverImgTooltip>
+        </div>
+        {/* <GroupIcon
           className="rounded-6 mr-3 ml-6"
           width={44}
           height={44}
           fontSize={24}
           group={group}
-        />
+        /> */}
         <div className="font-bold text-18 tracking-wider truncate max-w-[220px]">
           <span
             className="text-gray-1e cursor-pointer"
@@ -110,6 +121,10 @@ export const EpubHeader = observer(() => {
         )}
 
         <EpubUploadButton className="ml-8" />
+
+        <Button className="ml-6">
+          设为公开，允许发现
+        </Button>
       </div>
 
       <div className="flex items-center gap-x-4">

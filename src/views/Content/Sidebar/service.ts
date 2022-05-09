@@ -1,7 +1,7 @@
 import { action, observable } from 'mobx';
 
 const state = observable({
-  collapsed: false,
+  collapsed: true,
 });
 
 const toggleSidebar = action(() => {

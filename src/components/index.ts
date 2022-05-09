@@ -1,4 +1,5 @@
 export * from './Avatar';
+export * from './BookCoverImg';
 export * from './BookCoverImgTooltip';
 export * from './Button';
 export * from './Dialog';

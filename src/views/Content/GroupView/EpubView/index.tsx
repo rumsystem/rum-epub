@@ -434,6 +434,14 @@ export const EpubView = observer((props: Props) => {
     const ro = new ResizeObserver(handleResize);
     ro.observe(state.renderBox.current!);
 
+    const dispose = reaction(
+      () => state.bookItem,
+      action(() => {
+        epubService.state.currentBookItem = state.bookItem;
+      }),
+      { fireImmediately: true },
+    );
+
     return () => {
       try {
         state.book?.destroy();
@@ -443,6 +451,7 @@ export const EpubView = observer((props: Props) => {
       window.removeEventListener('keydown', handleKeydown);
       window.removeEventListener('mousemove', handleMouseMove);
       ro.disconnect();
+      dispose();
       watchGroupSyncDispose();
     };
   }, []);
@@ -457,7 +466,7 @@ export const EpubView = observer((props: Props) => {
 
   return (
     <div className={classNames('flex-col', props.className)}>
-      <EpubHeader />
+      <EpubHeader book={state.bookItem} />
 
       <div
         className={classNames(

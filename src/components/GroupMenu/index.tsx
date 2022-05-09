@@ -4,10 +4,10 @@ import { observer, useLocalObservable } from 'mobx-react-lite';
 import { FiMoreHorizontal, FiDelete } from 'react-icons/fi';
 import { MdInfoOutline } from 'react-icons/md';
 import { Menu, MenuItem } from '@mui/material';
+import { EditOutlined } from '@mui/icons-material';
 
 import { IGroup } from '~/apis';
-import { manageGroup } from '~/standaloneModals/manageGroup';
-import { groupInfo } from '~/standaloneModals/groupInfo';
+import { manageGroup, groupInfo, editEpubMetadata } from '~/standaloneModals';
 import { lang } from '~/utils';
 import { nodeService, dialogService, loadingService, tooltipService } from '~/service';
 
@@ -86,6 +86,11 @@ export const GroupMenu = observer((props: Props) => {
     handleMenuClose();
   };
 
+  const handleEditMetadata = () => {
+    editEpubMetadata();
+    handleMenuClose();
+  };
+
   return (<>
     <div
       className={props.className}
@@ -110,11 +115,6 @@ export const GroupMenu = observer((props: Props) => {
         horizontal: 'right',
       }}
       autoFocus={false}
-      PaperProps={{
-        style: {
-          width: 150,
-        },
-      }}
     >
       <MenuItem onClick={openGroupInfoModal}>
         <div className="flex items-center text-gray-600 leading-none pl-1 py-2">
@@ -141,6 +141,16 @@ export const GroupMenu = observer((props: Props) => {
               <img className="text-16 opacity-50" src={IconSeednetManage} />
             </span>
             <span className="font-bold text-14">{lang.manageGroup}</span>
+          </div>
+        </MenuItem>
+      )}
+      {isGroupOwner && (
+        <MenuItem onClick={handleEditMetadata}>
+          <div className="flex items-center text-gray-600 leading-none pl-1 py-2">
+            <span className="flex items-center w-7 flex-none">
+              <EditOutlined className="text-18" />
+            </span>
+            <span className="font-bold text-14">编辑书籍元信息</span>
           </div>
         </MenuItem>
       )}

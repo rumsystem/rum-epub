@@ -1,4 +1,5 @@
 import { action, observable, runInAction } from 'mobx';
+import * as J from 'fp-ts/lib/Json';
 import * as E from 'fp-ts/lib/Either';
 import * as O from 'fp-ts/lib/Option';
 import { pipe } from 'fp-ts/lib/function';
@@ -32,6 +33,8 @@ interface GroupStateItem {
 const state = observable({
   groupMap: new Map<string, GroupStateItem>(),
   bookBufferLRUCache: new Map<string, { buf: Uint8Array, time: number }>(),
+
+  currentBookItem: null as null | EpubItem,
 });
 
 const getGroupItem = action((groupId: string) => {
@@ -233,6 +236,8 @@ const parseNewTrx = action((groupId: string) => {
         const isSegment = trx.Content.type === 'File'
           && /^seg-\d+$/.test(trx.Content.name ?? '')
           && trx.Content.file.mediaType === 'application/octet-stream';
+        const isEpubMetadata = trx.Content.type === 'Note'
+          && trx.Content.name === 'epubMetadata';
 
         if (isFileInfo) {
           try {
@@ -269,6 +274,21 @@ const parseNewTrx = action((groupId: string) => {
               buf,
             };
           });
+        }
+
+        if (isEpubMetadata) {
+          const content = trx.Content.content;
+          const metadata = J.parse(content);
+          if (E.isRight(metadata)) {
+            const item = {
+              groupId,
+              bookTrx: trx.Content.id,
+              metadata: metadata.right,
+            };
+            await dbService.db.transaction('rw', [dbService.db.bookMetadata], async () => {
+              await dbService.db.bookMetadata.add(item);
+            });
+          }
         }
       }
       nextTrx = res.at(-1)!.TrxId;
