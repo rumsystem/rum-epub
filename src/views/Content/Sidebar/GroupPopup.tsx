@@ -1,24 +1,13 @@
 import React from 'react';
-import { format } from 'date-fns';
-import { observer, useLocalObservable } from 'mobx-react-lite';
+import { observer } from 'mobx-react-lite';
 import { FiDelete } from 'react-icons/fi';
 import { MdInfoOutline } from 'react-icons/md';
 import { ClickAwayListener, ClickAwayListenerProps } from '@mui/material';
 
-// import { IGroup } from 'quorum-sdk-electron-renderer';
-// import { IProfile } from '~/apis/content';
-// import useDatabase from '~/hooks/useDatabase';
-// import { getFirstBlock } from '~/hooks/useDatabase/models/object';
-// import { getUser } from '~/hooks/useDatabase/models/person';
-// import { useLeaveGroup } from '~/hooks/useLeaveGroup';
-import { IGroup, IProfile } from '~/apis';
-import { Avatar } from '~/components';
+import { IGroup } from '~/apis';
 import { groupInfo } from '~/standaloneModals/groupInfo';
 
 import { lang, sleep } from '~/utils';
-import { getGroupIcon } from '~/utils/getGroupIcon';
-
-import WalletIcon from '~/assets/icon_wallet.svg?react';
 
 interface Props {
   group: IGroup
@@ -27,10 +16,9 @@ interface Props {
 }
 
 export const GroupPopup = observer((props: Props) => {
-  const state = useLocalObservable(() => ({
-    profile: null as IProfile | null,
-    createdTime: 0,
-  }));
+  // const state = useLocalObservable(() => ({
+  //   profile: null as IProfile | null,
+  // }));
   // const db = useDatabase();
   // const leaveGroup = useLeaveGroup();
   // const getData = async () => {
@@ -49,7 +37,7 @@ export const GroupPopup = observer((props: Props) => {
   //   state.profile = user.profile;
   //   state.createdTime = (block?.TimeStamp ?? 0) / 1000000;
   // };
-  const isOwner = props.group.role === 'owner';
+  // const isOwner = props.group.role === 'owner';
 
   const handleLeaveGroup = () => {
     // let confirmText = '';
@@ -78,12 +66,12 @@ export const GroupPopup = observer((props: Props) => {
   };
 
   React.useEffect(() => {
-    // getData().catch(console.error);
+    // epubService.parseMetadata(props.group.group_id)
   }, []);
 
-  const GroupTypeIcon = getGroupIcon(props.group.app_key);
+  // const GroupTypeIcon = getGroupIcon(props.group.app_key);
   // const groupDesc = (groupStore.configMap.get(props.group.group_id)?.[GROUP_CONFIG_KEY.GROUP_DESC] ?? '') as string;
-  const groupDesc = '';
+  // const groupDesc = '';
 
   return (
     <ClickAwayListener
@@ -92,28 +80,18 @@ export const GroupPopup = observer((props: Props) => {
     >
       <div className="shadow-3 w-[400px] border-black border text-white">
         <div className="flex items-center bg-black h-[50px] px-4">
-          <GroupTypeIcon
-            className="text-white ml-1 mr-2 mt-[2px] flex-none"
-            style={{ strokeWidth: 4 }}
-            width="20"
-          />
           <div className="flex-1 text-16 truncate">
-            {props.group.group_name}
+            《{props.group.group_name}》
           </div>
-          {!!state.createdTime && (
-            <div className="flex-none text-gray-9c ml-2">
-              创建于 {format(state.createdTime, 'yyyy/MM/dd')}
-            </div>
-          )}
         </div>
         <div className="flex bg-white text-black">
           <div className="flex flex-col justify-center flex-1 p-4">
-            {groupDesc && (
+            {/* {groupDesc && (
               <div className="text-gray-9c text-12 pb-3 leading-normal">
                 {groupDesc}
               </div>
-            )}
-            <div className="flex items-center justify-center">
+            )} */}
+            {/* <div className="flex items-center justify-center">
               <Avatar
                 className="flex-none"
                 size={44}
@@ -136,7 +114,8 @@ export const GroupPopup = observer((props: Props) => {
                   </div>
                 )}
               </div>
-            </div>
+            </div> */}
+            TODO:
           </div>
           <div className="flex-none text-16 bg-gray-f2 py-3 select-none">
             <div

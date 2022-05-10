@@ -501,7 +501,9 @@ export const EpubView = observer((props: Props) => {
               {!!state.bookMetadata?.creator && (
                 <span className="text-gray-9c">
                   &nbsp;-&nbsp;
-                  {state.bookMetadata?.creator}
+                  <span className="text-14">
+                    {state.bookMetadata?.creator}
+                  </span>
                 </span>
               )}
             </div>

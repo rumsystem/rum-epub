@@ -2,11 +2,13 @@ import React from 'react';
 import classNames from 'classnames';
 import { action } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
+import { Popover } from '@mui/material';
 
 import { GroupIcon } from '~/components';
 import { IGroup } from '~/apis';
 import { nodeService } from '~/service';
 import { splitByHighlightText } from '~/utils';
+import { GroupPopup } from './GroupPopup';
 
 interface GroupItemProps {
   group: IGroup
@@ -29,9 +31,9 @@ export default observer((props: GroupItemProps) => {
     nodeService.changeActiveGroup(props.group.group_id);
   };
 
-  // const handleClose = action(() => {
-  //   state.groupPopupOpen = false;
-  // });
+  const handleClose = action(() => {
+    state.groupPopupOpen = false;
+  });
 
   return (<>
     <div
@@ -176,7 +178,7 @@ export default observer((props: GroupItemProps) => {
       </div>
     </div>
 
-    {/* <Popover
+    <Popover
       classes={{
         root: 'pointer-events-none',
         paper: 'pointer-events-auto',
@@ -198,6 +200,6 @@ export default observer((props: GroupItemProps) => {
         onClickAway={handleClose}
         onClose={handleClose}
       />
-    </Popover> */}
+    </Popover>
   </>);
 });
