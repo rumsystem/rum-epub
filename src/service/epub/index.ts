@@ -419,6 +419,30 @@ const parseCover = (groupId: string, bookTrx: string) => {
   });
 };
 
+const parseMetadata = (groupId: string, bookTrx: string) => {
+  const groupItem = getGroupItem(groupId);
+  const item = groupItem.books.find((v) => v.trxId === bookTrx);
+  if (!item) { return; }
+  const doParse = async () => {
+    let metadata: any;
+    const bookBuffer = await getBookBuffer(groupId, bookTrx);
+    if (O.isNone(bookBuffer)) { return; }
+    const epub = await parseEpub('', bookBuffer.value);
+    if (E.isLeft(epub)) {
+      console.error(epub.left);
+      metadata = { type: 'loaded', value: null };
+    } else {
+      metadata = { type: 'loaded', value: epub.right.metadata };
+    }
+    runInAction(() => {
+      item.metadata = metadata;
+    });
+  };
+  runInAction(() => {
+    item.metadata = { type: 'loading', value: doParse() };
+  });
+};
+
 const getBookBuffer = async (groupId: string, bookTrx: string) => {
   const key = `${groupId}-${bookTrx}`;
   const cacheItem = state.bookBufferLRUCache.get(key);
@@ -530,6 +554,7 @@ export const epubService = {
   parseNewTrx,
   tryLoadBookFromDB,
   parseCover,
+  parseMetadata,
   getBookBuffer,
   getHighlights,
   saveHighlight,

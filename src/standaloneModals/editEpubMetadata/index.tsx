@@ -13,7 +13,7 @@ import { AddCircleOutline, DeleteOutline } from '@mui/icons-material';
 
 import { Dialog } from '~/components';
 import { ThemeRoot } from '~/utils/theme';
-import { dbService, EpubItem, epubService, nodeService, tooltipService } from '~/service';
+import { dbService, EpubItem, EpubMetadata, epubService, nodeService, tooltipService } from '~/service';
 import { postContent } from '~/apis';
 import { runLoading } from '~/utils';
 
@@ -135,12 +135,20 @@ const EditEpubMetadata = observer((props: Props) => {
       (l) => { state.loading = l; },
       async () => {
         await epubService.parseNewTrx(state.groupId);
-        const metaData = await dbService.db.bookMetadata.where({
+        const metaDataItem = await dbService.db.bookMetadata.where({
           groupId: state.groupId,
           bookTrx: state.bookItem!.trxId,
         }).last();
-        if (!metaData) {
-          return;
+        let metadata = metaDataItem?.metadata;
+        if (!metadata) {
+          epubService.parseMetadata(state.groupId, state.bookItem!.trxId);
+          await state.bookItem?.metadata.value;
+          const groupItem = epubService.getGroupItem(state.groupId);
+          const item = groupItem.books.find((v) => v.trxId === state.bookItem!.trxId);
+          const value = item?.metadata.value;
+          if (!(value instanceof Promise)) {
+            metadata = value ?? undefined;
+          }
         }
         runInAction(() => {
           state.form = {
@@ -158,7 +166,7 @@ const EditEpubMetadata = observer((props: Props) => {
             categoryLevel2: '',
             categoryLevel3: '',
             // eslint-disable-next-line @typescript-eslint/ban-types
-            ...(metaData.metadata as {}),
+            ...((metadata ?? {}) as {}),
           };
           if (!state.form.languages.length) {
             state.form.languages = [''];
@@ -251,6 +259,7 @@ const EditEpubMetadata = observer((props: Props) => {
                 value={state.form.publishDate}
                 onChange={action((v) => { state.form.publishDate = v; })}
                 renderInput={(params) => <TextField {...params} size="small" />}
+                clearable
               />
             </LocalizationProvider>
           </div>

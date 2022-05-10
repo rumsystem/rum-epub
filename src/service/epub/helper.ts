@@ -2,17 +2,19 @@ import { Buffer } from 'buffer';
 import { createHash } from 'crypto';
 import { posix } from 'path';
 import { Entry, fromBuffer, ZipFile } from 'yauzl';
+import { parse } from 'date-fns';
 import * as E from 'fp-ts/lib/Either';
 
 import { fetchTrx } from '~/apis';
 import { sleep } from '~/utils';
-import { FileInfo } from '~/service/db';
+import { FileInfo, EpubMetadata } from '~/service/db';
 import { trxAckService } from '~/service/trxAck';
 
 export interface ParsedEpubBook {
   fileInfo: FileInfo
   cover: null | Buffer
   segments: Array<{ id: string, sha256: string, buf: Buffer }>
+  metadata: EpubMetadata
 }
 
 export const parseEpub = async (fileName: string, buffer: Buffer | Uint8Array): Promise<E.Either<Error, ParsedEpubBook>> => {
@@ -48,6 +50,41 @@ export const parseEpub = async (fileName: string, buffer: Buffer | Uint8Array): 
   if (!title) {
     return E.left(new Error('cant find title'));
   }
+  let publishDate = null as null | Date;
+  const publishDateString = contentDom.querySelector('metadata > date')?.textContent ?? '';
+  if (/^\d{4}$/.exec(publishDateString)) {
+    publishDate = parse(publishDateString, 'yyyy', new Date());
+  } else if (/^\d{4}-\d{2}$/.exec(publishDateString)) {
+    publishDate = parse(publishDateString, 'yyyy-MM', new Date());
+  } else if (/^\d{4}-\d{2}-\d{2}$/.exec(publishDateString)) {
+    publishDate = parse(publishDateString, 'yyyy-MM-dd', new Date());
+  } else {
+    publishDate = new Date(publishDateString);
+  }
+  if (Number.isNaN(publishDate?.getTime() ?? NaN)) {
+    publishDate = null;
+  }
+  const metadata: EpubMetadata = {
+    description: contentDom.querySelector('metadata > description')?.textContent ?? '',
+    subTitle: contentDom.querySelector('metadata > subtitle')?.textContent ?? '',
+    isbn: contentDom.querySelector('metadata > #ISBN')?.textContent
+      ?? contentDom.querySelector('metadata > #isbn')?.textContent
+      ?? contentDom.querySelector('metadata > identifier[*|scheme="ISBN"]')?.textContent
+      ?? contentDom.querySelector('metadata > identifier[*|scheme="isbn"]')?.textContent
+      ?? '',
+    author: contentDom.querySelector('metadata > creator')?.textContent ?? '',
+    translator: contentDom.querySelector('metadata > translator')?.textContent ?? '',
+    publishDate: publishDate?.getTime() ?? null,
+    publisher: contentDom.querySelector('metadata > publisher')?.textContent ?? '',
+    languages: [
+      contentDom.querySelector('metadata > language')?.textContent ?? '',
+    ] as Array<string>,
+    series: '',
+    seriesNumber: '',
+    categoryLevel1: '',
+    categoryLevel2: '',
+    categoryLevel3: '',
+  };
   let coverImage = null as null | Buffer;
   try {
     const coverId = contentDom.querySelector('metadata > meta[name="cover"]')?.getAttribute('content');
@@ -96,6 +133,7 @@ export const parseEpub = async (fileName: string, buffer: Buffer | Uint8Array): 
 
   return E.right({
     cover: coverImage,
+    metadata,
     fileInfo,
     segments,
   });
@@ -108,6 +146,9 @@ export interface EpubItem {
   | { type: 'loading', value: Promise<unknown> }
   | { type: 'nocover', value: null }
   | { type: 'loaded', value: string }
+  metadata: { type: 'notloaded', value: null }
+  | { type: 'loading', value: Promise<unknown> }
+  | { type: 'loaded', value: EpubMetadata }
   date: Date
   // file: Buffer
 }

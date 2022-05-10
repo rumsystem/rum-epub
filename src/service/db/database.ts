@@ -12,6 +12,22 @@ export interface FileInfo {
   }>
 }
 
+export interface EpubMetadata {
+  description: string
+  subTitle: string
+  isbn: string
+  author: string
+  translator: string
+  publishDate: null | number
+  publisher: string
+  languages: Array<string>
+  series: string
+  seriesNumber: string
+  categoryLevel1: string
+  categoryLevel2: string
+  categoryLevel3: string
+}
+
 export interface HighlightItem {
   id?: number
   groupId: string
@@ -62,7 +78,7 @@ export interface BookMetadataItem {
   id?: number
   groupId: string
   bookTrx: string
-  metadata: any
+  metadata: EpubMetadata
 }
 
 export class Database extends Dexie {
