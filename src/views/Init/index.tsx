@@ -105,6 +105,7 @@ export const Init = observer((props: Props) => {
     }
 
     runInAction(() => {
+      state.nodeConfig.type = NODE_TYPE.INTERNAL;
       state.nodeConfig.internalNode = {
         dir: state.internal.folder,
         password: state.internal.savePassword ? state.internal.password : '',
