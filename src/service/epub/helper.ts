@@ -142,15 +142,13 @@ export const parseEpub = async (fileName: string, buffer: Buffer | Uint8Array): 
 export interface EpubItem {
   fileInfo: FileInfo
   trxId: string
-  cover: { type: 'notloaded', value: null }
-  | { type: 'loading', value: Promise<unknown> }
-  | { type: 'nocover', value: null }
-  | { type: 'loaded', value: string }
-  metadata: { type: 'notloaded', value: null }
-  | { type: 'loading', value: Promise<unknown> }
-  | { type: 'loaded', value: EpubMetadata }
+  subData: {
+    type: 'notloaded' | 'loading' | 'loaded'
+    loadingPromise: null | Promise<unknown>
+    cover: null | string
+    metadata: null | EpubMetadata
+  }
   date: Date
-  // file: Buffer
 }
 
 const checkTrx = async (groupId: string, trxId: string) => {

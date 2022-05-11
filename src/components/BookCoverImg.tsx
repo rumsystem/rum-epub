@@ -14,12 +14,12 @@ export const BookCoverImg = observer((props: BookCoverImgProps) => {
   const { book, ...rest } = props;
   React.useEffect(() => {
     if (props.book) {
-      epubService.parseCover(nodeService.state.activeGroupId, props.book.trxId);
+      epubService.parseSubData(nodeService.state.activeGroupId, props.book.trxId);
     }
   }, [props.book]);
 
-  const img = props.book?.cover.type === 'loaded'
-    ? props.book.cover.value
+  const img = typeof props.book?.subData.cover === 'string'
+    ? props.book.subData.cover
     : null;
 
   if (!img) {

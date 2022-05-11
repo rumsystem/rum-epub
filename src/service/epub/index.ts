@@ -283,7 +283,7 @@ const parseNewTrx = action((groupId: string) => {
             const item = {
               groupId,
               bookTrx: trx.Content.id,
-              metadata: metadata.right,
+              metadata: metadata.right as any,
             };
             await dbService.db.transaction('rw', [dbService.db.bookMetadata], async () => {
               await dbService.db.bookMetadata.add(item);
@@ -353,7 +353,12 @@ const parseNewTrx = action((groupId: string) => {
         .filter((v) => v.file && currentBooks.every((u) => u.trxId !== v.bookTrx))
         .forEach((v) => {
           const item: EpubItem = {
-            cover: { type: 'notloaded', value: null } as const,
+            subData: {
+              type: 'notloaded',
+              loadingPromise: null,
+              cover: null,
+              metadata: null,
+            },
             date: v.date,
             fileInfo: v.fileInfo,
             trxId: v.bookTrx,
@@ -380,7 +385,12 @@ const tryLoadBookFromDB = async (groupId: string) => {
       .filter((v) => currentBooks.every((u) => u.trxId !== v.bookTrx))
       .forEach((v) => {
         const item: EpubItem = {
-          cover: { type: 'notloaded', value: null } as const,
+          subData: {
+            type: 'notloaded',
+            loadingPromise: null,
+            cover: null,
+            metadata: null,
+          },
           date: v.date,
           fileInfo: v.fileInfo,
           trxId: v.bookTrx,
@@ -390,56 +400,49 @@ const tryLoadBookFromDB = async (groupId: string) => {
   });
 };
 
-const parseCover = (groupId: string, bookTrx: string) => {
+/** parse cover and metadata */
+const parseSubData = (groupId: string, bookTrx: string) => {
   const groupItem = getGroupItem(groupId);
   const item = groupItem.books.find((v) => v.trxId === bookTrx);
   if (!item) { return; }
-  if (['loaded', 'loading', 'nocover'].includes(item.cover.type)) {
+
+  if (item.subData.type === 'loaded') {
     return;
   }
-  const doParse = async () => {
-    let cover: EpubItem['cover'];
-    const bookBuffer = await getBookBuffer(groupId, bookTrx);
-    if (O.isNone(bookBuffer)) { return; }
-    const epub = await parseEpub('', bookBuffer.value);
-    if (E.isLeft(epub)) {
-      console.error(epub.left);
-    }
-    if (E.isLeft(epub) || !epub.right.cover) {
-      cover = { type: 'nocover', value: null };
-    } else {
-      cover = { type: 'loaded', value: URL.createObjectURL(new Blob([epub.right.cover.buffer])) };
-    }
-    runInAction(() => {
-      item.cover = cover;
-    });
-  };
-  runInAction(() => {
-    item.cover = { type: 'loading', value: doParse() };
-  });
-};
+  if (item.subData.type === 'loading') {
+    return item.subData.loadingPromise;
+  }
 
-const parseMetadata = (groupId: string, bookTrx: string) => {
-  const groupItem = getGroupItem(groupId);
-  const item = groupItem.books.find((v) => v.trxId === bookTrx);
-  if (!item) { return; }
   const doParse = async () => {
-    let metadata: any;
     const bookBuffer = await getBookBuffer(groupId, bookTrx);
     if (O.isNone(bookBuffer)) { return; }
     const epub = await parseEpub('', bookBuffer.value);
     if (E.isLeft(epub)) {
       console.error(epub.left);
-      metadata = { type: 'loaded', value: null };
-    } else {
-      metadata = { type: 'loaded', value: epub.right.metadata };
+      runInAction(() => {
+        item.subData = {
+          type: 'loaded',
+          cover: null,
+          loadingPromise: null,
+          metadata: null,
+        };
+      });
+      return;
     }
+
+    const metadata = epub.right.metadata;
+    const cover = epub.right.cover
+      ? URL.createObjectURL(new Blob([epub.right.cover.buffer]))
+      : null;
     runInAction(() => {
-      item.metadata = metadata;
+      item.subData.cover = cover;
+      item.subData.metadata = metadata;
+      item.subData.loadingPromise = null;
     });
   };
   runInAction(() => {
-    item.metadata = { type: 'loading', value: doParse() };
+    item.subData.type = 'loading';
+    item.subData.loadingPromise = doParse();
   });
 };
 
@@ -553,8 +556,7 @@ export const epubService = {
   doUpload,
   parseNewTrx,
   tryLoadBookFromDB,
-  parseCover,
-  parseMetadata,
+  parseSubData,
   getBookBuffer,
   getHighlights,
   saveHighlight,

@@ -284,6 +284,7 @@ export const Init = observer((props: Props) => {
     if (canStartInternal) {
       runInAction(() => {
         state.internal.password = config.internalNode?.password ?? '';
+        state.internal.savePassword = true;
         state.internal.folder = config.internalNode?.dir ?? '';
       });
       await startInternalNode();

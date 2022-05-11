@@ -1,5 +1,5 @@
 import { join } from 'path';
-import { spawn } from 'child_process';
+// import { spawn } from 'child_process';
 import { builtinModules } from 'module';
 import { defineConfig } from 'vite';
 import commonjsExternalsPlugin from 'vite-plugin-commonjs-externals';
@@ -13,21 +13,21 @@ export default async () => {
   const prod = process.env.NODE_ENV === 'production';
   const a = !!process.env.analyze;
 
-  if (!prod) {
-    const cp = spawn('node', [
-      'node_modules/eslint-watch/bin/esw',
-      '--color',
-      '--ext',
-      '.js,.jsx,.ts,.tsx',
-      '-w',
-      'src',
-    ]);
-    cp.stdout.pipe(process.stdout);
-    cp.stderr.pipe(process.stderr);
-    cp.on('error', (err) => {
-      console.error(err);
-    });
-  }
+  // if (!prod) {
+  //   const cp = spawn('node', [
+  //     'node_modules/eslint-watch/bin/esw',
+  //     '--color',
+  //     '--ext',
+  //     '.js,.jsx,.ts,.tsx',
+  //     '-w',
+  //     'src',
+  //   ]);
+  //   cp.stdout.pipe(process.stdout);
+  //   cp.stderr.pipe(process.stderr);
+  //   cp.on('error', (err) => {
+  //     console.error(err);
+  //   });
+  // }
 
   const ignores = [
     'electron',

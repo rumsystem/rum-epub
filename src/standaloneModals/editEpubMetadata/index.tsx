@@ -13,7 +13,7 @@ import { AddCircleOutline, DeleteOutline } from '@mui/icons-material';
 
 import { Dialog } from '~/components';
 import { ThemeRoot } from '~/utils/theme';
-import { dbService, EpubItem, EpubMetadata, epubService, nodeService, tooltipService } from '~/service';
+import { dbService, EpubItem, epubService, nodeService, tooltipService } from '~/service';
 import { postContent } from '~/apis';
 import { runLoading } from '~/utils';
 
@@ -141,11 +141,11 @@ const EditEpubMetadata = observer((props: Props) => {
         }).last();
         let metadata = metaDataItem?.metadata;
         if (!metadata) {
-          epubService.parseMetadata(state.groupId, state.bookItem!.trxId);
-          await state.bookItem?.metadata.value;
+          epubService.parseSubData(state.groupId, state.bookItem!.trxId);
+          await state.bookItem?.subData.loadingPromise;
           const groupItem = epubService.getGroupItem(state.groupId);
           const item = groupItem.books.find((v) => v.trxId === state.bookItem!.trxId);
-          const value = item?.metadata.value;
+          const value = item?.subData.metadata;
           if (!(value instanceof Promise)) {
             metadata = value ?? undefined;
           }

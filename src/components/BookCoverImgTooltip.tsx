@@ -19,7 +19,7 @@ export const BookCoverImgTooltip = observer((props: BookCoverImgProps) => {
 
   const handleOpen = action(() => {
     if (book) {
-      epubService.parseCover(nodeService.state.activeGroupId, book.trxId);
+      epubService.parseSubData(nodeService.state.activeGroupId, book.trxId);
     }
     state.open = true;
   });
@@ -28,8 +28,8 @@ export const BookCoverImgTooltip = observer((props: BookCoverImgProps) => {
     state.open = false;
   });
 
-  const img = book?.cover.type === 'loaded'
-    ? book.cover.value
+  const img = typeof book?.subData.cover === 'string'
+    ? book.subData.cover
     : null;
 
   return (

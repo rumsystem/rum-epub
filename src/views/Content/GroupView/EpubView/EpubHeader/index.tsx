@@ -4,6 +4,7 @@ import { observer, useLocalObservable } from 'mobx-react-lite';
 import { HiOutlineShare } from 'react-icons/hi';
 import { GoSync } from 'react-icons/go';
 import LockIcon from 'boxicons/svg/regular/bx-lock.svg?fill-icon';
+import DetailIcon from 'boxicons/svg/regular/bx-detail.svg?fill-icon';
 import { Button, Tooltip } from '@mui/material';
 
 import { GroupMenu } from '~/components/GroupMenu';
@@ -17,6 +18,8 @@ import { lang } from '~/utils';
 import { EpubItem, nodeService } from '~/service';
 
 import { EpubUploadButton } from './EpubUploadButton';
+import { action } from 'mobx';
+import { EpubInfoPopup } from './EpubInfoPopup';
 
 interface Props {
   book?: EpubItem | null
@@ -24,6 +27,7 @@ interface Props {
 
 export const EpubHeader = observer((props: Props) => {
   const state = useLocalObservable(() => ({
+    epubInfoPopup: false,
     get peersCount() {
       const groups = nodeService.state.network.groups ?? [];
       const item = groups.find((v) => v.GroupId === nodeService.state.activeGroupId);
@@ -35,6 +39,7 @@ export const EpubHeader = observer((props: Props) => {
       return postAuthType === 'FOLLOW_ALW_LIST';
     },
   }));
+  const infoPopupButton = React.useRef<HTMLDivElement>(null);
 
   const handleOpenGroupInfo = () => {
     if (nodeService.state.activeGroup) {
@@ -127,7 +132,7 @@ export const EpubHeader = observer((props: Props) => {
         </Button>
       </div>
 
-      <div className="flex items-center gap-x-4">
+      <div className="flex items-center gap-x-6">
         {!!state.peersCount && (
           <Tooltip
             enterDelay={500}
@@ -156,9 +161,37 @@ export const EpubHeader = observer((props: Props) => {
             className="flex flex-center text-link-blue cursor-pointer text-16 opacity-80"
             onClick={() => shareGroup(group.group_id)}
           >
-            <HiOutlineShare className="text-16 mr-[6px]" />
+            <HiOutlineShare className="text-18 mr-[6px]" />
             {lang.share}
           </div>
+        </div>
+
+        <div className="flex items-center">
+          <div
+            className="flex flex-center text-link-blue cursor-pointer text-16 opacity-80"
+            onClick={action(() => { state.epubInfoPopup = true; })}
+            ref={infoPopupButton}
+          >
+            <DetailIcon className="text-18 mr-[6px]" />
+            内容详情
+          </div>
+          {!!props.book && (
+            <EpubInfoPopup
+              open={state.epubInfoPopup}
+              onClose={action(() => { state.epubInfoPopup = false; })}
+              anchorEl={infoPopupButton.current}
+              groupId={nodeService.state.activeGroupId}
+              bookTrx={props.book.trxId}
+              transformOrigin={{
+                horizontal: 'center',
+                vertical: 'top',
+              }}
+              anchorOrigin={{
+                horizontal: 'center',
+                vertical: 'bottom',
+              }}
+            />
+          )}
         </div>
 
         <GroupMenu
