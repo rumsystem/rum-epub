@@ -3,6 +3,7 @@ import { basename } from 'path';
 import React from 'react';
 import classNames from 'classnames';
 import { action, reaction } from 'mobx';
+import * as E from 'fp-ts/Either';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import { dialog, getCurrentWindow } from '@electron/remote';
 import { Rendition } from 'epubjs';
@@ -24,18 +25,13 @@ interface Props {
 export const EpubUploadButton = observer((props: Props) => {
   const state = useLocalObservable(() => ({
     open: false,
-
-    // epub: null as null | VerifiedEpub,
-    // uploadProgress: [] as Array<[string, UploadStatus]>,
-    // uploading: false,
-
     scrollDebounceTimer: 0,
 
     get groupItem() {
       return epubService.getGroupItem(nodeService.state.activeGroupId);
     },
     get uploadState() {
-      return this.groupItem.upload;
+      return this.groupItem.upload.epub;
     },
     get uploadDone() {
       return this.uploadState.uploadDone;
@@ -98,12 +94,19 @@ export const EpubUploadButton = observer((props: Props) => {
   };
 
   const handleReset = () => {
-    epubService.resetUploadState(nodeService.state.activeGroupId);
+    epubService.upload.resetEpub(nodeService.state.activeGroupId);
   };
 
   const setFile = async (fileName: string, buffer: Buffer) => {
+    const result = await epubService.upload.selectEpub(nodeService.state.activeGroupId, fileName, buffer);
+    if (E.isLeft(result)) {
+      tooltipService.show({
+        content: '解析文件失败！',
+        type: 'error',
+      });
+      return;
+    }
     try {
-      await epubService.selectFile(nodeService.state.activeGroupId, fileName, buffer);
       const book = state.uploadState?.epub;
       if (book) {
         const allBooks = state.groupItem.books;
@@ -147,7 +150,7 @@ export const EpubUploadButton = observer((props: Props) => {
   });
 
   const handleConfirmUpload = () => {
-    epubService.doUpload(nodeService.state.activeGroupId);
+    epubService.upload.doUploadEpub(nodeService.state.activeGroupId);
   };
 
   const scrollProgressIntoView = () => {

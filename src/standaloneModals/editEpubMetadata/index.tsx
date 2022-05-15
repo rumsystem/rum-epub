@@ -5,17 +5,18 @@ import * as TE from 'fp-ts/lib/TaskEither';
 import { identity, pipe } from 'fp-ts/lib/function';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import { action, runInAction } from 'mobx';
-import { Button, IconButton, OutlinedInput, TextField } from '@mui/material';
+import { Button, IconButton, OutlinedInput, Popover, TextField } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { AddCircleOutline, DeleteOutline } from '@mui/icons-material';
+import { StaticDatePicker } from '@mui/x-date-pickers';
+import { AddCircleOutline, CalendarMonth, DeleteOutline } from '@mui/icons-material';
 
 import { Dialog } from '~/components';
 import { ThemeRoot } from '~/utils/theme';
 import { dbService, EpubItem, epubService, nodeService, tooltipService } from '~/service';
 import { postContent } from '~/apis';
 import { runLoading } from '~/utils';
+import { format } from 'date-fns';
 
 export const editEpubMetadata = async () => new Promise<void>((rs) => {
   if (!epubService.state.currentBookItem) {
@@ -53,6 +54,7 @@ const EditEpubMetadata = observer((props: Props) => {
     submitting: false,
     groupId: '',
     bookItem: null as null | EpubItem,
+    publisherDatePicker: false,
 
     form: {
       description: '',
@@ -60,7 +62,7 @@ const EditEpubMetadata = observer((props: Props) => {
       isbn: '',
       author: '',
       translator: '',
-      publishDate: null as null | Date,
+      publishDate: '',
       publisher: '',
       languages: [''] as Array<string>,
       series: '',
@@ -76,7 +78,11 @@ const EditEpubMetadata = observer((props: Props) => {
       const valid = String(nn) === n && nn >= 1 && nn <= 100;
       return !n || valid;
     },
+    get formValid() {
+      return this.form.description.length <= 340;
+    },
   }));
+  const publisherButton = React.useRef<HTMLButtonElement>(null);
 
   const handleClose = action(() => {
     state.open = false;
@@ -84,10 +90,9 @@ const EditEpubMetadata = observer((props: Props) => {
   });
 
   const handleSubmit = async () => {
+    if (!state.formValid) { return; }
     const bookItem = state.bookItem;
-    if (!bookItem) {
-      return;
-    }
+    if (!bookItem) { return; }
     const bookTrxId = bookItem.trxId;
     const groupId = state.groupId;
     const data = {
@@ -96,10 +101,7 @@ const EditEpubMetadata = observer((props: Props) => {
         id: bookTrxId,
         type: 'Note',
         name: 'epubMetadata',
-        content: JSON.stringify({
-          ...state.form,
-          publishDate: state.form.publishDate?.getTime(),
-        }),
+        content: JSON.stringify(state.form),
       },
       target: {
         id: groupId,
@@ -157,7 +159,7 @@ const EditEpubMetadata = observer((props: Props) => {
             isbn: '',
             author: '',
             translator: '',
-            publishDate: null,
+            publishDate: '',
             publisher: '',
             languages: [''],
             series: '',
@@ -250,18 +252,50 @@ const EditEpubMetadata = observer((props: Props) => {
 
           <div className="text-left text-16">出版日期：</div>
           <div className="flex">
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
-              <DatePicker
-                inputFormat="yyyy-MM-dd"
-                InputProps={{
-                  className: 'text-14',
-                }}
-                value={state.form.publishDate}
-                onChange={action((v) => { state.form.publishDate = v; })}
-                renderInput={(params) => <TextField {...params} size="small" />}
-                clearable
-              />
-            </LocalizationProvider>
+            <OutlinedInput
+              className="w-[240px] text-14"
+              size="small"
+              value={state.form.publishDate}
+              onChange={action((e) => { state.form.publishDate = e.target.value; })}
+              placeholder=""
+              endAdornment={(
+                <IconButton
+                  className="-mr-2"
+                  ref={publisherButton}
+                  onClick={action(() => { state.publisherDatePicker = true; })}
+                >
+                  <CalendarMonth className="text-18" />
+                </IconButton>
+              )}
+            />
+            <Popover
+              open={state.publisherDatePicker}
+              onClose={action(() => { state.publisherDatePicker = false; })}
+              anchorEl={publisherButton.current}
+              anchorOrigin={{
+                horizontal: 'right',
+                vertical: 'center',
+              }}
+              transformOrigin={{
+                horizontal: 'left',
+                vertical: 'center',
+              }}
+            >
+              <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <StaticDatePicker
+                  displayStaticWrapperAs="desktop"
+                  inputFormat="yyyy-MM-dd"
+                  InputProps={{
+                    className: 'text-14',
+                  }}
+                  value={null}
+                  onChange={action((v: any) => {
+                    state.form.publishDate = v instanceof Date ? format(v, 'yyyy-MM-dd') : '';
+                  })}
+                  renderInput={(params) => <TextField {...params} size="small" />}
+                />
+              </LocalizationProvider>
+            </Popover>
           </div>
 
           <div className="text-left text-16">出版商：</div>
@@ -390,6 +424,7 @@ const EditEpubMetadata = observer((props: Props) => {
             className="py-[6px] px-8 text-16 rounded-full"
             size="large"
             onClick={handleSubmit}
+            disabled={!state.formValid}
           >
             提交修改
           </Button>

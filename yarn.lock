@@ -5254,6 +5254,13 @@ react-icons@^4.3.1:
   resolved "https://registry.npmmirror.com/react-icons/-/react-icons-4.3.1.tgz#2fa92aebbbc71f43d2db2ed1aed07361124e91ca"
   integrity sha512-cB10MXLTs3gVuXimblAdI71jrJx8njrJZmNMEMC+sQu5B/BIOmlsAjskdqpn81y8UBVEGuHODd7/ci5DvoSzTQ==
 
+react-image-crop@^10.0.1:
+  version "10.0.1"
+  resolved "https://registry.npmmirror.com/react-image-crop/-/react-image-crop-10.0.1.tgz#5fd96c5ff359d3d5d64c7b407b11cf9b1b88c28f"
+  integrity sha512-tKnTF5c91BHjmp00Ga81W9Y/QkODLZeJkPtJwNKyM7cg9wsDwbA6tQxNu7alYkXZB5VvOBdKfqjqAoeqS+l5CQ==
+  dependencies:
+    clsx "^1.1.1"
+
 react-infinite-scroll-hook@^4.0.3:
   version "4.0.3"
   resolved "https://registry.npmmirror.com/react-infinite-scroll-hook/-/react-infinite-scroll-hook-4.0.3.tgz#48eba01ef3e7f70528e92d15f031ff0ec7845493"

@@ -12,6 +12,7 @@ import { lang } from '~/utils';
 import { nodeService, dialogService, loadingService, tooltipService } from '~/service';
 
 import IconSeednetManage from '~/assets/icon_seednet_manage.svg';
+import { editEpubCover } from '~/standaloneModals/editEpupCover';
 
 interface Props {
   group: IGroup
@@ -91,6 +92,11 @@ export const GroupMenu = observer((props: Props) => {
     handleMenuClose();
   };
 
+  const handleEditCover = () => {
+    editEpubCover();
+    handleMenuClose();
+  };
+
   return (<>
     <div
       className={props.className}
@@ -151,6 +157,16 @@ export const GroupMenu = observer((props: Props) => {
               <EditOutlined className="text-18" />
             </span>
             <span className="font-bold text-14">编辑书籍元信息</span>
+          </div>
+        </MenuItem>
+      )}
+      {isGroupOwner && (
+        <MenuItem onClick={handleEditCover}>
+          <div className="flex items-center text-gray-600 leading-none pl-1 py-2">
+            <span className="flex items-center w-7 flex-none">
+              <EditOutlined className="text-18" />
+            </span>
+            <span className="font-bold text-14">编辑书籍封面</span>
           </div>
         </MenuItem>
       )}

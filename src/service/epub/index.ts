@@ -5,9 +5,10 @@ import * as O from 'fp-ts/lib/Option';
 import { pipe } from 'fp-ts/lib/function';
 import { fetchContents, IPostContentResult, postContent } from '~/apis';
 import { promiseAllSettledThrottle, runLoading, sleep } from '~/utils';
-import { dbService, FileInfo } from '~/service/db';
+import { dbService, FileInfo, CoverFileInfo } from '~/service/db';
 import { busService } from '~/service/bus';
-import { parseEpub, ParsedEpubBook, checkTrxAndAck, EpubItem, hashBufferSha256 } from './helper';
+import { parseEpub, ParsedEpubBook, checkTrxAndAck, EpubItem, hashBufferSha256, splitFile } from './helper';
+import { createHash } from 'crypto';
 
 export * from './helper';
 
@@ -17,11 +18,23 @@ interface UploadStatusItem {
 }
 
 interface GroupUploadState {
-  epub: ParsedEpubBook | null
-  uploading: boolean
-  uploadDone: boolean
-  progress: Array<UploadStatusItem>
-  recentUploadBook: EpubItem | null
+  epub: {
+    epub: ParsedEpubBook | null
+    uploading: boolean
+    uploadDone: boolean
+    progress: Array<UploadStatusItem>
+    recentUploadBook: EpubItem | null
+  }
+  cover: {
+    file: ArrayBuffer | null
+    bookTrx: string
+    sha256: string
+    src: string
+    segments: Array<{ id: string, sha256: string, buf: Buffer }>
+    uploading: boolean
+    uploadDone: boolean
+    progress: Array<UploadStatusItem>
+  }
 }
 
 interface GroupStateItem {
@@ -42,11 +55,23 @@ const getGroupItem = action((groupId: string) => {
   if (!item) {
     item = observable({
       upload: {
-        epub: null,
-        uploading: false,
-        uploadDone: false,
-        progress: [],
-        recentUploadBook: null,
+        epub: {
+          epub: null,
+          uploading: false,
+          uploadDone: false,
+          progress: [],
+          recentUploadBook: null,
+        },
+        cover: {
+          file: null,
+          bookTrx: '',
+          sha256: '',
+          src: '',
+          segments: [],
+          uploading: false,
+          uploadDone: false,
+          progress: [],
+        },
       },
       books: [],
       highlights: [],
@@ -57,97 +82,94 @@ const getGroupItem = action((groupId: string) => {
   return item;
 });
 
-const resetUploadState = action((groupId: string) => {
-  const groupItem = getGroupItem(groupId);
-  groupItem.upload = {
-    epub: null,
-    uploading: false,
-    uploadDone: false,
-    progress: [],
-    recentUploadBook: groupItem.upload.recentUploadBook,
-  };
-  return groupItem.upload;
-});
+const upload = {
+  resetEpub: action((groupId: string) => {
+    const groupItem = getGroupItem(groupId);
+    groupItem.upload = {
+      ...groupItem.upload,
+      epub: {
+        epub: null,
+        uploading: false,
+        uploadDone: false,
+        progress: [],
+        recentUploadBook: groupItem.upload.epub.recentUploadBook,
+      },
+    };
+    return groupItem.upload;
+  }),
+  resetCover: action((groupId: string) => {
+    const groupItem = getGroupItem(groupId);
+    if (groupItem.upload.cover.src) {
+      URL.revokeObjectURL(groupItem.upload.cover.src);
+    }
+    groupItem.upload = {
+      ...groupItem.upload,
+      cover: {
+        file: null,
+        bookTrx: '',
+        sha256: '',
+        src: '',
+        segments: [],
+        uploading: false,
+        uploadDone: false,
+        progress: [],
+      },
+    };
+    return groupItem.upload;
+  }),
+  selectEpub: async (groupId: string, fileName: string, fileBuffer: Buffer) => {
+    const uploadState = getGroupItem(groupId).upload;
+    const epub = await parseEpub(fileName, fileBuffer);
+    return pipe(
+      epub,
+      E.map((epub) => {
+        runInAction(() => {
+          uploadState.epub = {
+            ...uploadState.epub,
+            epub,
+            uploading: false,
+            uploadDone: false,
+            progress: [
+              { name: 'fileinfo', status: 'pending' },
+              ...epub.fileInfo.segments.map((v) => ({
+                name: v.id,
+                status: 'pending',
+              } as UploadStatusItem)),
+              { name: 'trxcheck', status: 'pending' },
+            ],
+          };
+        });
+        return null;
+      }),
+    );
+  },
+  doUploadEpub: (groupId: string) => {
+    const groupItem = getGroupItem(groupId);
+    const uploadState = groupItem.upload.epub;
+    const epub = uploadState?.epub;
+    if (uploadState.uploading || !epub) { return; }
 
-const selectFile = async (groupId: string, fileName: string, fileBuffer: Buffer) => {
-  const uploadState = getGroupItem(groupId).upload;
-  const epub = await parseEpub(fileName, fileBuffer);
-  return pipe(
-    epub,
-    E.map((epub) => {
-      runInAction(() => {
-        uploadState.epub = epub;
-        uploadState.uploading = false;
-        uploadState.uploadDone = false;
-        uploadState.progress = [
-          { name: 'fileinfo', status: 'pending' },
-          ...epub.fileInfo.segments.map((v) => ({
-            name: v.id,
-            status: 'pending',
-          } as UploadStatusItem)),
-          { name: 'trxcheck', status: 'pending' },
-        ];
-      });
-      return null;
-    }),
-  );
-};
+    runLoading(
+      (l) => { uploadState.uploading = l; },
+      async () => {
+        const changeProgressStatus = action((name: string, status: UploadStatusItem['status']) => {
+          const progressItem = uploadState.progress.find((v) => v.name === name);
+          if (!progressItem) {
+            throw new Error(`trying setting progress for ${name} which doesn't exist`);
+          }
+          progressItem.status = status;
+        });
 
-const doUpload = (groupId: string) => {
-  const groupItem = getGroupItem(groupId);
-  const uploadState = groupItem.upload;
-  const epub = uploadState?.epub;
-  if (uploadState.uploading || !epub) { return; }
-
-  runLoading(
-    (l) => { uploadState.uploading = l; },
-    async () => {
-      const changeProgressStatus = action((name: string, status: UploadStatusItem['status']) => {
-        const progressItem = uploadState.progress.find((v) => v.name === name);
-        if (!progressItem) {
-          throw new Error(`trying setting progress for ${name} which doesn't exist`);
-        }
-        progressItem.status = status;
-      });
-
-      const fileinfoContent = Buffer.from(JSON.stringify(epub.fileInfo));
-      const fileInfoPostData = {
-        type: 'Add',
-        object: {
-          type: 'File',
-          name: 'fileinfo',
-          file: {
-            compression: 0,
-            mediaType: 'application/json',
-            content: fileinfoContent.toString('base64'),
-          },
-        },
-        target: {
-          id: groupId,
-          type: 'Group',
-        },
-      };
-
-      let fileInfoTrx: IPostContentResult;
-
-      await runLoading(
-        (l) => changeProgressStatus('fileinfo', l ? 'uploading' : 'done'),
-        async () => {
-          fileInfoTrx = await postContent(fileInfoPostData as any);
-          await checkTrxAndAck(groupId, fileInfoTrx.trx_id);
-        },
-      );
-
-      const segTasks = epub.segments.map((seg) => async () => {
-        const segData = {
+        const fileinfoContent = Buffer.from(JSON.stringify(epub.fileInfo));
+        const fileInfoPostData = {
           type: 'Add',
           object: {
             type: 'File',
-            name: seg.id,
+            name: 'fileinfo',
             file: {
               compression: 0,
-              mediaType: 'application/octet-stream',
-              content: seg.buf.toString('base64'),
+              mediaType: 'application/json',
+              content: fileinfoContent.toString('base64'),
             },
           },
           target: {
@@ -156,37 +178,196 @@ const doUpload = (groupId: string) => {
           },
         };
 
+        let fileInfoTrx: IPostContentResult;
+
         await runLoading(
-          (l) => changeProgressStatus(seg.id, l ? 'uploading' : 'done'),
+          (l) => changeProgressStatus('fileinfo', l ? 'uploading' : 'done'),
           async () => {
-            const segTrx = await postContent(segData as any);
-            await checkTrxAndAck(groupId, segTrx.trx_id);
+            fileInfoTrx = await postContent(fileInfoPostData as any);
+            await checkTrxAndAck(groupId, fileInfoTrx.trx_id);
           },
         );
-      });
-      await promiseAllSettledThrottle(segTasks, 20);
 
-      await runLoading(
-        (l) => changeProgressStatus('trxcheck', l ? 'uploading' : 'done'),
-        async () => {
-          for (let i = 0; i < 30; i += 1) {
-            await parseNewTrx(groupId);
-            const theBook = groupItem.books.find((v) => v.trxId === fileInfoTrx.trx_id);
-            await sleep(1000);
-            if (theBook) {
-              break;
+        const segTasks = epub.segments.map((seg) => async () => {
+          const segData = {
+            type: 'Add',
+            object: {
+              type: 'File',
+              name: seg.id,
+              file: {
+                compression: 0,
+                mediaType: 'application/octet-stream',
+                content: seg.buf.toString('base64'),
+              },
+            },
+            target: {
+              id: groupId,
+              type: 'Group',
+            },
+          };
+
+          await runLoading(
+            (l) => changeProgressStatus(seg.id, l ? 'uploading' : 'done'),
+            async () => {
+              const segTrx = await postContent(segData as any);
+              await checkTrxAndAck(groupId, segTrx.trx_id);
+            },
+          );
+        });
+        await promiseAllSettledThrottle(segTasks, 20);
+
+        await runLoading(
+          (l) => changeProgressStatus('trxcheck', l ? 'uploading' : 'done'),
+          async () => {
+            for (let i = 0; i < 30; i += 1) {
+              await parseNewTrx(groupId);
+              const theBook = groupItem.books.find((v) => v.trxId === fileInfoTrx.trx_id);
+              await sleep(1000);
+              if (theBook) {
+                break;
+              }
             }
-          }
-        },
-      );
+          },
+        );
 
-      runInAction(() => {
-        uploadState.uploadDone = true;
-        const epub = groupItem.books.find((v) => v.trxId === fileInfoTrx.trx_id);
-        uploadState.recentUploadBook = epub ?? null;
-      });
-    },
-  );
+        runInAction(() => {
+          uploadState.uploadDone = true;
+          const epub = groupItem.books.find((v) => v.trxId === fileInfoTrx.trx_id);
+          uploadState.recentUploadBook = epub ?? null;
+        });
+      },
+    );
+  },
+  selectCover: (groupId: string, bookTrx: string, file: ArrayBuffer) => {
+    const uploadState = getGroupItem(groupId).upload;
+    const segments = splitFile(Buffer.from(file));
+    runInAction(() => {
+      const src = URL.createObjectURL(new Blob([file]));
+      uploadState.cover = {
+        file,
+        bookTrx,
+        sha256: '',
+        src,
+        segments,
+        progress: [
+          { name: 'fileinfo', status: 'pending' },
+          ...segments.map((v) => ({
+            name: v.id,
+            status: 'pending',
+          } as UploadStatusItem)),
+          { name: 'trxcheck', status: 'pending' },
+        ],
+        uploadDone: false,
+        uploading: false,
+      };
+    });
+  },
+  doUploadCover: (groupId: string) => {
+    const groupItem = getGroupItem(groupId);
+    const uploadState = groupItem.upload.cover;
+    const imagearrayBuffer = uploadState.file;
+    if (uploadState.uploading || !imagearrayBuffer) { return; }
+
+    runLoading(
+      (l) => { uploadState.uploading = l; },
+      async () => {
+        const changeProgressStatus = action((name: string, status: UploadStatusItem['status']) => {
+          const progressItem = uploadState.progress.find((v) => v.name === name);
+          if (!progressItem) {
+            throw new Error(`trying setting progress for ${name} which doesn't exist`);
+          }
+          progressItem.status = status;
+        });
+
+        const segHash = createHash('sha256');
+        segHash.update(Buffer.from(imagearrayBuffer));
+        const imageSha256 = segHash.digest('hex');
+
+        const fileinfoContent = Buffer.from(JSON.stringify({
+          mediaType: 'image/jpeg',
+          name: 'epub-cover-image',
+          bookTrx: uploadState.bookTrx,
+          sha256: imageSha256,
+          segments: uploadState.segments.map((v) => ({
+            id: v.id,
+            sha256: v.sha256,
+          })),
+        }));
+        const fileInfoPostData = {
+          type: 'Add',
+          object: {
+            type: 'File',
+            name: 'fileinfocover',
+            file: {
+              compression: 0,
+              mediaType: 'application/json',
+              content: fileinfoContent.toString('base64'),
+            },
+          },
+          target: {
+            id: groupId,
+            type: 'Group',
+          },
+        };
+
+        let fileInfoTrx: IPostContentResult;
+
+        await runLoading(
+          (l) => changeProgressStatus('fileinfo', l ? 'uploading' : 'done'),
+          async () => {
+            fileInfoTrx = await postContent(fileInfoPostData as any);
+            await checkTrxAndAck(groupId, fileInfoTrx.trx_id);
+          },
+        );
+
+        const segTasks = uploadState.segments.map((seg) => async () => {
+          const segData = {
+            type: 'Add',
+            object: {
+              type: 'File',
+              name: seg.id,
+              file: {
+                compression: 0,
+                mediaType: 'application/octet-stream',
+                content: seg.buf.toString('base64'),
+              },
+            },
+            target: {
+              id: groupId,
+              type: 'Group',
+            },
+          };
+
+          await runLoading(
+            (l) => changeProgressStatus(seg.id, l ? 'uploading' : 'done'),
+            async () => {
+              const segTrx = await postContent(segData as any);
+              await checkTrxAndAck(groupId, segTrx.trx_id);
+            },
+          );
+        });
+        await promiseAllSettledThrottle(segTasks, 20);
+
+        await runLoading(
+          (l) => changeProgressStatus('trxcheck', l ? 'uploading' : 'done'),
+          async () => {
+            for (let i = 0; i < 30; i += 1) {
+              await parseNewTrx(groupId);
+              const theBook = groupItem.books.find((v) => v.trxId === fileInfoTrx.trx_id);
+              await sleep(1000);
+              if (theBook) {
+                break;
+              }
+            }
+          },
+        );
+
+        runInAction(() => {
+          uploadState.uploadDone = true;
+        });
+      },
+    );
+  },
 };
 
 const parseNewTrx = action((groupId: string) => {
@@ -194,9 +375,19 @@ const parseNewTrx = action((groupId: string) => {
   let p = groupItem.trxParsinsPromise;
   if (p) { return p; }
   const run = async () => {
-    const [booksToCaculate, lastTrxItem] = await dbService.db.transaction(
+    const [
+      booksToCaculate,
+      coversToCaculate,
+      lastTrxItem,
+    ] = await dbService.db.transaction(
       'r',
-      [dbService.db.groupLatestParsedTrx, dbService.db.book, dbService.db.bookSegment],
+      [
+        dbService.db.groupLatestParsedTrx,
+        dbService.db.book,
+        dbService.db.bookSegment,
+        dbService.db.cover,
+        dbService.db.coverSegment,
+      ],
       async () => {
         const [dbBooks, lastTrxItem] = await Promise.all([
           dbService.db.book.where({ groupId, status: 'incomplete' }).toArray(),
@@ -217,7 +408,25 @@ const parseNewTrx = action((groupId: string) => {
           },
         }));
 
-        return [books, lastTrxItem];
+        const dbCovers = await dbService.db.cover.where({
+          groupId,
+        }).toArray();
+
+        const coverSegments = await dbService.db.coverSegment.where({
+          groupId,
+        }).toArray();
+
+        const covers = dbCovers.map((v) => ({
+          ...v,
+          file: null as null | Buffer,
+          segmentItem: coverSegments.find((s) => s.coverTrx === v.coverTrx) ?? {
+            coverTrx: v.coverTrx,
+            segments: {},
+            groupId,
+          },
+        }));
+
+        return [books, covers, lastTrxItem];
       },
     );
 
@@ -233,6 +442,7 @@ const parseNewTrx = action((groupId: string) => {
       if (!res || !res.length) { break; }
       for (const trx of res) {
         const isFileInfo = trx.Content.type === 'File' && trx.Content.name === 'fileinfo';
+        const isCoverFileInfo = trx.Content.type === 'File' && trx.Content.name === 'fileinfocover';
         const isSegment = trx.Content.type === 'File'
           && /^seg-\d+$/.test(trx.Content.name ?? '')
           && trx.Content.file.mediaType === 'application/octet-stream';
@@ -260,6 +470,27 @@ const parseNewTrx = action((groupId: string) => {
           }
         }
 
+        if (isCoverFileInfo) {
+          try {
+            const fileinfo: CoverFileInfo = JSON.parse(Buffer.from(trx.Content.file.content, 'base64').toString());
+            coversToCaculate.push({
+              coverTrx: trx.TrxId,
+              file: null,
+              fileInfo: fileinfo,
+              bookTrx: fileinfo.bookTrx,
+              groupId,
+              status: 'incomplete',
+              segmentItem: {
+                coverTrx: trx.TrxId,
+                groupId,
+                segments: {},
+              },
+            });
+          } catch (e) {
+            console.error(e);
+          }
+        }
+
         if (isSegment) {
           const name = trx.Content.name;
           const buf = Buffer.from(trx.Content.file.content, 'base64');
@@ -269,6 +500,16 @@ const parseNewTrx = action((groupId: string) => {
             if (!segment) { return; }
             if (segment.sha256 !== sha256) { return; }
             book.segmentItem.segments[name] = {
+              id: name,
+              sha256,
+              buf,
+            };
+          });
+          coversToCaculate.forEach((cover) => {
+            const segment = cover.fileInfo.segments.find((v) => v.id === name);
+            if (!segment) { return; }
+            if (segment.sha256 !== sha256) { return; }
+            cover.segmentItem.segments[name] = {
               id: name,
               sha256,
               buf,
@@ -312,14 +553,43 @@ const parseNewTrx = action((groupId: string) => {
         }
       });
 
+    coversToCaculate
+      .filter((v) => v.fileInfo.segments.length === Object.keys(v.segmentItem.segments).length)
+      .forEach((cover) => {
+        const segments = Object.values(cover.segmentItem.segments).map((v) => ({
+          ...v,
+          num: Number(v.id.replace('seg-', '')),
+        }));
+        segments.sort((a, b) => a.num - b.num);
+        const file = Buffer.concat(segments.map((v) => v.buf));
+        const fileSha256 = hashBufferSha256(file);
+        if (fileSha256 === cover.fileInfo.sha256) {
+          cover.file = file;
+          cover.status = 'complete';
+        } else {
+          cover.status = 'broken';
+        }
+      });
+
     const booksToWrite = booksToCaculate.map((v) => {
       const { file, segmentItem, ...u } = v;
       return u;
     });
+    const coversToWrite = coversToCaculate.map((v) => {
+      const { file, segmentItem, ...u } = v;
+      return u;
+    });
     const segmentsToWrite = booksToCaculate.map((v) => v.segmentItem);
+    const coverSegmentsToWrite = coversToCaculate.map((v) => v.segmentItem);
     const bookBuffersToWrite = booksToCaculate.filter((v) => v.file).map((v) => ({
       groupId: v.groupId,
       bookTrx: v.bookTrx,
+      file: v.file!,
+    }));
+    const coverBuffersToWrite = coversToCaculate.filter((v) => v.file).map((v) => ({
+      groupId: v.groupId,
+      bookTrx: v.bookTrx,
+      coverTrx: v.coverTrx,
       file: v.file!,
     }));
 
@@ -329,12 +599,19 @@ const parseNewTrx = action((groupId: string) => {
         dbService.db.book,
         dbService.db.bookSegment,
         dbService.db.bookBuffer,
+        dbService.db.cover,
+        dbService.db.coverSegment,
+        dbService.db.coverBuffer,
         dbService.db.groupLatestParsedTrx,
       ],
       async () => Promise.all([
         dbService.db.book.bulkPut(booksToWrite),
         dbService.db.bookSegment.bulkPut(segmentsToWrite),
         dbService.db.bookBuffer.bulkPut(bookBuffersToWrite),
+
+        dbService.db.cover.bulkPut(coversToWrite),
+        dbService.db.coverSegment.bulkPut(coverSegmentsToWrite),
+        dbService.db.coverBuffer.bulkPut(coverBuffersToWrite),
 
         dbService.db.groupLatestParsedTrx.where({
           groupId,
@@ -431,9 +708,25 @@ const parseSubData = (groupId: string, bookTrx: string) => {
     }
 
     const metadata = epub.right.metadata;
-    const cover = epub.right.cover
-      ? URL.createObjectURL(new Blob([epub.right.cover.buffer]))
-      : null;
+    let cover: string | null = null;
+    const coverDBItem = await dbService.db.cover.where({
+      groupId,
+      bookTrx,
+      status: 'complete',
+    }).last();
+    if (coverDBItem) {
+      const coverBuffer = await dbService.db.coverBuffer.where({
+        coverTrx: coverDBItem.coverTrx,
+      }).last();
+      if (coverBuffer) {
+        cover = URL.createObjectURL(new Blob([coverBuffer.file]));
+      }
+    }
+    if (!cover) {
+      cover = epub.right.cover
+        ? URL.createObjectURL(new Blob([epub.right.cover.buffer]))
+        : null;
+    }
     runInAction(() => {
       item.subData.cover = cover;
       item.subData.metadata = metadata;
@@ -551,9 +844,10 @@ export const epubService = {
   init,
 
   getGroupItem,
-  resetUploadState,
-  selectFile,
-  doUpload,
+  upload,
+  // resetUploadState,
+  // selectFile,
+  // doUpload,
   parseNewTrx,
   tryLoadBookFromDB,
   parseSubData,

@@ -2,7 +2,6 @@ import { Buffer } from 'buffer';
 import { createHash } from 'crypto';
 import { posix } from 'path';
 import { Entry, fromBuffer, ZipFile } from 'yauzl';
-import { parse } from 'date-fns';
 import * as E from 'fp-ts/lib/Either';
 
 import { fetchTrx } from '~/apis';
@@ -16,6 +15,25 @@ export interface ParsedEpubBook {
   segments: Array<{ id: string, sha256: string, buf: Buffer }>
   metadata: EpubMetadata
 }
+
+export const splitFile = (fileBuffer: Buffer) => {
+  const segments: ParsedEpubBook['segments'] = [];
+  for (let i = 0; ;i += 1) {
+    const buf = fileBuffer.slice(150 * 1024 * i, 150 * 1024 * (i + 1));
+    if (!buf.length) {
+      break;
+    }
+    const segHash = createHash('sha256');
+    segHash.update(buf);
+    const segsha256 = segHash.digest('hex');
+    segments.push({
+      id: `seg-${i + 1}`,
+      sha256: segsha256,
+      buf,
+    });
+  }
+  return segments;
+};
 
 export const parseEpub = async (fileName: string, buffer: Buffer | Uint8Array): Promise<E.Either<Error, ParsedEpubBook>> => {
   const fileBuffer = buffer instanceof Buffer
@@ -50,20 +68,6 @@ export const parseEpub = async (fileName: string, buffer: Buffer | Uint8Array): 
   if (!title) {
     return E.left(new Error('cant find title'));
   }
-  let publishDate = null as null | Date;
-  const publishDateString = contentDom.querySelector('metadata > date')?.textContent ?? '';
-  if (/^\d{4}$/.exec(publishDateString)) {
-    publishDate = parse(publishDateString, 'yyyy', new Date());
-  } else if (/^\d{4}-\d{2}$/.exec(publishDateString)) {
-    publishDate = parse(publishDateString, 'yyyy-MM', new Date());
-  } else if (/^\d{4}-\d{2}-\d{2}$/.exec(publishDateString)) {
-    publishDate = parse(publishDateString, 'yyyy-MM-dd', new Date());
-  } else {
-    publishDate = new Date(publishDateString);
-  }
-  if (Number.isNaN(publishDate?.getTime() ?? NaN)) {
-    publishDate = null;
-  }
   const metadata: EpubMetadata = {
     description: contentDom.querySelector('metadata > description')?.textContent ?? '',
     subTitle: contentDom.querySelector('metadata > subtitle')?.textContent ?? '',
@@ -74,7 +78,7 @@ export const parseEpub = async (fileName: string, buffer: Buffer | Uint8Array): 
       ?? '',
     author: contentDom.querySelector('metadata > creator')?.textContent ?? '',
     translator: contentDom.querySelector('metadata > translator')?.textContent ?? '',
-    publishDate: publishDate?.getTime() ?? null,
+    publishDate: contentDom.querySelector('metadata > date')?.textContent ?? '',
     publisher: contentDom.querySelector('metadata > publisher')?.textContent ?? '',
     languages: [
       contentDom.querySelector('metadata > language')?.textContent ?? '',
@@ -104,21 +108,7 @@ export const parseEpub = async (fileName: string, buffer: Buffer | Uint8Array): 
   hash.update(fileBuffer);
   const sha256 = hash.digest('hex');
 
-  const segments: ParsedEpubBook['segments'] = [];
-  for (let i = 0; ;i += 1) {
-    const buf = fileBuffer.slice(150 * 1024 * i, 150 * 1024 * (i + 1));
-    if (!buf.length) {
-      break;
-    }
-    const segHash = createHash('sha256');
-    segHash.update(buf);
-    const segsha256 = segHash.digest('hex');
-    segments.push({
-      id: `seg-${i + 1}`,
-      sha256: segsha256,
-      buf,
-    });
-  }
+  const segments = splitFile(fileBuffer);
 
   const fileInfo: FileInfo = {
     mediaType: mimetype,

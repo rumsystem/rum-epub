@@ -11,6 +11,16 @@ export interface FileInfo {
     sha256: string
   }>
 }
+export interface CoverFileInfo {
+  mediaType: string
+  name: string
+  bookTrx: string
+  sha256: string
+  segments: Array<{
+    id: string
+    sha256: string
+  }>
+}
 
 export interface EpubMetadata {
   description: string
@@ -18,7 +28,7 @@ export interface EpubMetadata {
   isbn: string
   author: string
   translator: string
-  publishDate: null | number
+  publishDate: string
   publisher: string
   languages: Array<string>
   series: string
@@ -74,6 +84,34 @@ export interface BookSegmentItem {
     buf: Uint8Array
   }>
 }
+
+export interface CoverItem {
+  id?: number
+  groupId: string
+  bookTrx: string
+  fileInfo: CoverFileInfo
+  coverTrx: string
+  status: 'incomplete' | 'complete' | 'broken'
+}
+
+export interface CoverBufferItem {
+  id?: number
+  groupId: string
+  coverTrx: string
+  file: Uint8Array
+}
+
+export interface CoverSegmentItem {
+  id?: number
+  groupId: string
+  coverTrx: string
+  segments: Record<string, {
+    id: string
+    sha256: string
+    buf: Uint8Array
+  }>
+}
+
 export interface BookMetadataItem {
   id?: number
   groupId: string
@@ -85,6 +123,9 @@ export class Database extends Dexie {
   public book: Dexie.Table<BookDatabaseItem, number>;
   public bookBuffer: Dexie.Table<BookBufferItem, number>;
   public bookSegment: Dexie.Table<BookSegmentItem, number>;
+  public cover: Dexie.Table<CoverItem, number>;
+  public coverBuffer: Dexie.Table<CoverBufferItem, number>;
+  public coverSegment: Dexie.Table<CoverSegmentItem, number>;
   public highlights: Dexie.Table<HighlightItem, number>;
   public readingProgress: Dexie.Table<ReadingProgressItem, number>;
   public groupLatestParsedTrx: Dexie.Table<GroupLatestParsedTrxItem, number>;
@@ -94,7 +135,7 @@ export class Database extends Dexie {
     super(name);
     applyOldVersions(this);
 
-    this.version(7).stores({
+    this.version(8).stores({
       book: [
         '++id',
         'groupId',
@@ -114,6 +155,27 @@ export class Database extends Dexie {
         'groupId',
         'bookTrx',
         '[groupId+bookTrx]',
+      ].join(','),
+      coverSegment: [
+        '++id',
+        'groupId',
+        'bookTrx',
+        'coverTrx',
+        '[groupId+bookTrx]',
+      ].join(','),
+      cover: [
+        '++id',
+        'groupId',
+        'bookTrx',
+        'coverTrx',
+        '[groupId+bookTrx]',
+        '[groupId+bookTrx+status]',
+      ].join(','),
+      coverBuffer: [
+        '++id',
+        'groupId',
+        'coverTrx',
+        '[groupId+coverTrx]',
       ].join(','),
       groupLatestParsedTrx: [
         '++id',
@@ -147,6 +209,9 @@ export class Database extends Dexie {
     this.book = this.table('book');
     this.bookBuffer = this.table('bookBuffer');
     this.bookSegment = this.table('bookSegment');
+    this.cover = this.table('cover');
+    this.coverBuffer = this.table('coverBuffer');
+    this.coverSegment = this.table('coverSegment');
     this.groupLatestParsedTrx = this.table('groupLatestParsedTrx');
 
     this.highlights = this.table('highlights');
@@ -159,6 +224,8 @@ export class Database extends Dexie {
       this.book,
       this.bookBuffer,
       this.bookSegment,
+      this.cover,
+      this.coverSegment,
       this.groupLatestParsedTrx,
     ];
   }

@@ -1,6 +1,5 @@
 import React from 'react';
 import classNames from 'classnames';
-import { format } from 'date-fns';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import DOMPurify from 'dompurify';
 import { Popover, PopoverProps } from '@mui/material';
@@ -140,7 +139,7 @@ export const EpubInfoPopup = observer((props: Props) => {
               { text: 'ISBN：', value: metadata?.isbn },
               { text: '作者：', value: metadata?.author },
               { text: '译者：', value: metadata?.translator },
-              { text: '出版日期：', value: metadata?.publishDate ? format(metadata.publishDate, 'yyyy-MM') : '' },
+              { text: '出版日期：', value: metadata?.publishDate },
               { text: '出版商：', value: metadata?.publisher },
               { text: '语言：', value: metadata?.languages.join('') },
               { text: '丛书：', value: metadata?.series },
