@@ -88,7 +88,7 @@ export const EpubView = observer((props: Props) => {
       return item;
     },
     get currentUploadItem() {
-      return this.groupItem.upload;
+      return this.groupItem.upload.epub;
     },
     get readerTheme() {
       return readerThemes[readerSettingsService.state.theme];
@@ -317,7 +317,7 @@ export const EpubView = observer((props: Props) => {
 
   const handleLoadRecentUpload = () => {
     const book = state.currentUploadItem?.recentUploadBook;
-    epubService.resetUploadState(nodeService.state.activeGroupId);
+    epubService.upload.resetEpub(nodeService.state.activeGroupId);
     if (book) {
       loadBook(book);
     }
@@ -383,7 +383,7 @@ export const EpubView = observer((props: Props) => {
       () => nodeService.state.groupMap[groupId]?.highest_height,
       async () => {
         await epubService.parseNewTrx(groupId);
-        if (!state.book && !state.currentUploadItem?.epub) {
+        if (!state.book && !state.currentUploadItem) {
           const epub = state.groupItem.books.at(0);
           if (epub) {
             loadBook(epub);
