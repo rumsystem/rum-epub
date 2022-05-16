@@ -353,9 +353,11 @@ const upload = {
           async () => {
             for (let i = 0; i < 30; i += 1) {
               await parseNewTrx(groupId);
-              const theBook = groupItem.books.find((v) => v.trxId === fileInfoTrx.trx_id);
+              const coverCount = await dbService.db.cover.where({
+                coverTrx: fileInfoTrx.trx_id,
+              }).count();
               await sleep(1000);
-              if (theBook) {
+              if (coverCount) {
                 break;
               }
             }

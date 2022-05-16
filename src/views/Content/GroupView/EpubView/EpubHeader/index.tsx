@@ -5,6 +5,7 @@ import { HiOutlineShare } from 'react-icons/hi';
 import { GoSync } from 'react-icons/go';
 import LockIcon from 'boxicons/svg/regular/bx-lock.svg?fill-icon';
 import DetailIcon from 'boxicons/svg/regular/bx-detail.svg?fill-icon';
+import UploadIcon from 'boxicons/svg/regular/bx-upload.svg?fill';
 import { Button, Tooltip } from '@mui/material';
 
 import { GroupMenu } from '~/components/GroupMenu';
@@ -20,6 +21,7 @@ import { EpubItem, nodeService } from '~/service';
 import { EpubUploadButton } from './EpubUploadButton';
 import { action } from 'mobx';
 import { EpubInfoPopup } from './EpubInfoPopup';
+import { uploadEpub, UploadEpubButton } from '~/standaloneModals/uploadEpub';
 
 interface Props {
   book?: EpubItem | null
@@ -125,7 +127,37 @@ export const EpubHeader = observer((props: Props) => {
           <LockIcon className="text-20 text-bright-orange ml-6" />
         )}
 
-        <EpubUploadButton className="ml-8" />
+        <UploadEpubButton>
+          {(p) => (
+            <Tooltip title={p.hasWritePermission ? '上传书籍' : '你没有权限在这个种子网络上传内容'}>
+              <div className="ml-8">
+                <Button
+                  className="relative overflow-hidden"
+                  onClick={uploadEpub}
+                  disabled={!p.hasWritePermission}
+                >
+                  <div className="flex flex-center gap-x-2 relative z-10">
+                    <UploadIcon />
+                    <span>
+                      上传书籍
+                    </span>
+                  </div>
+
+                  <div
+                    className={classNames(
+                      'absolute left-0 top-0 h-full bg-white/30 duration-300',
+                      p.hasUploadAtLeastOneBook && 'hidden',
+                    )}
+                    style={{ width: p.progressPercentage }}
+                  />
+                </Button>
+              </div>
+            </Tooltip>
+          )}
+        </UploadEpubButton>
+
+
+        {/* <EpubUploadButton className="ml-8" /> */}
 
         <Button className="ml-6">
           设为公开，允许发现
