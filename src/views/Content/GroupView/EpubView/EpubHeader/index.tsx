@@ -18,7 +18,6 @@ import { GroupStatus } from '~/apis';
 import { lang } from '~/utils';
 import { EpubItem, nodeService } from '~/service';
 
-import { EpubUploadButton } from './EpubUploadButton';
 import { action } from 'mobx';
 import { EpubInfoPopup } from './EpubInfoPopup';
 import { uploadEpub, UploadEpubButton } from '~/standaloneModals/uploadEpub';
@@ -63,9 +62,17 @@ export const EpubHeader = observer((props: Props) => {
     <div className="flex items-center justify-between flex-none border-b border-gray-200 h-[70px] pr-6">
       <div className="flex self-stretch items-center flex-1 w-0">
         <div className="mx-4 flex-none h-full">
-          <BookCoverImgTooltip book={props.book} placement="bottom">
+          <BookCoverImgTooltip
+            groupId={nodeService.state.activeGroupId}
+            bookTrx={props.book?.trxId ?? ''}
+            placement="bottom"
+          >
             <div className="h-full">
-              <BookCoverImg className="h-full w-auto" book={props.book} />
+              <BookCoverImg
+                className="h-full w-auto"
+                groupId={nodeService.state.activeGroupId}
+                bookTrx={props.book?.trxId ?? ''}
+              />
             </div>
           </BookCoverImgTooltip>
         </div>

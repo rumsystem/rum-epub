@@ -111,7 +111,8 @@ export const EpubSelectBookButton = observer((props: Props) => {
           )}
           {state.books.map((v, i) => (
             <BookCoverImgTooltip
-              book={v}
+              groupId={nodeService.state.activeGroupId}
+              bookTrx={v?.trxId ?? ''}
               key={i}
             >
               <div

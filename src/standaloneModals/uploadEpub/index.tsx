@@ -17,9 +17,6 @@ import { ThemeRoot } from '~/utils/theme';
 import { epubService, nodeService, tooltipService, dialogService } from '~/service';
 
 export const uploadEpub = async () => new Promise<void>((rs) => {
-  if (!epubService.state.currentBookItem) {
-    return;
-  }
   const div = document.createElement('div');
   const root = createRoot(div);
   document.body.append(div);

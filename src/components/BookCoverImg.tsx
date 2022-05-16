@@ -1,35 +1,47 @@
 
 import React from 'react';
-import { observer } from 'mobx-react-lite';
-
-import { EpubItem, epubService, nodeService } from '~/service';
 import classNames from 'classnames';
+import { action, runInAction } from 'mobx';
+import { observer, useLocalObservable } from 'mobx-react-lite';
+import { epubService } from '~/service';
 
 interface BookCoverImgProps extends React.DetailedHTMLProps<React.ImgHTMLAttributes<HTMLImageElement>, HTMLImageElement> {
   className?: string
-  book?: EpubItem | null
+  groupId: string
+  bookTrx: string
 }
 
 export const BookCoverImg = observer((props: BookCoverImgProps) => {
-  const { book, ...rest } = props;
+  const state = useLocalObservable(() => ({
+    groupId: '',
+    bookTrx: '',
+    get img() {
+      const groupItem = epubService.getGroupItem(state.groupId);
+      const book = groupItem.books.find((v) => v.trxId === state.bookTrx);
+      const img = book?.cover.cover || null;
+      return img;
+    },
+  }));
+
   React.useEffect(() => {
-    if (props.book) {
-      epubService.parseSubData(nodeService.state.activeGroupId, props.book.trxId);
+    runInAction(() => {
+      state.groupId = props.groupId;
+      state.bookTrx = props.bookTrx;
+    });
+    if (props.groupId && props.bookTrx) {
+      epubService.parseSubData(props.groupId, props.bookTrx);
     }
-  }, [props.book]);
+  }, [props.groupId, props.bookTrx]);
 
-  const img = typeof props.book?.subData.cover === 'string'
-    ? props.book.subData.cover
-    : null;
-
-  if (!img) {
+  if (!state.img) {
     return null;
   }
 
+  const { groupId, bookTrx, ...rest } = props;
   return (
     <img
       className={classNames(props.className)}
-      src={img ?? ''}
+      src={state.img ?? ''}
       {...rest}
     />
   );

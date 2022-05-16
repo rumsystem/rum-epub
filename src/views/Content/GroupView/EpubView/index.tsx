@@ -486,7 +486,8 @@ export const EpubView = observer((props: Props) => {
             currentBookTrxId={state.bookTrxId}
           />
           <BookCoverImgTooltip
-            book={state.bookItem}
+            groupId={nodeService.state.activeGroupId}
+            bookTrx={state.bookItem?.trxId ?? ''}
             placement="bottom"
           >
             <div className="text-18 truncate">

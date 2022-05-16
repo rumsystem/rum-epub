@@ -137,21 +137,8 @@ const EditEpubMetadata = observer((props: Props) => {
       (l) => { state.loading = l; },
       async () => {
         await epubService.parseNewTrx(state.groupId);
-        const metaDataItem = await dbService.db.bookMetadata.where({
-          groupId: state.groupId,
-          bookTrx: state.bookItem!.trxId,
-        }).last();
-        let metadata = metaDataItem?.metadata;
-        if (!metadata) {
-          epubService.parseSubData(state.groupId, state.bookItem!.trxId);
-          await state.bookItem?.subData.loadingPromise;
-          const groupItem = epubService.getGroupItem(state.groupId);
-          const item = groupItem.books.find((v) => v.trxId === state.bookItem!.trxId);
-          const value = item?.subData.metadata;
-          if (!(value instanceof Promise)) {
-            metadata = value ?? undefined;
-          }
-        }
+        await epubService.parseSubData(state.groupId, state.bookItem!.trxId);
+        const metadata = state.bookItem?.metadata.metadata ?? null;
         runInAction(() => {
           state.form = {
             description: '',

@@ -72,8 +72,8 @@ const EditEpubCover = observer((props: Props) => {
     },
     get currentCover() {
       const book = this.groupItem.books.find((v) => v.trxId === state.bookTrx);
-      return typeof book?.subData.cover === 'string'
-        ? book.subData.cover
+      return typeof book?.cover.cover === 'string'
+        ? book.cover.cover
         : null;
     },
   }));
@@ -265,7 +265,7 @@ const EditEpubCover = observer((props: Props) => {
         </div>
 
         <div className="mt-4">
-          {!state.src && !state.uploadState.src && (
+          {!state.uploadState.src && !state.src && (
             <div className="flex-col items-center gap-y-4">
               {!!state.currentCover && (
                 <div>
@@ -290,7 +290,7 @@ const EditEpubCover = observer((props: Props) => {
               </div>
             </div>
           )}
-          {!!state.src && !state.uploadState.src && (
+          {!state.uploadState.src && !!state.src && (
             <div className="flex flex-center">
               <ReactCrop
                 className="max-w-[500px] max-h-[500px]"
@@ -441,21 +441,6 @@ const EditEpubCover = observer((props: Props) => {
               )}
             </div>
           )}
-          {/* <Button
-            className="py-[6px] px-8 text-16 rounded-full bg-white text-black border-solid border border-2"
-            size="large"
-            color="inherit"
-            onClick={handleClose}
-          >
-            关闭窗口
-          </Button>
-          <Button
-            className="py-[6px] px-8 text-16 rounded-full"
-            size="large"
-            onClick={handleSubmit}
-          >
-            提交修改
-          </Button> */}
         </div>
       </div>
     </Dialog>

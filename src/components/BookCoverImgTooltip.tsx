@@ -1,26 +1,32 @@
 
 import React from 'react';
-import { action } from 'mobx';
+import { action, runInAction } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import { Tooltip, TooltipProps } from '@mui/material';
 
-import { EpubItem, epubService, nodeService } from '~/service';
+import { epubService } from '~/service';
 
 interface BookCoverImgProps extends Omit<TooltipProps, 'title'> {
-  book?: EpubItem | null
   children: React.ReactElement
+  groupId: string
+  bookTrx: string
 }
 
 export const BookCoverImgTooltip = observer((props: BookCoverImgProps) => {
   const state = useLocalObservable(() => ({
     open: false,
+    groupId: '',
+    bookTrx: '',
+    get img() {
+      const groupItem = epubService.getGroupItem(state.groupId);
+      const book = groupItem.books.find((v) => v.trxId === state.bookTrx);
+      const img = book?.cover.cover || null;
+      return img;
+    },
   }));
-  const { book, children, ...rest } = props;
 
   const handleOpen = action(() => {
-    if (book) {
-      epubService.parseSubData(nodeService.state.activeGroupId, book.trxId);
-    }
+    epubService.parseSubData(props.groupId, props.bookTrx);
     state.open = true;
   });
 
@@ -28,23 +34,27 @@ export const BookCoverImgTooltip = observer((props: BookCoverImgProps) => {
     state.open = false;
   });
 
-  const img = typeof book?.subData.cover === 'string'
-    ? book.subData.cover
-    : null;
+  React.useEffect(() => {
+    runInAction(() => {
+      state.groupId = props.groupId;
+      state.bookTrx = props.bookTrx;
+    });
+  }, [props.groupId, props.bookTrx]);
 
+  const { groupId, bookTrx, children, ...rest } = props;
   return (
     <Tooltip
       classes={{
         tooltip: 'bg-transparent',
       }}
-      open={state.open && !!img}
+      open={state.open && !!state.img}
       onOpen={handleOpen}
       onClose={handleClose}
       disableInteractive
       title={(
         <img
           className="shadow-4 rounded"
-          src={img ?? ''}
+          src={state.img ?? ''}
           width="200"
         />
       )}

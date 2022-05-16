@@ -5,7 +5,7 @@ import * as O from 'fp-ts/lib/Option';
 import { pipe } from 'fp-ts/lib/function';
 import { fetchContents, IPostContentResult, postContent } from '~/apis';
 import { promiseAllSettledThrottle, runLoading, sleep } from '~/utils';
-import { dbService, FileInfo, CoverFileInfo } from '~/service/db';
+import { dbService, FileInfo, CoverFileInfo, EpubMetadata } from '~/service/db';
 import { busService } from '~/service/bus';
 import { parseEpub, ParsedEpubBook, checkTrxAndAck, EpubItem, hashBufferSha256, splitFile } from './helper';
 import { createHash } from 'crypto';
@@ -367,6 +367,7 @@ const upload = {
         runInAction(() => {
           uploadState.uploadDone = true;
         });
+        parseSubData(groupId, uploadState.bookTrx);
       },
     );
   },
@@ -632,11 +633,15 @@ const parseNewTrx = action((groupId: string) => {
         .filter((v) => v.file && currentBooks.every((u) => u.trxId !== v.bookTrx))
         .forEach((v) => {
           const item: EpubItem = {
-            subData: {
+            metadata: {
+              type: 'notloaded',
+              loadingPromise: null,
+              metadata: null,
+            },
+            cover: {
               type: 'notloaded',
               loadingPromise: null,
               cover: null,
-              metadata: null,
             },
             date: v.date,
             fileInfo: v.fileInfo,
@@ -664,11 +669,15 @@ const tryLoadBookFromDB = async (groupId: string) => {
       .filter((v) => currentBooks.every((u) => u.trxId !== v.bookTrx))
       .forEach((v) => {
         const item: EpubItem = {
-          subData: {
+          metadata: {
+            type: 'notloaded',
+            loadingPromise: null,
+            metadata: null,
+          },
+          cover: {
             type: 'notloaded',
             loadingPromise: null,
             cover: null,
-            metadata: null,
           },
           date: v.date,
           fileInfo: v.fileInfo,
@@ -680,65 +689,97 @@ const tryLoadBookFromDB = async (groupId: string) => {
 };
 
 /** parse cover and metadata */
-const parseSubData = (groupId: string, bookTrx: string) => {
+const parseSubData = async (groupId: string, bookTrx: string) => {
   const groupItem = getGroupItem(groupId);
   const item = groupItem.books.find((v) => v.trxId === bookTrx);
   if (!item) { return; }
 
-  if (item.subData.type === 'loaded') {
-    return;
-  }
-  if (item.subData.type === 'loading') {
-    return item.subData.loadingPromise;
-  }
+  await parseNewTrx(groupId);
 
   const doParse = async () => {
-    const bookBuffer = await getBookBuffer(groupId, bookTrx);
-    if (O.isNone(bookBuffer)) { return; }
-    const epub = await parseEpub('', bookBuffer.value);
-    if (E.isLeft(epub)) {
-      console.error(epub.left);
-      runInAction(() => {
-        item.subData = {
-          type: 'loaded',
-          cover: null,
-          loadingPromise: null,
-          metadata: null,
-        };
-      });
-      return;
-    }
-
-    const metadata = epub.right.metadata;
     let cover: string | null = null;
-    const coverDBItem = await dbService.db.cover.where({
-      groupId,
-      bookTrx,
-      status: 'complete',
-    }).last();
-    if (coverDBItem) {
-      const coverBuffer = await dbService.db.coverBuffer.where({
-        coverTrx: coverDBItem.coverTrx,
-      }).last();
-      if (coverBuffer) {
-        cover = URL.createObjectURL(new Blob([coverBuffer.file]));
+    let metadata: EpubMetadata | null = null;
+
+    const bookMetadata = await dbService.db.transaction(
+      'r',
+      [
+        dbService.db.bookMetadata,
+        dbService.db.cover,
+        dbService.db.coverBuffer,
+      ],
+      async () => {
+        const [bookMetadata, coverItem] = await Promise.all([
+          dbService.db.bookMetadata.where({
+            groupId,
+            bookTrx,
+          }).last(),
+          dbService.db.cover.where({
+            groupId,
+            bookTrx,
+            status: 'complete',
+          }).last(),
+        ]);
+        if (coverItem) {
+          const coverBuffer = await dbService.db.coverBuffer.where({
+            coverTrx: coverItem.coverTrx,
+          }).last();
+          if (coverBuffer) {
+            cover = URL.createObjectURL(new Blob([coverBuffer.file]));
+          }
+        }
+        return bookMetadata;
+      },
+    );
+
+    if (!cover || !bookMetadata) {
+      const bookBuffer = await getBookBuffer(groupId, bookTrx);
+      if (O.isNone(bookBuffer)) { return; }
+      const epub = await parseEpub('', bookBuffer.value);
+      if (E.isLeft(epub)) {
+        console.error(epub.left);
+        runInAction(() => {
+          cover = null;
+          metadata = null;
+        });
+        return;
+      }
+      if (!cover && epub.right.cover) {
+        cover = URL.createObjectURL(new Blob([epub.right.cover]));
+      }
+      if (!metadata && epub.right.metadata) {
+        metadata = epub.right.metadata;
       }
     }
-    if (!cover) {
-      cover = epub.right.cover
-        ? URL.createObjectURL(new Blob([epub.right.cover.buffer]))
-        : null;
-    }
+
     runInAction(() => {
-      item.subData.cover = cover;
-      item.subData.metadata = metadata;
-      item.subData.loadingPromise = null;
+      if (item.cover.cover) {
+        URL.revokeObjectURL(item.cover.cover);
+      }
+      item.cover = {
+        type: 'loaded',
+        cover,
+        loadingPromise: null,
+      };
+      item.metadata = {
+        type: 'loaded',
+        metadata,
+        loadingPromise: null,
+      };
     });
   };
+
+  if (item.cover.loadingPromise || item.metadata.loadingPromise) {
+    return item.cover.loadingPromise || item.metadata.loadingPromise;
+  }
+
+  const p = doParse();
   runInAction(() => {
-    item.subData.type = 'loading';
-    item.subData.loadingPromise = doParse();
+    item.metadata.type = 'loading';
+    item.cover.type = 'loading';
+    item.metadata.loadingPromise = p;
+    item.cover.loadingPromise = p;
   });
+  return p;
 };
 
 const getBookBuffer = async (groupId: string, bookTrx: string) => {
