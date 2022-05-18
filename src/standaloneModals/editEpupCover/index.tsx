@@ -365,7 +365,12 @@ const EditEpubCover = observer((props: Props) => {
               上传成功！
             </div>
           )}
-          {!state.uploadState.src && !state.src && (
+          {!state.uploadState.src && !state.src && (<>
+            <div className="flex items-center self-stretch gap-x-12">
+              <div className="flex-1 border-b border-gray-c4" />
+              <div className="text-gray-9b">或者</div>
+              <div className="flex-1 border-b border-gray-c4" />
+            </div>
             <Button
               className="py-[6px] px-8 text-16 rounded-full"
               size="large"
@@ -373,7 +378,7 @@ const EditEpubCover = observer((props: Props) => {
             >
               选择本地封面图片文件
             </Button>
-          )}
+          </>)}
           {!state.uploadState.src && !!state.src && (
             <div className="flex-col items-center gap-y-4">
               <FormControlLabel

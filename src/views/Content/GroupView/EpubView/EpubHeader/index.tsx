@@ -76,13 +76,6 @@ export const EpubHeader = observer((props: Props) => {
             </div>
           </BookCoverImgTooltip>
         </div>
-        {/* <GroupIcon
-          className="rounded-6 mr-3 ml-6"
-          width={44}
-          height={44}
-          fontSize={24}
-          group={group}
-        /> */}
         <div className="font-bold text-18 tracking-wider truncate max-w-[220px]">
           <span
             className="text-gray-1e cursor-pointer"
@@ -135,32 +128,35 @@ export const EpubHeader = observer((props: Props) => {
         )}
 
         <UploadEpubButton>
-          {(p) => (
-            <Tooltip title={p.hasWritePermission ? '上传书籍' : '你没有权限在这个种子网络上传内容'}>
-              <div className="ml-8">
-                <Button
-                  className="relative overflow-hidden"
-                  onClick={uploadEpub}
-                  disabled={!p.hasWritePermission}
-                >
-                  <div className="flex flex-center gap-x-2 relative z-10">
-                    <UploadIcon />
-                    <span>
-                      上传书籍
-                    </span>
-                  </div>
+          {(p) => {
+            if (p.hasUploadAtLeastOneBook || !p.hasUploadAtLeastOneBook) { return null; }
+            return (
+              <Tooltip title={p.hasWritePermission ? '上传书籍' : '你没有权限在这个种子网络上传内容'}>
+                <div className="ml-8">
+                  <Button
+                    className="relative overflow-hidden"
+                    onClick={uploadEpub}
+                    disabled={!p.hasWritePermission}
+                  >
+                    <div className="flex flex-center gap-x-2 relative z-10">
+                      <UploadIcon />
+                      <span>
+                        上传书籍
+                      </span>
+                    </div>
 
-                  <div
-                    className={classNames(
-                      'absolute left-0 top-0 h-full bg-white/30 duration-300',
-                      p.hasUploadAtLeastOneBook && 'hidden',
-                    )}
-                    style={{ width: p.progressPercentage }}
-                  />
-                </Button>
-              </div>
-            </Tooltip>
-          )}
+                    <div
+                      className={classNames(
+                        'absolute left-0 top-0 h-full bg-white/30 duration-300',
+                        p.hasUploadAtLeastOneBook && 'hidden',
+                      )}
+                      style={{ width: p.progressPercentage }}
+                    />
+                  </Button>
+                </div>
+              </Tooltip>
+            );
+          }}
         </UploadEpubButton>
 
 

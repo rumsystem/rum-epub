@@ -7,7 +7,7 @@ import { Close } from '@mui/icons-material';
 import FileImageIcon from 'boxicons/svg/solid/bxs-file-image.svg?fill-icon';
 import EditIcon from 'boxicons/svg/solid/bxs-edit.svg?fill-icon';
 import { epubService } from '~/service';
-import { editEpubMetadata } from '~/standaloneModals';
+import { editEpubMetadata, editEpubCover } from '~/standaloneModals';
 import { runInAction } from 'mobx';
 
 interface Props extends PopoverProps {
@@ -111,7 +111,10 @@ export const EpubInfoPopup = observer((props: Props) => {
               </div>
             </div>
             <div className="flex justify-between text-bright-orange mt-5">
-              <button className="flex items-center text-14">
+              <button
+                className="flex items-center text-14"
+                onClick={(e) => { handleClose(e); editEpubCover(); }}
+              >
                 <FileImageIcon className="text-16 mr-1" />
                 编辑封面
               </button>

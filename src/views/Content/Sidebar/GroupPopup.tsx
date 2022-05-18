@@ -8,6 +8,8 @@ import { IGroup } from '~/apis';
 import { groupInfo } from '~/standaloneModals/groupInfo';
 
 import { lang, sleep } from '~/utils';
+import { epubService } from '~/service';
+import DOMPurify from 'dompurify';
 
 interface Props {
   group: IGroup
@@ -85,7 +87,7 @@ export const GroupPopup = observer((props: Props) => {
           </div>
         </div>
         <div className="flex bg-white text-black">
-          <div className="flex flex-col justify-center flex-1 p-4">
+          <div className="flex-1 p-4 max-h-[200px] overflow-y-auto">
             {/* {groupDesc && (
               <div className="text-gray-9c text-12 pb-3 leading-normal">
                 {groupDesc}
@@ -115,7 +117,16 @@ export const GroupPopup = observer((props: Props) => {
                 )}
               </div>
             </div> */}
-            TODO:
+            {/* TODO: epub metadata desc */}
+            {/* <div
+              className="group-popup-desc"
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(epubService.state.currentBookItem?.metadata.metadata?.description ?? ''),
+              }}
+            /> */}
+            <style>{`
+              .group-popup-desc * { font-size: 14px !important; }
+            `}</style>
           </div>
           <div className="flex-none text-16 bg-gray-f2 py-3 select-none">
             <div

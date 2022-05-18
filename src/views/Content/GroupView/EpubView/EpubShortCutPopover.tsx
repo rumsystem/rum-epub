@@ -3,7 +3,7 @@ import classNames from 'classnames';
 import { action } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import { Popover, Tooltip } from '@mui/material';
-import KeyboardIcon from 'boxicons/svg/solid/bxs-keyboard.svg?fill';
+import KeyboardIcon from 'boxicons/svg/solid/bxs-keyboard.svg?fill-icon';
 import { readerSettingsService } from '~/service';
 
 interface Props {
@@ -39,6 +39,7 @@ export const EpubShortCutPopover = observer((props: Props) => {
       >
         <KeyboardIcon
           className={classNames(
+            'text-22',
             !readerSettingsService.state.dark && 'text-black',
             readerSettingsService.state.dark && 'text-gray-af',
           )}

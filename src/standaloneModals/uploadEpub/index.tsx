@@ -353,7 +353,7 @@ interface UploadEpubButtonProps {
     progressPercentage: string
     hasWritePermission: boolean
     hasUploadAtLeastOneBook: boolean
-  }) => React.ReactElement
+  }) => React.ReactElement | null
 }
 
 export const UploadEpubButton = observer((props: UploadEpubButtonProps) => {

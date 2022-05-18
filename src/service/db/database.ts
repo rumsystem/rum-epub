@@ -119,6 +119,25 @@ export interface BookMetadataItem {
   metadata: EpubMetadata
 }
 
+export interface ProfileItem {
+  id?: number
+  groupId: string
+  publisher: string
+  profile: {
+    name: string
+    image?: {
+      mediaType: string
+      content: string
+    }
+    wallet?: Array<{
+      id: string
+      type: string
+      name: string
+    }>
+  }
+  status: 'synced' | 'syncing'
+}
+
 export class Database extends Dexie {
   public book: Dexie.Table<BookDatabaseItem, number>;
   public bookBuffer: Dexie.Table<BookBufferItem, number>;
@@ -130,12 +149,13 @@ export class Database extends Dexie {
   public readingProgress: Dexie.Table<ReadingProgressItem, number>;
   public groupLatestParsedTrx: Dexie.Table<GroupLatestParsedTrxItem, number>;
   public bookMetadata: Dexie.Table<BookMetadataItem, number>;
+  public profile: Dexie.Table<ProfileItem, number>;
 
   public constructor(name: string) {
     super(name);
     applyOldVersions(this);
 
-    this.version(8).stores({
+    this.version(9).stores({
       book: [
         '++id',
         'groupId',
@@ -202,6 +222,14 @@ export class Database extends Dexie {
         'bookTrx',
         '[groupId+bookTrx]',
       ].join(','),
+      profile: [
+        '++id',
+        'groupId',
+        'publisher',
+        'status',
+        '[groupId+status]',
+        '[groupId+publisher+status]',
+      ].join(','),
     }).upgrade(async () => {
       await this.table('book').clear();
     });
@@ -217,6 +245,7 @@ export class Database extends Dexie {
     this.highlights = this.table('highlights');
     this.readingProgress = this.table('readingProgress');
     this.bookMetadata = this.table('bookMetadata');
+    this.profile = this.table('profile');
   }
 
   public get bookRelatedTables() {
@@ -235,6 +264,7 @@ export class Database extends Dexie {
       ...this.bookRelatedTables,
       this.highlights,
       this.readingProgress,
+      this.profile,
     ];
   }
 }

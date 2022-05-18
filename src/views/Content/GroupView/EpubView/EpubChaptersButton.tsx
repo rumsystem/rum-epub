@@ -4,7 +4,7 @@ import { action } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import { NavItem } from 'epubjs';
 import { Divider, MenuItem, Popover, Tooltip } from '@mui/material';
-import ListUlIcon from 'boxicons/svg/regular/bx-list-ul.svg?fill';
+import ListUlIcon from 'boxicons/svg/regular/bx-list-ul.svg?fill-icon';
 import { readerSettingsService } from '~/service';
 import { modifierKeys } from '~/utils';
 
@@ -73,11 +73,10 @@ export const EpubChaptersButton = observer((props: Props) => {
       >
         <ListUlIcon
           className={classNames(
+            'text-26',
             !readerSettingsService.state.dark && 'text-black',
             readerSettingsService.state.dark && 'text-gray-af',
           )}
-          width="28"
-          height="28"
         />
       </div>
     </Tooltip>

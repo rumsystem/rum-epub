@@ -10,8 +10,8 @@ import { Annotation } from 'epubjs/types/annotations';
 import { PackagingMetadataObject } from 'epubjs/types/packaging';
 import { Button, CircularProgress, ClickAwayListener, Tooltip } from '@mui/material';
 import { ChevronLeft, ChevronRight } from '@mui/icons-material';
-import FullscreenIcon from 'boxicons/svg/regular/bx-fullscreen.svg?fill';
-import ExitFullscreenIcon from 'boxicons/svg/regular/bx-exit-fullscreen.svg?fill';
+import FullscreenIcon from 'boxicons/svg/regular/bx-fullscreen.svg?fill-icon';
+import ExitFullscreenIcon from 'boxicons/svg/regular/bx-exit-fullscreen.svg?fill-icon';
 import EditAltIcon from 'boxicons/svg/regular/bx-edit-alt.svg?fill';
 
 import {
@@ -477,7 +477,7 @@ export const EpubView = observer((props: Props) => {
       >
         <div
           className={classNames(
-            'flex justify-between items-center flex-none gap-x-4 px-6 h-[62px]',
+            'flex justify-between items-center flex-none gap-x-4 px-6 h-[40px]',
             readerSettingsService.state.dark && 'bg-gray-2c',
           )}
         >
@@ -512,30 +512,29 @@ export const EpubView = observer((props: Props) => {
 
           <div className="flex items-center gap-x-1">
             <EpubChaptersButton
-              className="w-11 h-11"
+              className="px-2"
               chapters={state.chapters}
               current={state.currentHref}
               onChapterClick={handleJumpToChapter}
             />
             <EpubAllHighlightButton
-              className="w-11 h-11"
+              className="px-2"
               book={state.book}
             />
             <EpubSettings
-              className="w-11 h-11"
+              className="px-2"
               book={state.book}
               bookTrx={state.bookTrxId}
             />
-            <EpubShortCutPopover
-              className="w-11 h-11"
-            />
+            <EpubShortCutPopover className="px-2" />
             <Tooltip title="切换全屏">
               <div
-                className="w-11 h-11 flex flex-center cursor-pointer"
+                className="px-2 flex flex-center cursor-pointer"
                 onClick={handleToggleFullScreen}
               >
                 <ExitFullscreenIcon
                   className={classNames(
+                    'text-22',
                     !state.fullScreen && 'hidden',
                     !readerSettingsService.state.dark && 'text-black',
                     readerSettingsService.state.dark && 'text-gray-af',
@@ -543,6 +542,7 @@ export const EpubView = observer((props: Props) => {
                 />
                 <FullscreenIcon
                   className={classNames(
+                    'text-22',
                     state.fullScreen && 'hidden',
                     !readerSettingsService.state.dark && 'text-black',
                     readerSettingsService.state.dark && 'text-gray-af',
@@ -610,7 +610,7 @@ export const EpubView = observer((props: Props) => {
             )}
 
             <div className="flex-col flex-center flex-1 h-0 self-stretch">
-              <img className="flex-1 h-0 max-h-[550px]" src={BookImage} alt="" />
+              <img className="flex-1 h-0 max-h-[350px]" src={BookImage} alt="" />
             </div>
           </div>
         )}

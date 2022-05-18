@@ -15,7 +15,7 @@ import {
   dialogService,
   updateService,
 } from '~/service';
-import { nodeInfoModal } from '~/standaloneModals/nodeInfo';
+import { nodeInfoModal, editProfile } from '~/standaloneModals';
 import IconLangLocal from '~/assets/lang_local.svg';
 import { TitleBarItem, TitleBarMenuItem } from './TitleBarItem';
 import { exportLog } from './helper';
@@ -111,11 +111,37 @@ export const TitleBar = observer((props: Props) => {
     },
   ].filter(<T extends unknown>(v: false | T): v is T => !!v);
   const menuRight: Array<TitleBarMenuItem> = [
-    !!nodeService.state.nodeInfo.node_publickey && {
-      text: lang.nodeAndNetwork,
-      action: () => {
-        nodeInfoModal();
-      },
+    {
+      // TODO:
+      text: (
+        <div>
+          用户名用户名
+        </div>
+      ),
+      children: [
+        {
+          text: '设置个人信息',
+          action: () => editProfile(),
+        },
+        {
+          text: '关联钱包',
+          action: () => {},
+        },
+        !!nodeService.state.nodeInfo.node_publickey && {
+          text: lang.nodeAndNetwork,
+          action: () => {
+            nodeInfoModal();
+          },
+        },
+        {
+          text: '导出密钥',
+          action: () => {},
+        },
+        {
+          text: '导入密钥',
+          action: () => {},
+        },
+      ].filter(<T extends unknown>(v: T | false): v is T => !!v),
     },
     {
       text: (

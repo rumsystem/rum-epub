@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import { Help } from '@mui/icons-material';
 import { Annotation } from 'epubjs/types/annotations';
-import SliderAltIcon from 'boxicons/svg/regular/bx-slider-alt.svg?fill';
+import SliderAltIcon from 'boxicons/svg/regular/bx-slider-alt.svg?fill-icon';
 
 import { readerSettingsService, ReaderThemes, nodeService } from '~/service';
 import { highLightRange } from './helper';
@@ -134,11 +134,10 @@ export const EpubSettings = observer((props: Props) => {
       >
         <SliderAltIcon
           className={classNames(
+            'text-22',
             !readerSettingsService.state.dark && 'text-black',
             readerSettingsService.state.dark && 'text-gray-af',
           )}
-          width="24"
-          height="24"
         />
       </div>
     </Tooltip>

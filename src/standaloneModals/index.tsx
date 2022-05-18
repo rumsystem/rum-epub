@@ -1,5 +1,7 @@
 export * from './createGroup';
 export * from './editEpubMetadata';
+export * from './editEpupCover';
+export * from './editProfile';
 export * from './groupInfo';
 export * from './joinGroup';
 export * from './languageSelect';
