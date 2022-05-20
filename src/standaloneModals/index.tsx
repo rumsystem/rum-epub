@@ -1,4 +1,5 @@
 export * from './createGroup';
+export * from './editAvatar';
 export * from './editEpubMetadata';
 export * from './editEpupCover';
 export * from './editProfile';

@@ -138,6 +138,22 @@ export interface ProfileItem {
   status: 'synced' | 'syncing'
 }
 
+export interface GlobalProfile {
+  id?: number
+  profile: {
+    name: string
+    image?: {
+      mediaType: string
+      content: string
+    }
+    wallet?: Array<{
+      id: string
+      type: string
+      name: string
+    }>
+  }
+}
+
 export class Database extends Dexie {
   public book: Dexie.Table<BookDatabaseItem, number>;
   public bookBuffer: Dexie.Table<BookBufferItem, number>;
@@ -150,6 +166,7 @@ export class Database extends Dexie {
   public groupLatestParsedTrx: Dexie.Table<GroupLatestParsedTrxItem, number>;
   public bookMetadata: Dexie.Table<BookMetadataItem, number>;
   public profile: Dexie.Table<ProfileItem, number>;
+  public globalProfile: Dexie.Table<GlobalProfile, number>;
 
   public constructor(name: string) {
     super(name);
@@ -202,7 +219,6 @@ export class Database extends Dexie {
         'groupId',
         'trxId',
       ].join(','),
-
       highlights: [
         '++id',
         'groupId',
@@ -230,6 +246,10 @@ export class Database extends Dexie {
         '[groupId+status]',
         '[groupId+publisher+status]',
       ].join(','),
+      globalProfile: [
+        '++id',
+        'profile',
+      ].join(','),
     }).upgrade(async () => {
       await this.table('book').clear();
     });
@@ -246,6 +266,7 @@ export class Database extends Dexie {
     this.readingProgress = this.table('readingProgress');
     this.bookMetadata = this.table('bookMetadata');
     this.profile = this.table('profile');
+    this.globalProfile = this.table('globalProfile');
   }
 
   public get bookRelatedTables() {

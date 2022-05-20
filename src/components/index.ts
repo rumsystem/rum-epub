@@ -7,4 +7,5 @@ export * from './GroupIcon';
 export * from './ImageEditor';
 export * from './Loading';
 export * from './MiddleTruncate';
+export * from './Scrollable';
 export * from './SearchInput';

@@ -5222,10 +5222,10 @@ rc@^1.2.8:
     minimist "^1.2.0"
     strip-json-comments "~2.0.1"
 
-react-avatar-editor@^12.0.0:
-  version "12.0.0"
-  resolved "https://registry.npmmirror.com/react-avatar-editor/-/react-avatar-editor-12.0.0.tgz#e6d2cbad3a82a468c60bd43a7d78eb889bcd7007"
-  integrity sha512-l7NrN8CXlUXbMhnbkuduAtR3+AlDz+DzYWlYBNr7q+rNeJMZlv26ap3Dk/D1WK/MPlnoS33iITlhLkuDsYQpug==
+react-avatar-editor@^13.0.0:
+  version "13.0.0"
+  resolved "https://registry.npmmirror.com/react-avatar-editor/-/react-avatar-editor-13.0.0.tgz#55013625ee9ae715c1fe2dc553b8079994d8a5f2"
+  integrity sha512-0xw63MbRRQdDy7YI1IXU9+7tTFxYEFLV8CABvryYOGjZmXRTH2/UA0mafe57ns62uaEFX181kA4XlGlxCaeXKA==
   dependencies:
     "@babel/plugin-transform-runtime" "^7.12.1"
     "@babel/runtime" "^7.12.5"
