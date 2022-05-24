@@ -21,6 +21,7 @@ import { TitleBarItem, TitleBarMenuItem } from './TitleBarItem';
 import { exportLog } from './helper';
 
 import './index.sass';
+import { myLibrary } from '~/standaloneModals/myLibrary';
 
 interface Props {
   className?: string
@@ -111,6 +112,23 @@ export const TitleBar = observer((props: Props) => {
     },
   ].filter(<T extends unknown>(v: false | T): v is T => !!v);
   const menuRight: Array<TitleBarMenuItem> = [
+    // {
+    //   // TODO:
+    //   text: (
+    //     <div className="text-bright-orange">
+    //       发现内容
+    //     </div>
+    //   ),
+    //   action: () => myLibrary(),
+    // },
+    {
+      text: (
+        <div className="text-bright-orange">
+          管理我的内容库
+        </div>
+      ),
+      action: () => myLibrary(),
+    },
     {
       // TODO:
       text: (

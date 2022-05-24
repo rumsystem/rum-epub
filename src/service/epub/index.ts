@@ -5,7 +5,7 @@ import * as O from 'fp-ts/lib/Option';
 import { pipe } from 'fp-ts/lib/function';
 import { fetchContents, IPostContentResult, postContent } from '~/apis';
 import { promiseAllSettledThrottle, runLoading, sleep } from '~/utils';
-import { dbService, FileInfo, CoverFileInfo, EpubMetadata } from '~/service/db';
+import { dbService, FileInfo, CoverFileInfo, EpubMetadata, BookMetadataItem } from '~/service/db';
 import { busService } from '~/service/bus';
 import { parseEpub, ParsedEpubBook, checkTrxAndAck, EpubItem, hashBufferSha256, splitFile } from './helper';
 import { createHash } from 'crypto';
@@ -455,11 +455,14 @@ const parseNewTrx = action((groupId: string) => {
         if (isFileInfo) {
           try {
             const fileData: FileInfo = JSON.parse(Buffer.from(trx.Content.file.content, 'base64').toString());
+            const fileInfoExisted = booksToCaculate.some((v) => v.fileInfo.sha256 === fileData.sha256);
             booksToCaculate.push({
               bookTrx: trx.TrxId,
               date: new Date(trx.TimeStamp / 1000000),
               fileInfo: fileData,
-              status: 'incomplete',
+              status: fileInfoExisted
+                ? 'broken'
+                : 'incomplete',
               file: null,
               groupId,
               segmentItem: {
@@ -499,6 +502,7 @@ const parseNewTrx = action((groupId: string) => {
           const buf = Buffer.from(trx.Content.file.content, 'base64');
           const sha256 = hashBufferSha256(buf);
           booksToCaculate.forEach((book) => {
+            if (book.status !== 'incomplete') { return; }
             const segment = book.fileInfo.segments.find((v) => v.id === name);
             if (!segment) { return; }
             if (segment.sha256 !== sha256) { return; }
@@ -509,7 +513,7 @@ const parseNewTrx = action((groupId: string) => {
             };
           });
           coversToCaculate.forEach((cover) => {
-            const segment = cover.fileInfo.segments.find((v) => v.id === name);
+            const segment = cover.fileInfo?.segments.find((v) => v.id === name);
             if (!segment) { return; }
             if (segment.sha256 !== sha256) { return; }
             cover.segmentItem.segments[name] = {
@@ -556,8 +560,39 @@ const parseNewTrx = action((groupId: string) => {
         }
       });
 
+    const metadataToWrite: Array<BookMetadataItem> = [];
+
+    const bookParsing = booksToCaculate.filter((v) => v.status === 'complete').map(async (v) => {
+      const epub = await parseEpub('', v.file!);
+      if (E.isLeft(epub)) { return; }
+      if (epub.right.cover) {
+        coversToCaculate.push({
+          bookTrx: v.bookTrx,
+          coverTrx: '',
+          file: epub.right.cover,
+          fileInfo: null,
+          groupId,
+          segmentItem: {
+            coverTrx: '',
+            groupId,
+            segments: {},
+          },
+          status: 'complete',
+        });
+      }
+      if (epub.right.metadata) {
+        metadataToWrite.push({
+          bookTrx: v.bookTrx,
+          groupId,
+          metadata: epub.right.metadata,
+        });
+      }
+    });
+
+    await Promise.all(bookParsing);
+
     coversToCaculate
-      .filter((v) => v.fileInfo.segments.length === Object.keys(v.segmentItem.segments).length)
+      .filter((v) => v.fileInfo?.segments.length === Object.keys(v.segmentItem.segments).length)
       .forEach((cover) => {
         const segments = Object.values(cover.segmentItem.segments).map((v) => ({
           ...v,
@@ -566,7 +601,7 @@ const parseNewTrx = action((groupId: string) => {
         segments.sort((a, b) => a.num - b.num);
         const file = Buffer.concat(segments.map((v) => v.buf));
         const fileSha256 = hashBufferSha256(file);
-        if (fileSha256 === cover.fileInfo.sha256) {
+        if (fileSha256 === cover.fileInfo?.sha256) {
           cover.file = file;
           cover.status = 'complete';
         } else {
@@ -602,6 +637,7 @@ const parseNewTrx = action((groupId: string) => {
         dbService.db.book,
         dbService.db.bookSegment,
         dbService.db.bookBuffer,
+        dbService.db.bookMetadata,
         dbService.db.cover,
         dbService.db.coverSegment,
         dbService.db.coverBuffer,
@@ -615,6 +651,7 @@ const parseNewTrx = action((groupId: string) => {
         dbService.db.cover.bulkPut(coversToWrite),
         dbService.db.coverSegment.bulkPut(coverSegmentsToWrite),
         dbService.db.coverBuffer.bulkPut(coverBuffersToWrite),
+        dbService.db.bookMetadata.bulkPut(metadataToWrite),
 
         dbService.db.groupLatestParsedTrx.where({
           groupId,

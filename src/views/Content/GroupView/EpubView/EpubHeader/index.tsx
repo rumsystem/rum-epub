@@ -129,7 +129,7 @@ export const EpubHeader = observer((props: Props) => {
 
         <UploadEpubButton>
           {(p) => {
-            if (p.hasUploadAtLeastOneBook || !p.hasUploadAtLeastOneBook) { return null; }
+            if (p.hasUploadAtLeastOneBook || !p.hasWritePermission) { return null; }
             return (
               <Tooltip title={p.hasWritePermission ? '上传书籍' : '你没有权限在这个种子网络上传内容'}>
                 <div className="ml-8">

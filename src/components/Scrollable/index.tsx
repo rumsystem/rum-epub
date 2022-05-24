@@ -11,6 +11,7 @@ interface Props {
   wrapperClassName?: string
   scrollBoxRef?: React.MutableRefObject<HTMLDivElement | null>
   onScroll?: () => unknown
+  light?: boolean
   autoHideMode?: boolean
 }
 
@@ -191,9 +192,13 @@ export const Scrollable = observer((props: Props) => {
           >
             <div
               className={classNames(
-                'scroll-bar-thumb bg-black/15 w-[6px] ease-in-out duration-100 rounded-full',
-                'group-hover:bg-black/25 group-hover:w-[8px]',
-                state.drag.start && 'w-[8px] bg-black/25',
+                'scroll-bar-thumb w-[6px] ease-in-out duration-100 rounded-full',
+                'group-hover:w-[8px]',
+                !props.light && 'bg-black/15 group-hover:bg-black/25',
+                props.light && 'bg-white/20 group-hover:bg-white/35',
+                state.drag.start && 'w-[8px]',
+                !props.light && state.drag.start && 'bg-black/25',
+                props.light && state.drag.start && 'bg-white/35',
               )}
               ref={thumb}
             />

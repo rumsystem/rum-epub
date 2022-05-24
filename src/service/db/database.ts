@@ -89,7 +89,7 @@ export interface CoverItem {
   id?: number
   groupId: string
   bookTrx: string
-  fileInfo: CoverFileInfo
+  fileInfo: CoverFileInfo | null
   coverTrx: string
   status: 'incomplete' | 'complete' | 'broken'
 }
@@ -97,7 +97,8 @@ export interface CoverItem {
 export interface CoverBufferItem {
   id?: number
   groupId: string
-  coverTrx: string
+  bookTrx: string
+  coverTrx?: string
   file: Uint8Array
 }
 
@@ -172,7 +173,7 @@ export class Database extends Dexie {
     super(name);
     applyOldVersions(this);
 
-    this.version(9).stores({
+    this.version(10).stores({
       book: [
         '++id',
         'groupId',
@@ -205,6 +206,7 @@ export class Database extends Dexie {
         'groupId',
         'bookTrx',
         'coverTrx',
+        'status',
         '[groupId+bookTrx]',
         '[groupId+bookTrx+status]',
       ].join(','),
@@ -251,7 +253,9 @@ export class Database extends Dexie {
         'profile',
       ].join(','),
     }).upgrade(async () => {
-      await this.table('book').clear();
+      await Promise.all(
+        this.allTables.map((v) => v.clear()),
+      );
     });
 
     this.book = this.table('book');
@@ -286,6 +290,23 @@ export class Database extends Dexie {
       this.highlights,
       this.readingProgress,
       this.profile,
+    ];
+  }
+
+  public get allTables() {
+    return [
+      this.book,
+      this.bookBuffer,
+      this.bookSegment,
+      this.cover,
+      this.coverBuffer,
+      this.coverSegment,
+      this.groupLatestParsedTrx,
+      this.highlights,
+      this.readingProgress,
+      this.bookMetadata,
+      this.profile,
+      this.globalProfile,
     ];
   }
 }
