@@ -18,6 +18,7 @@ import {
   NODE_TYPE,
   tooltipService,
   NodeInfoStore,
+  initServiceAfterDB,
 } from '~/service';
 import { lang } from '~/utils';
 import { selectRumFolder } from './helper';
@@ -192,6 +193,7 @@ export const Init = observer((props: Props) => {
       nodeService.updateNodeInfo().then(() => {
         if (nodeService.state.nodeInfo.node_publickey) {
           dbService.initDb(nodeService.state.nodeInfo.node_publickey);
+          initServiceAfterDB();
         }
       }),
     ]);

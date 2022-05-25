@@ -1,5 +1,4 @@
 import React from 'react';
-import classNames from 'classnames';
 import { createRoot } from 'react-dom/client';
 import { action, runInAction } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
@@ -9,11 +8,13 @@ import { ChevronLeft, ChevronRight, Edit } from '@mui/icons-material';
 import { ThemeRoot } from '~/utils/theme';
 import { defaultAvatar } from '~/utils/avatars';
 import { Avatar } from '~/components';
-import { dbService, GlobalProfile } from '~/service';
+import { GlobalProfile, profileService, tooltipService } from '~/service';
 import { runLoading } from '~/utils';
 import { editAvatar } from '~/standaloneModals/editAvatar';
 
+let canOpen = true;
 export const editProfile = async () => new Promise<void>((rs) => {
+  if (!canOpen) { return; }
   const div = document.createElement('div');
   const root = createRoot(div);
   document.body.append(div);
@@ -35,19 +36,14 @@ export const editProfile = async () => new Promise<void>((rs) => {
   );
 });
 
-interface Props {
-  rs: () => unknown
-}
-
-const EditProfile = observer((props: Props) => {
+const EditProfile = observer((props: { rs: () => unknown }) => {
   const state = useLocalObservable(() => ({
     open: true,
     loading: false,
-
     form: {
       avatar: '',
       name: '',
-      mixinUID: null,
+      mixinUID: '',
     },
   }));
 
@@ -55,6 +51,7 @@ const EditProfile = observer((props: Props) => {
     if (state.loading) { return; }
     props.rs();
     state.open = false;
+    canOpen = true;
   });
 
   const handleEditAvatar = async () => {
@@ -87,11 +84,14 @@ const EditProfile = observer((props: Props) => {
     runLoading(
       (l) => { state.loading = l; },
       async () => {
-        await dbService.db.globalProfile.add({
-          profile,
+        await profileService.setProfile(profile);
+        tooltipService.show({
+          content: '修改成功！',
         });
+        setTimeout(handleClose);
       },
     );
+
     // const payload = {
     //   type: 'Update',
     //   person: profile,
@@ -116,7 +116,21 @@ const EditProfile = observer((props: Props) => {
     // });
   };
 
+  const loadProfile = () => {
+    runInAction(() => {
+      state.form = {
+        name: profileService.state.currentProfile.name,
+        avatar: profileService.state.currentProfile.image?.content
+          ? `data:image/jpeg/;base64,${profileService.state.currentProfile.image?.content}`
+          : '',
+        mixinUID: profileService.state.currentProfile.wallet?.find((v) => v.type === 'mixin')?.id ?? '',
+      };
+    });
+  };
+
   React.useEffect(() => {
+    canOpen = false;
+    loadProfile();
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         handleClose();
@@ -155,11 +169,11 @@ const EditProfile = observer((props: Props) => {
               <div className="font-bold text-16">
                 编辑个人信息
               </div>
-              <div
-                className="flex items-center gap-x-6 border border-gray-ec p-10 rounded"
-                onClick={handleEditAvatar}
-              >
-                <div className="relative">
+              <div className="flex items-center gap-x-6 border border-gray-ec p-10 rounded">
+                <div
+                  className="relative"
+                  onClick={handleEditAvatar}
+                >
                   <Avatar
                     url={state.form.avatar || defaultAvatar}
                     size={96}
@@ -179,12 +193,13 @@ const EditProfile = observer((props: Props) => {
                     <OutlinedInput
                       className="text-14"
                       label="昵称"
-                    // value={state.form.author}
-                    // onChange={action((e) => { state.form.author = e.target.value; })}
+                      value={state.form.name}
+                      onChange={action((e) => { state.form.name = e.target.value; })}
                     />
                   </FormControl>
                   <div className="">
                     <button className="flex items-center text-12 text-gray-9c">
+                      {/* TODO: */}
                       绑定钱包
                       <ChevronRight className="text-20" />
                     </button>
@@ -192,7 +207,14 @@ const EditProfile = observer((props: Props) => {
                 </div>
               </div>
 
-              <div className="flex flex-center">
+              <div className="flex flex-center gap-x-8">
+                <Button
+                  className="min-w-[120px]"
+                  onClick={handleClose}
+                  color="inherit"
+                >
+                  取消
+                </Button>
                 <Button
                   className="min-w-[120px]"
                   onClick={handleConfirm}

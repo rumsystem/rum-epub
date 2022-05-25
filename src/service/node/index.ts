@@ -84,6 +84,7 @@ const state = observable({
     updateAllGroupConfig: null as null | PollingTask,
     updateAllGroupTrxAuthType: null as null | PollingTask,
   },
+  pollingStarted: false,
 });
 
 const updateGroups = async (init = false) => {
@@ -362,6 +363,7 @@ const startPolling = (restart = false) => {
   state.pollings.updateNetworkInfo = new PollingTask(updateNetworkInfo, 10000, true, true);
   state.pollings.updateAllGroupConfig = new PollingTask(updateAllGroupConfig, 20000, true, true);
   state.pollings.updateAllGroupTrxAuthType = new PollingTask(updateAllGroupTrxAuthType, 30000, true, true);
+  state.pollingStarted = true;
 };
 
 const stopPolling = action(() => {

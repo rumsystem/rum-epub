@@ -4,7 +4,7 @@ import { observer } from 'mobx-react-lite';
 import { ipcRenderer } from 'electron';
 import { getCurrentWindow, shell, app } from '@electron/remote';
 import { Tooltip } from '@mui/material';
-import { Check } from '@mui/icons-material';
+import { Check, ChevronLeft, ChevronRight } from '@mui/icons-material';
 
 import { lang } from '~/utils';
 import {
@@ -14,6 +14,7 @@ import {
   dbService,
   dialogService,
   updateService,
+  profileService,
 } from '~/service';
 import { nodeInfoModal, editProfile } from '~/standaloneModals';
 import IconLangLocal from '~/assets/lang_local.svg';
@@ -121,7 +122,7 @@ export const TitleBar = observer((props: Props) => {
     //   ),
     //   action: () => myLibrary(),
     // },
-    {
+    !!nodeService.state.pollingStarted && {
       text: (
         <div className="text-bright-orange">
           管理我的内容库
@@ -129,11 +130,18 @@ export const TitleBar = observer((props: Props) => {
       ),
       action: () => myLibrary(),
     },
-    {
+    !!nodeService.state.pollingStarted && {
       // TODO:
       text: (
-        <div>
-          用户名用户名
+        <div className="flex flex-center gap-x-2">
+          <div
+            className="w-8 h-8 rounded-full bg-contain"
+            style={{
+              backgroundImage: `url("${profileService.state.profileImage}")`,
+            }}
+          />
+          {profileService.state.profileName}
+          <ChevronRight className="rotate-90 text-bright-orange -mx-1" />
         </div>
       ),
       children: [

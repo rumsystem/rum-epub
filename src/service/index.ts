@@ -4,6 +4,7 @@ import { epubService } from './epub';
 import { readerSettingsService } from './readerSettings';
 import { updateService } from './update';
 import { trxAckService } from './trxAck';
+import { profileService } from './profile';
 
 export * from './bus';
 export * from './db';
@@ -12,6 +13,7 @@ export * from './epub';
 export * from './i18n';
 export * from './loading';
 export * from './node';
+export * from './profile';
 export * from './quorum';
 export * from './readerSettings';
 export * from './tooltip';
@@ -37,6 +39,14 @@ export const initService = () => {
     epubService.init(),
     updateService.init(),
     trxAckService.init(),
+  ];
+
+  return () => disposes.forEach((v) => v());
+};
+
+export const initServiceAfterDB = () => {
+  const disposes = [
+    profileService.init(),
   ];
 
   return () => disposes.forEach((v) => v());
