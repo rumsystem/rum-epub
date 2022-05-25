@@ -4,7 +4,7 @@ import { observer } from 'mobx-react-lite';
 import { ipcRenderer } from 'electron';
 import { getCurrentWindow, shell, app } from '@electron/remote';
 import { Tooltip } from '@mui/material';
-import { Check, ChevronLeft, ChevronRight } from '@mui/icons-material';
+import { Check, ChevronRight } from '@mui/icons-material';
 
 import { lang } from '~/utils';
 import {
@@ -151,7 +151,7 @@ export const TitleBar = observer((props: Props) => {
         },
         {
           text: '关联钱包',
-          action: () => {},
+          action: () => editProfile(),
         },
         !!nodeService.state.nodeInfo.node_publickey && {
           text: lang.nodeAndNetwork,

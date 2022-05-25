@@ -23,7 +23,7 @@ import PermissionWriteIcon from '~/assets/permission/write.svg?react';
 import PermissionReadOnlyIcon from '~/assets/permission/readonly.svg?react';
 import SeedNoopenIcon from '~/assets/icon_seed_noopen.svg?react';
 
-import { dialogService, nodeService, tooltipService } from '~/service';
+import { dialogService, escService, nodeService, tooltipService } from '~/service';
 import { lang, runLoading } from '~/utils';
 import { GROUP_CONFIG_KEY, GROUP_TEMPLATE_TYPE } from '~/utils/constant';
 import { ThemeRoot } from '~/utils/theme';
@@ -75,6 +75,7 @@ const CreateGroup = observer((props: Props) => {
     encryptionType: 'public',
 
     creating: false,
+    dispose: escService.noop,
   }));
 
   const scrollBox = React.useRef<HTMLDivElement>(null);
@@ -225,6 +226,7 @@ const CreateGroup = observer((props: Props) => {
   const handleClose = action(() => {
     props.rs();
     state.open = false;
+    state.dispose();
   });
 
   React.useEffect(() => reaction(
@@ -240,15 +242,7 @@ const CreateGroup = observer((props: Props) => {
     runInAction(() => {
       state.open = true;
     });
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        handleClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
+    state.dispose = escService.add(handleClose);
   }, []);
 
   return (

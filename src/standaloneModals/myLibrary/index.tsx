@@ -5,7 +5,7 @@ import { action, observable, runInAction } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import DOMPurify from 'dompurify';
 import { createRoot } from 'react-dom/client';
-import { useTable, useResizeColumns, useFlexLayout, useBlockLayout } from 'react-table';
+import { useTable, useResizeColumns, useFlexLayout } from 'react-table';
 import {
   Checkbox,
   Fade,
@@ -24,10 +24,12 @@ import TrashIcon from 'boxicons/svg/regular/bx-trash.svg?fill-icon';
 import IconFold from '~/assets/fold.svg?react';
 import IconLib from '~/assets/icon_lib.svg?fill';
 import { ThemeRoot } from '~/utils/theme';
-import { BookDatabaseItem, BookMetadataItem, dbService } from '~/service';
+import { BookDatabaseItem, BookMetadataItem, dbService, escService } from '~/service';
 import { Scrollable } from '~/components';
 
+let canOpen = true;
 export const myLibrary = async () => new Promise<void>((rs) => {
+  if (!canOpen) { return; }
   const div = document.createElement('div');
   const root = createRoot(div);
   document.body.append(div);
@@ -49,17 +51,13 @@ export const myLibrary = async () => new Promise<void>((rs) => {
   );
 });
 
-interface Props {
-  rs: () => unknown
-}
-
 interface LibBookItem {
   book: BookDatabaseItem
   cover: string
   metadata: BookMetadataItem['metadata'] | null
 }
 
-const MyLibrary = observer((props: Props) => {
+const MyLibrary = observer((props: { rs: () => unknown }) => {
   const state = useLocalObservable(() => ({
     open: false,
     sidebarCollapsed: false,
@@ -67,8 +65,9 @@ const MyLibrary = observer((props: Props) => {
     coverCache: [] as Array<string>,
     languageFilter: [] as Array<string>,
     nameFilter: '',
-    viewMode: 'list' as 'grid' | 'list',
+    viewMode: 'grid' as 'grid' | 'list',
     selectedBook: null as null | LibBookItem,
+    dispose: escService.noop,
     get allCategories() {
       return Array.from(new Set(state.allBooks.flatMap((v) => [
         v.metadata?.categoryLevel1 ?? '',
@@ -115,7 +114,7 @@ const MyLibrary = observer((props: Props) => {
         accessor: (row: LibBookItem) => `${row.metadata?.author}${row.metadata?.translator && `[译]${row.metadata?.translator}`}`,
       },
       {
-        Header: 'size',
+        Header: 'Size (MB)',
         width: 80,
         accessor: () => 'TODO',
       },
@@ -167,6 +166,8 @@ const MyLibrary = observer((props: Props) => {
   const handleClose = action(() => {
     props.rs();
     state.open = false;
+    canOpen = true;
+    state.dispose();
   });
 
   const loadBooks = async () => {
@@ -206,17 +207,12 @@ const MyLibrary = observer((props: Props) => {
   };
 
   React.useEffect(() => {
+    canOpen = false;
     loadBooks();
     runInAction(() => { state.open = true; });
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        handleClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
+    state.dispose = escService.add(handleClose);
     return () => {
       clearCache();
-      window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
 

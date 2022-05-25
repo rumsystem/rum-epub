@@ -273,22 +273,18 @@ export class Database extends Dexie {
     this.globalProfile = this.table('globalProfile');
   }
 
-  public get bookRelatedTables() {
+  public get groupRelatedTables() {
     return [
       this.book,
       this.bookBuffer,
       this.bookSegment,
       this.cover,
+      this.coverBuffer,
       this.coverSegment,
       this.groupLatestParsedTrx,
-    ];
-  }
-
-  public get groupRelatedTables() {
-    return [
-      ...this.bookRelatedTables,
       this.highlights,
       this.readingProgress,
+      this.bookMetadata,
       this.profile,
     ];
   }

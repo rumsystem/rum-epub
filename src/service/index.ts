@@ -5,11 +5,13 @@ import { readerSettingsService } from './readerSettings';
 import { updateService } from './update';
 import { trxAckService } from './trxAck';
 import { profileService } from './profile';
+import { escService } from './esc';
 
 export * from './bus';
 export * from './db';
 export * from './dialog';
 export * from './epub';
+export * from './esc';
 export * from './i18n';
 export * from './loading';
 export * from './node';
@@ -39,6 +41,7 @@ export const initService = () => {
     epubService.init(),
     updateService.init(),
     trxAckService.init(),
+    escService.init(),
   ];
 
   return () => disposes.forEach((v) => v());

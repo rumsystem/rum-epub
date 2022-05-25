@@ -8,7 +8,7 @@ import { ChevronLeft, ChevronRight, Edit } from '@mui/icons-material';
 import { ThemeRoot } from '~/utils/theme';
 import { defaultAvatar } from '~/utils/avatars';
 import { Avatar } from '~/components';
-import { GlobalProfile, profileService, tooltipService } from '~/service';
+import { GlobalProfile, profileService, tooltipService, escService } from '~/service';
 import { runLoading } from '~/utils';
 import { editAvatar } from '~/standaloneModals/editAvatar';
 
@@ -45,6 +45,12 @@ const EditProfile = observer((props: { rs: () => unknown }) => {
       name: '',
       mixinUID: '',
     },
+    initForm: {
+      avatar: '',
+      name: '',
+      mixinUID: '',
+    },
+    dispose: escService.noop,
   }));
 
   const handleClose = action(() => {
@@ -52,6 +58,7 @@ const EditProfile = observer((props: { rs: () => unknown }) => {
     props.rs();
     state.open = false;
     canOpen = true;
+    state.dispose();
   });
 
   const handleEditAvatar = async () => {
@@ -64,6 +71,11 @@ const EditProfile = observer((props: { rs: () => unknown }) => {
   };
 
   const handleConfirm = () => {
+    const notChanged = Object.entries(state.form).every(([k, v]) => v === (state.initForm as any)[k]);
+    if (notChanged) {
+      handleClose();
+      return;
+    }
     const profile: GlobalProfile['profile'] = {
       name: state.form.name,
     };
@@ -117,29 +129,23 @@ const EditProfile = observer((props: { rs: () => unknown }) => {
   };
 
   const loadProfile = () => {
+    const getProfile = () => ({
+      name: profileService.state.currentProfile.name,
+      avatar: profileService.state.currentProfile.image?.content
+        ? `data:image/jpeg/;base64,${profileService.state.currentProfile.image?.content}`
+        : '',
+      mixinUID: profileService.state.currentProfile.wallet?.find((v) => v.type === 'mixin')?.id ?? '',
+    });
     runInAction(() => {
-      state.form = {
-        name: profileService.state.currentProfile.name,
-        avatar: profileService.state.currentProfile.image?.content
-          ? `data:image/jpeg/;base64,${profileService.state.currentProfile.image?.content}`
-          : '',
-        mixinUID: profileService.state.currentProfile.wallet?.find((v) => v.type === 'mixin')?.id ?? '',
-      };
+      state.form = getProfile();
+      state.initForm = getProfile();
     });
   };
 
   React.useEffect(() => {
     canOpen = false;
     loadProfile();
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        handleClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
+    state.dispose = escService.add(handleClose);
   }, []);
 
   return (
