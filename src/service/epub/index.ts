@@ -460,6 +460,7 @@ const parseNewTrx = action((groupId: string) => {
               bookTrx: trx.TrxId,
               date: new Date(trx.TimeStamp / 1000000),
               fileInfo: fileData,
+              size: 0,
               status: fileInfoExisted
                 ? 'broken'
                 : 'incomplete',
@@ -611,7 +612,10 @@ const parseNewTrx = action((groupId: string) => {
 
     const booksToWrite = booksToCaculate.map((v) => {
       const { file, segmentItem, ...u } = v;
-      return u;
+      return {
+        ...u,
+        size: file?.length ?? 0,
+      };
     });
     const coversToWrite = coversToCaculate.map((v) => {
       const { file, segmentItem, ...u } = v;

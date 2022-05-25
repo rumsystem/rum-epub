@@ -58,6 +58,7 @@ export interface BookDatabaseItem {
   groupId: string
   bookTrx: string
   fileInfo: FileInfo
+  size: number
   status: 'incomplete' | 'complete' | 'broken'
   date: Date
 }

@@ -140,8 +140,8 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
       },
       {
         Header: 'Size (MB)',
-        width: 80,
-        accessor: () => 'TODO',
+        width: 60,
+        accessor: (row: LibBookItem) => Number((row.book.size / 1048576).toFixed(2)),
       },
       {
         Header: '格式',
