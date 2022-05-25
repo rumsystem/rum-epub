@@ -1,7 +1,7 @@
 
 import React from 'react';
 import classNames from 'classnames';
-import { action, runInAction } from 'mobx';
+import { runInAction } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import { epubService } from '~/service';
 

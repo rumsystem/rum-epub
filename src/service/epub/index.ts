@@ -737,38 +737,31 @@ const parseSubData = async (groupId: string, bookTrx: string) => {
     let cover: string | null = null;
     let metadata: EpubMetadata | null = null;
 
-    const bookMetadata = await dbService.db.transaction(
+    await dbService.db.transaction(
       'r',
       [
         dbService.db.bookMetadata,
-        dbService.db.cover,
         dbService.db.coverBuffer,
       ],
       async () => {
-        const [bookMetadata, coverItem] = await Promise.all([
+        const [bookMetadata, coverBuffer] = await Promise.all([
           dbService.db.bookMetadata.where({
             groupId,
             bookTrx,
           }).last(),
-          dbService.db.cover.where({
+          dbService.db.coverBuffer.where({
             groupId,
             bookTrx,
-            status: 'complete',
           }).last(),
         ]);
-        if (coverItem) {
-          const coverBuffer = await dbService.db.coverBuffer.where({
-            coverTrx: coverItem.coverTrx,
-          }).last();
-          if (coverBuffer) {
-            cover = URL.createObjectURL(new Blob([coverBuffer.file]));
-          }
+        if (coverBuffer) {
+          cover = URL.createObjectURL(new Blob([coverBuffer.file]));
         }
-        return bookMetadata;
+        metadata = bookMetadata?.metadata ?? null;
       },
     );
 
-    if (!cover || !bookMetadata) {
+    if (!cover || !metadata) {
       const bookBuffer = await getBookBuffer(groupId, bookTrx);
       if (O.isNone(bookBuffer)) { return; }
       const epub = await parseEpub('', bookBuffer.value);
@@ -912,6 +905,7 @@ const saveReadingProgress = async (groupId: string, bookTrx: string, readingProg
 };
 
 const init = () => {
+  // TODO: all group polling
   const dispose = busService.on('group_leave', (v) => {
     const groupId = v.data.groupId;
     state.groupMap.delete(groupId);

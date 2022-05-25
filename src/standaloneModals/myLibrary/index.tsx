@@ -15,6 +15,7 @@ import {
   MenuItem,
   OutlinedInput,
   Select,
+  Tooltip,
 } from '@mui/material';
 import { Close, Search } from '@mui/icons-material';
 import GridAltIcon from 'boxicons/svg/regular/bx-grid-alt.svg?fill-icon';
@@ -64,29 +65,34 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
     allBooks: [] as Array<LibBookItem>,
     coverCache: [] as Array<string>,
     languageFilter: [] as Array<string>,
+    subjectFilter: [] as Array<string>,
     nameFilter: '',
     viewMode: 'grid' as 'grid' | 'list',
     selectedBook: null as null | LibBookItem,
     dispose: escService.noop,
-    get allCategories() {
-      return Array.from(new Set(state.allBooks.flatMap((v) => [
-        v.metadata?.categoryLevel1 ?? '',
-        v.metadata?.categoryLevel2 ?? '',
-        v.metadata?.categoryLevel3 ?? '',
-      ])));
+    get allSubjects() {
+      const list = Array.from(new Set(state.allBooks.flatMap((v) => v.metadata?.subjects ?? [])));
+      list.sort((a, b) => (a > b ? 1 : a < b ? -1 : 0));
+      return list;
     },
     get allLanguages() {
-      const allLangs = state.allBooks.flatMap((v) => v.metadata?.languages ?? '').filter(Boolean);
-      return Array.from(new Set(allLangs));
+      const allLangs = Array.from(new Set(
+        state.allBooks.flatMap((v) => v.metadata?.languages ?? '').filter(Boolean),
+      ));
+      allLangs.sort((a, b) => (a > b ? 1 : a < b ? -1 : 0));
+      return allLangs;
     },
     get filteredBooks() {
       return this.allBooks.filter((v) => {
         const languageMatch = this.languageFilter.length
           ? v.metadata && v.metadata.languages.some((v) => this.languageFilter.some((u) => u === v))
           : true;
+        const subjectMatch = this.subjectFilter.length
+          ? v.metadata && v.metadata.subjects.some((v) => this.subjectFilter.some((u) => u === v))
+          : true;
         const words = state.nameFilter.split(' ').map((v) => v.toLowerCase());
         const nameFilter = words.every((word) => v.book.fileInfo.title.toLowerCase().includes(word));
-        return languageMatch && nameFilter;
+        return languageMatch && nameFilter && subjectMatch;
       });
     },
   }), { coverCache: observable.shallow });
@@ -97,21 +103,40 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
         Header: '内容标题',
         width: 240,
         minWidth: 80,
-        accessor: (row: LibBookItem) => (
-          <div
-            className="font-medium cursor-pointer"
-            onClick={action(() => { state.selectedBook = row; })}
-          >
-            {row.book.fileInfo.title}
-            {row.metadata?.subTitle && ` - ${row.metadata?.subTitle}`}
-          </div>
-        ),
+        accessor: (row: LibBookItem) => {
+          const title = `${row.book.fileInfo.title}${row.metadata?.subTitle && ` - ${row.metadata?.subTitle}`}`;
+          return (
+            <Tooltip title={title} placement="bottom" disableInteractive>
+              <div
+                className="font-medium cursor-pointer"
+                onClick={action(() => { state.selectedBook = row; })}
+              >
+                {title}
+              </div>
+            </Tooltip>
+          );
+        },
       },
       {
         Header: '作者',
         width: 240,
         minWidth: 80,
         accessor: (row: LibBookItem) => `${row.metadata?.author}${row.metadata?.translator && `[译]${row.metadata?.translator}`}`,
+      },
+      {
+        Header: '标签',
+        width: 160,
+        accessor: (row: LibBookItem) => {
+          const tags = row.metadata?.subjects.join(', ') ?? '';
+          if (!tags) { return null; }
+          return (
+            <Tooltip title={tags} placement="bottom" disableInteractive>
+              <div className="whitespace-nowrap overflow-hidden">
+                {tags}
+              </div>
+            </Tooltip>
+          );
+        },
       },
       {
         Header: 'Size (MB)',
@@ -157,6 +182,17 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
     }
     langs = langs.filter((v) => state.allLanguages.some((u) => u === v));
     state.languageFilter = langs;
+  });
+
+  const handleChangeSubjectFilter = action((sub: string, checked: boolean) => {
+    let langs = [...state.subjectFilter];
+    if (!checked) {
+      langs = langs.filter((v) => v !== sub);
+    } else {
+      langs = [...langs, sub];
+    }
+    langs = langs.filter((v) => state.allSubjects.some((u) => u === v));
+    state.subjectFilter = langs;
   });
 
   const handleOpenDetailView = action((book: LibBookItem) => {
@@ -265,26 +301,39 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
             <div className="text-18 font-medium">
               内容类型
             </div>
-            <div className="text-16 font-medium mt-1 mb-2">
+            <div className="text-16 font-medium my-1">
               {'<< 书籍分类'}
             </div>
-            {Array(10).fill(0).map((v, i) => (
-              <div className="ml-4" key={i}>
-                分类{i}
-              </div>
-            ))}
+            <div className="flex-col py-3 pl-4 overflow-hidden">
+              {state.allSubjects.map((sub, i) => (
+                <Tooltip title={sub} placement="right">
+                  <FormControlLabel
+                    className="-mt-3"
+                    key={i}
+                    control={(
+                      <Checkbox
+                        size="small"
+                        checked={state.subjectFilter.some((v) => v === sub)}
+                        onChange={action((e, v) => handleChangeSubjectFilter(sub, v))}
+                      />
+                    )}
+                    label={(<span className="text-12 break-all whitespace-nowrap">{sub}</span>)}
+                  />
+                </Tooltip>
+              ))}
+            </div>
 
-            <div className="text-14 font-medium mt-6">
+            {/* <div className="text-14 font-medium mt-6">
               评分
             </div>
             <div>
               ★★★★★
-            </div>
+            </div> */}
 
             <div className="text-14 font-medium mt-6">
               语言
             </div>
-            <div className="flex-col pt-2">
+            <div className="flex-col py-3 pl-4">
               {/* {['简体中文', '英文', '繁体中文'].map((v) => ( */}
               {state.allLanguages.map((lang) => (
                 <FormControlLabel
@@ -294,9 +343,7 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
                     <Checkbox
                       size="small"
                       checked={state.languageFilter.some((v) => v === lang)}
-                      // value={state.lockRatio}
                       onChange={action((e, v) => handleChangeLanguageFilter(lang, v))}
-                      defaultChecked
                     />
                   )}
                   label={(<span className="text-12">{lang}</span>)}
@@ -334,10 +381,10 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
                 </InputLabel>
                 <Select
                   className="min-w-[120px] text-14"
-                  // value={age}
-                  // onChange={handleChange}
                   label="排序"
+                  onChange={() => alert('TODO:')}
                 >
+                  {/* TODO: */}
                   <MenuItem value="recent-added">按最新上架</MenuItem>
                   <MenuItem value="recent-opened">按最近浏览</MenuItem>
                 </Select>
@@ -422,7 +469,7 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
             {state.viewMode === 'list' && (
               <div className="flex flex-1 p-4">
                 <div
-                  className="flex-col flex-1 w-0 max-h-[100%] overflow-x-auto"
+                  className="flex-col flex-1 w-0 max-h-[100%] overflow-x-auto px-1"
                   {...tableInstance.getTableProps()}
                 >
                   <div className="border-b border-black">

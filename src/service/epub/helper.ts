@@ -83,6 +83,7 @@ export const parseEpub = async (fileName: string, buffer: Buffer | Uint8Array): 
     languages: [
       contentDom.querySelector('metadata > language')?.textContent ?? '',
     ] as Array<string>,
+    subjects: Array.from(contentDom.querySelectorAll('metadata subject')).map((v) => v.textContent?.trim() ?? '').filter(Boolean),
     series: '',
     seriesNumber: '',
     categoryLevel1: '',

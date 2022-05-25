@@ -8,8 +8,6 @@ import { IGroup } from '~/apis';
 import { groupInfo } from '~/standaloneModals/groupInfo';
 
 import { lang, sleep } from '~/utils';
-import { epubService } from '~/service';
-import DOMPurify from 'dompurify';
 
 interface Props {
   group: IGroup

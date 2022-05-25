@@ -31,6 +31,7 @@ export interface EpubMetadata {
   publishDate: string
   publisher: string
   languages: Array<string>
+  subjects: Array<string>
   series: string
   seriesNumber: string
   categoryLevel1: string

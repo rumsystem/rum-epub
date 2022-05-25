@@ -5,7 +5,7 @@ import * as TE from 'fp-ts/lib/TaskEither';
 import { identity, pipe } from 'fp-ts/lib/function';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import { action, runInAction } from 'mobx';
-import { Button, FormControl, IconButton, Input, InputLabel, OutlinedInput, Popover, TextField } from '@mui/material';
+import { Autocomplete, Button, FormControl, IconButton, InputLabel, OutlinedInput, Popover, TextField } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { StaticDatePicker } from '@mui/x-date-pickers';
@@ -13,7 +13,7 @@ import { AddCircleOutline, CalendarMonth, DeleteOutline } from '@mui/icons-mater
 
 import { Dialog } from '~/components';
 import { ThemeRoot } from '~/utils/theme';
-import { dbService, dialogService, EpubItem, epubService, nodeService, tooltipService } from '~/service';
+import { dialogService, EpubItem, epubService, nodeService, tooltipService } from '~/service';
 import { postContent } from '~/apis';
 import { runLoading } from '~/utils';
 import { format } from 'date-fns';
@@ -65,6 +65,7 @@ const EditEpubMetadata = observer((props: Props) => {
       publishDate: '',
       publisher: '',
       languages: [''] as Array<string>,
+      subjects: [] as Array<string>,
       series: '',
       seriesNumber: '',
       categoryLevel1: '',
@@ -156,7 +157,8 @@ const EditEpubMetadata = observer((props: Props) => {
       async () => {
         await epubService.parseNewTrx(state.groupId);
         await epubService.parseSubData(state.groupId, state.bookItem!.trxId);
-        const metadata = state.bookItem?.metadata.metadata ?? null;
+        const book = epubService.state.groupMap.get(state.groupId)?.books.find((v) => v.trxId === state.bookItem?.trxId);
+        const metadata = book?.metadata.metadata ?? null;
         runInAction(() => {
           const createForm = () => ({
             description: '',
@@ -167,6 +169,7 @@ const EditEpubMetadata = observer((props: Props) => {
             publishDate: '',
             publisher: '',
             languages: [''],
+            subjects: [],
             series: '',
             seriesNumber: '',
             categoryLevel1: '',
@@ -357,6 +360,53 @@ const EditEpubMetadata = observer((props: Props) => {
               </div>
             </React.Fragment>
           ))}
+
+          <div className="text-left text-16 leading-loose">标签：</div>
+          <div className="flex gap-x-4">
+            <Autocomplete
+              className="w-full"
+              multiple
+              options={[]}
+              freeSolo
+              size="small"
+              value={state.form.subjects}
+              onChange={action((_, v: any) => { state.form.subjects = v; })}
+              // getOptionLabel={(option) => option.title}
+              // defaultValue={[top100Films[13]]}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  variant="outlined"
+                  label={(
+                    <span className="text-14">标签</span>
+                  )}
+                />
+              )}
+            />
+            {/* <OutlinedInput
+              className="w-full text-14 w-80"
+              size="small"
+              value={v}
+              onChange={action((e) => { state.form.languages[i] = e.target.value; })}
+              endAdornment={i > 0 && (
+                <IconButton className="-right-2" onClick={action(() => { state.form.languages.splice(i, 1); })}>
+                  <DeleteOutline className="text-18" />
+                </IconButton>
+              )}
+            />
+            {i === state.form.languages.length - 1 && state.form.languages.length < 3 && (
+              <button
+                className="flex flex-none items-center text-nice-blue cursor-pointer"
+                onClick={action(() => { if (state.form.languages.length < 3) { state.form.languages.push(''); } })}
+              >
+                <AddCircleOutline className="text-18 mr-1" />
+                添加第
+                {i === 0 && '二'}
+                {i === 1 && '三'}
+                种语言
+              </button>
+            )} */}
+          </div>
 
           <div className="text-left text-16 leading-loose">丛书：</div>
           <div>
