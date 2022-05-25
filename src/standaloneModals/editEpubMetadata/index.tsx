@@ -79,8 +79,14 @@ const EditEpubMetadata = observer((props: Props) => {
       const valid = String(nn) === n && nn >= 1 && nn <= 100;
       return !n || valid;
     },
+    get descLength() {
+      const size = Array.from(this.form.description)
+        .map((v) => (v.charCodeAt(0) > 256 ? 1 : 0.5))
+        .reduce((p, c) => p + c, 0);
+      return Math.ceil(size);
+    },
     get formValid() {
-      return this.form.description.length <= 340;
+      return this.descLength <= 340;
     },
   }));
   const publisherButton = React.useRef<HTMLButtonElement>(null);
@@ -485,16 +491,16 @@ const EditEpubMetadata = observer((props: Props) => {
               placeholder="描述"
               value={state.form.description}
               onChange={action((e) => { state.form.description = e.target.value; })}
-              error={state.form.description.length > 340}
+              error={state.descLength > 340}
             />
             <div
               className={classNames(
                 'text-right',
-                state.form.description.length <= 340 && 'text-gray-bd',
-                state.form.description.length > 340 && 'text-red-400',
+                state.descLength <= 340 && 'text-gray-bd',
+                state.descLength > 340 && 'text-red-400',
               )}
             >
-              {state.form.description.length} / 340
+              {state.descLength} / 340
             </div>
           </div>
         </div>
