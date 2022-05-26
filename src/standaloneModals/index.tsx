@@ -7,5 +7,6 @@ export * from './groupInfo';
 export * from './joinGroup';
 export * from './languageSelect';
 export * from './manageGroup';
+export * from './mixinOAuth';
 export * from './nodeInfo';
 export * from './shareGroup';

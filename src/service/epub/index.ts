@@ -4,11 +4,12 @@ import * as E from 'fp-ts/lib/Either';
 import * as O from 'fp-ts/lib/Option';
 import { pipe } from 'fp-ts/lib/function';
 import { fetchContents, IPostContentResult, postContent } from '~/apis';
-import { promiseAllSettledThrottle, runLoading, sleep } from '~/utils';
+import { PollingTask, promiseAllSettledThrottle, runLoading, sleep } from '~/utils';
 import { dbService, FileInfo, CoverFileInfo, EpubMetadata, BookMetadataItem } from '~/service/db';
 import { busService } from '~/service/bus';
 import { parseEpub, ParsedEpubBook, checkTrxAndAck, EpubItem, hashBufferSha256, splitFile } from './helper';
 import { createHash } from 'crypto';
+import { nodeService } from '../node';
 
 export * from './helper';
 
@@ -48,6 +49,7 @@ const state = observable({
   bookBufferLRUCache: new Map<string, { buf: Uint8Array, time: number }>(),
 
   currentBookItem: null as null | EpubItem,
+  polling: null as null | PollingTask,
 });
 
 const getGroupItem = action((groupId: string) => {
@@ -908,6 +910,20 @@ const saveReadingProgress = async (groupId: string, bookTrx: string, readingProg
   });
 };
 
+const initAfterDB = () => {
+  state.polling = new PollingTask(
+    async () => {
+      for (const group of nodeService.state.groups) {
+        await parseNewTrx(group.group_id);
+      }
+    },
+    60000,
+    true,
+  );
+
+  return () => 1;
+};
+
 const init = () => {
   // TODO: all group polling
   const dispose = busService.on('group_leave', (v) => {
@@ -920,6 +936,7 @@ const init = () => {
 export const epubService = {
   state,
   init,
+  initAfterDB,
 
   getGroupItem,
   upload,

@@ -8,9 +8,10 @@ import { ChevronLeft, ChevronRight, Edit } from '@mui/icons-material';
 import { ThemeRoot } from '~/utils/theme';
 import { defaultAvatar } from '~/utils/avatars';
 import { Avatar } from '~/components';
-import { GlobalProfile, profileService, tooltipService, escService } from '~/service';
+import { GlobalProfile, profileService, tooltipService, escService, dialogService } from '~/service';
 import { runLoading } from '~/utils';
 import { editAvatar } from '~/standaloneModals/editAvatar';
+import { mixinOAuth } from '../mixinOAuth';
 
 let canOpen = true;
 export const editProfile = async () => new Promise<void>((rs) => {
@@ -66,6 +67,25 @@ const EditProfile = observer((props: { rs: () => unknown }) => {
     if (img) {
       runInAction(() => {
         state.form.avatar = img;
+      });
+    }
+  };
+
+  const handleGetMixinId = async () => {
+    const id = await mixinOAuth();
+    if (id) {
+      runInAction(() => {
+        state.form.mixinUID = id;
+      });
+    }
+  };
+  const handleClearMixinId = async () => {
+    const result = await dialogService.open({
+      content: '确定要取消mixin绑定吗？',
+    });
+    if (result === 'confirm') {
+      runInAction(() => {
+        state.form.mixinUID = '';
       });
     }
   };
@@ -204,11 +224,23 @@ const EditProfile = observer((props: { rs: () => unknown }) => {
                     />
                   </FormControl>
                   <div className="">
-                    <button className="flex items-center text-12 text-gray-9c">
-                      {/* TODO: */}
-                      绑定钱包
-                      <ChevronRight className="text-20" />
-                    </button>
+                    {!state.form.mixinUID && (
+                      <button
+                        className="flex items-center text-12 text-gray-9c"
+                        onClick={handleGetMixinId}
+                      >
+                        绑定钱包
+                        <ChevronRight className="text-20" />
+                      </button>
+                    )}
+                    {!!state.form.mixinUID && (
+                      <button
+                        className="flex items-center text-12 text-gray-9c"
+                        onClick={handleClearMixinId}
+                      >
+                        {state.form.mixinUID}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

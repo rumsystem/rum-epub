@@ -50,6 +50,7 @@ export const initService = () => {
 export const initServiceAfterDB = () => {
   const disposes = [
     profileService.init(),
+    epubService.initAfterDB(),
   ];
 
   return () => disposes.forEach((v) => v());

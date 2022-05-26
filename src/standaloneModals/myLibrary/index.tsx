@@ -440,7 +440,10 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
                         }}
                         onClick={(e) => e.target === e.currentTarget && handleOpenDetailView(v)}
                       >
-                        <div className="absolute hidden right-0 top-0 p-1 group-hover:block bg-white/50 hover:bg-white/75">
+                        <div
+                          className="absolute hidden right-0 top-0 p-1 group-hover:block bg-white/50 hover:bg-white/75"
+                          onClick={() => { /* TODO: */ }}
+                        >
                           <TrashIcon className="text-20 text-[#5fc0e9]" />
                         </div>
                       </div>
