@@ -25,8 +25,9 @@ import TrashIcon from 'boxicons/svg/regular/bx-trash.svg?fill-icon';
 import IconFold from '~/assets/fold.svg?react';
 import IconLib from '~/assets/icon_lib.svg?fill';
 import { ThemeRoot } from '~/utils/theme';
-import { BookDatabaseItem, BookMetadataItem, dbService, escService } from '~/service';
+import { BookDatabaseItem, BookMetadataItem, dbService, dialogService, escService, loadingService, nodeService, tooltipService } from '~/service';
 import { Scrollable } from '~/components';
+import { lang } from '~/utils';
 
 let canOpen = true;
 export const myLibrary = async () => new Promise<void>((rs) => {
@@ -205,6 +206,31 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
     canOpen = true;
     state.dispose();
   });
+
+  const handleLeaveGroup = async (groupId: string) => {
+    const result = await dialogService.open({
+      content: '确实要退出这本书所在的种子网络吗？',
+      danger: true,
+    });
+    if (result === 'cancel') { return; }
+    const loading = loadingService.add('正在退出群组');
+    nodeService.leaveGroup(groupId).then(
+      () => {
+        tooltipService.show({
+          content: lang.exited,
+        });
+      },
+      (err) => {
+        console.error(err);
+        tooltipService.show({
+          content: lang.somethingWrong,
+          type: 'error',
+        });
+      },
+    ).finally(() => {
+      loading.close();
+    });
+  };
 
   const loadBooks = async () => {
     const [books, metadata, coverBuffer] = await dbService.db.transaction(
@@ -442,7 +468,7 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
                       >
                         <div
                           className="absolute hidden right-0 top-0 p-1 group-hover:block bg-white/50 hover:bg-white/75"
-                          onClick={() => { /* TODO: */ }}
+                          onClick={() => handleLeaveGroup(v.book.groupId)}
                         >
                           <TrashIcon className="text-20 text-[#5fc0e9]" />
                         </div>

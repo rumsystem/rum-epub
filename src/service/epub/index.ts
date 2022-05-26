@@ -925,7 +925,6 @@ const initAfterDB = () => {
 };
 
 const init = () => {
-  // TODO: all group polling
   const dispose = busService.on('group_leave', (v) => {
     const groupId = v.data.groupId;
     state.groupMap.delete(groupId);
