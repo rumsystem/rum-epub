@@ -15,6 +15,7 @@ import {
   MenuItem,
   OutlinedInput,
   Select,
+  SelectChangeEvent,
   Tooltip,
 } from '@mui/material';
 import { Close, Search } from '@mui/icons-material';
@@ -25,13 +26,23 @@ import TrashIcon from 'boxicons/svg/regular/bx-trash.svg?fill-icon';
 import IconFold from '~/assets/fold.svg?react';
 import IconLib from '~/assets/icon_lib.svg?fill';
 import { ThemeRoot } from '~/utils/theme';
-import { BookDatabaseItem, BookMetadataItem, dbService, dialogService, escService, loadingService, nodeService, tooltipService } from '~/service';
+import {
+  BookDatabaseItem,
+  BookMetadataItem,
+  epubService,
+  dbService,
+  dialogService,
+  escService,
+  loadingService,
+  nodeService,
+  tooltipService,
+} from '~/service';
 import { Scrollable } from '~/components';
 import { lang } from '~/utils';
 
-let canOpen = true;
+let closeCurrent = null as null | (() => unknown);
 export const myLibrary = async () => new Promise<void>((rs) => {
-  if (!canOpen) { return; }
+  if (closeCurrent) { closeCurrent(); return; }
   const div = document.createElement('div');
   const root = createRoot(div);
   document.body.append(div);
@@ -69,6 +80,7 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
     subjectFilter: [] as Array<string>,
     nameFilter: '',
     viewMode: 'grid' as 'grid' | 'list',
+    sort: 'added' as 'added' | 'opened',
     selectedBook: null as null | LibBookItem,
     dispose: escService.noop,
     get allSubjects() {
@@ -84,7 +96,7 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
       return allLangs;
     },
     get filteredBooks() {
-      return this.allBooks.filter((v) => {
+      const filteredBooks = this.allBooks.filter((v) => {
         const languageMatch = this.languageFilter.length
           ? v.metadata && v.metadata.languages.some((v) => this.languageFilter.some((u) => u === v))
           : true;
@@ -95,6 +107,13 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
         const nameFilter = words.every((word) => v.book.fileInfo.title.toLowerCase().includes(word));
         return languageMatch && nameFilter && subjectMatch;
       });
+      if (this.sort === 'added') {
+        filteredBooks.sort((a, b) => b.book.time - a.book.time);
+      }
+      if (this.sort === 'opened') {
+        filteredBooks.sort((a, b) => b.book.openTime - a.book.openTime);
+      }
+      return filteredBooks;
     },
   }), { coverCache: observable.shallow });
 
@@ -203,8 +222,16 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
   const handleClose = action(() => {
     props.rs();
     state.open = false;
-    canOpen = true;
+    closeCurrent = null;
     state.dispose();
+  });
+
+  const handleOpenBook = action((v: LibBookItem) => {
+    epubService.state.pendingBookTrxToOpen = v.book.bookTrx;
+    if (nodeService.state.activeGroupId !== v.book.groupId) {
+      nodeService.changeActiveGroup(v.book.groupId);
+    }
+    handleClose();
   });
 
   const handleLeaveGroup = async (groupId: string) => {
@@ -269,7 +296,7 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
   };
 
   React.useEffect(() => {
-    canOpen = false;
+    closeCurrent = handleClose;
     loadBooks();
     runInAction(() => { state.open = true; });
     state.dispose = escService.add(handleClose);
@@ -408,11 +435,11 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
                 <Select
                   className="min-w-[120px] text-14"
                   label="排序"
-                  onChange={() => alert('TODO:')}
+                  value={state.sort}
+                  onChange={action((e: SelectChangeEvent<unknown>) => { state.sort = e.target.value as any; })}
                 >
-                  {/* TODO: */}
-                  <MenuItem value="recent-added">按最新上架</MenuItem>
-                  <MenuItem value="recent-opened">按最近浏览</MenuItem>
+                  <MenuItem value="added">按最新上架</MenuItem>
+                  <MenuItem value="opened">按最近浏览</MenuItem>
                 </Select>
               </FormControl>
             </div>
@@ -486,9 +513,11 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
                         {v.metadata?.author}
                         {v.metadata?.translator}
                       </div>
-                      <div className="text-12 text-nice-blue">
-                        epub size
-                        {/* TODO: */}
+                      <div
+                        className="text-12 text-nice-blue cursor-pointer"
+                        onClick={() => handleOpenBook(v)}
+                      >
+                        epub {Number((v.book.size / 1048576).toFixed(2))}MB
                       </div>
                     </div>
                   ))}
@@ -570,11 +599,11 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
                     style={{
                       backgroundImage: state.selectedBook.cover ? `url("${state.selectedBook.cover}")` : undefined,
                     }}
-                    onClick={() => { /* TODO: */ }}
+                    onClick={() => state.selectedBook && handleOpenBook(state.selectedBook)}
                   />
                   <div
                     className="text-center text-18 font-bold my-4"
-                    onClick={() => { /* TODO: */ }}
+                    onClick={() => state.selectedBook && handleOpenBook(state.selectedBook)}
                   >
                     《{state.selectedBook.book.fileInfo.title}》
                   </div>

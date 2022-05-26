@@ -49,6 +49,7 @@ const state = observable({
   bookBufferLRUCache: new Map<string, { buf: Uint8Array, time: number }>(),
 
   currentBookItem: null as null | EpubItem,
+  pendingBookTrxToOpen: '',
   polling: null as null | PollingTask,
 });
 
@@ -375,6 +376,23 @@ const upload = {
   },
 };
 
+const markBookOpened = async (groupId: string, bookTrx: string) => {
+  const groupItem = getGroupItem(groupId);
+  const book = groupItem.books.find((v) => v.trxId === bookTrx);
+  const now = Date.now();
+  if (book) {
+    runInAction(() => {
+      book.openTime = now;
+    });
+  }
+  await dbService.db.book.where({
+    groupId,
+    bookTrx,
+  }).modify({
+    openTime: now,
+  });
+};
+
 const parseNewTrx = action((groupId: string) => {
   const groupItem = getGroupItem(groupId);
   let p = groupItem.trxParsinsPromise;
@@ -460,7 +478,6 @@ const parseNewTrx = action((groupId: string) => {
             const fileInfoExisted = booksToCaculate.some((v) => v.fileInfo.sha256 === fileData.sha256);
             booksToCaculate.push({
               bookTrx: trx.TrxId,
-              date: new Date(trx.TimeStamp / 1000000),
               fileInfo: fileData,
               size: 0,
               status: fileInfoExisted
@@ -473,6 +490,8 @@ const parseNewTrx = action((groupId: string) => {
                 groupId,
                 segments: {},
               },
+              time: trx.TimeStamp / 1000000,
+              openTime: 0,
             });
           } catch (e) {
             console.error(e);
@@ -686,7 +705,6 @@ const parseNewTrx = action((groupId: string) => {
               loadingPromise: null,
               cover: null,
             },
-            date: v.date,
             fileInfo: v.fileInfo,
             trxId: v.bookTrx,
           };
@@ -722,7 +740,8 @@ const tryLoadBookFromDB = async (groupId: string) => {
             loadingPromise: null,
             cover: null,
           },
-          date: v.date,
+          time: v.time,
+          openTime: v.openTime,
           fileInfo: v.fileInfo,
           trxId: v.bookTrx,
         };
@@ -925,11 +944,13 @@ const initAfterDB = () => {
 };
 
 const init = () => {
-  const dispose = busService.on('group_leave', (v) => {
-    const groupId = v.data.groupId;
-    state.groupMap.delete(groupId);
-  });
-  return dispose;
+  const disposes = [
+    busService.on('group_leave', (v) => {
+      const groupId = v.data.groupId;
+      state.groupMap.delete(groupId);
+    }),
+  ];
+  return () => disposes.forEach((v) => v());
 };
 
 export const epubService = {
@@ -939,9 +960,7 @@ export const epubService = {
 
   getGroupItem,
   upload,
-  // resetUploadState,
-  // selectFile,
-  // doUpload,
+  markBookOpened,
   parseNewTrx,
   tryLoadBookFromDB,
   parseSubData,

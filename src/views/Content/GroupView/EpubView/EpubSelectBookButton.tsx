@@ -124,7 +124,7 @@ export const EpubSelectBookButton = observer((props: Props) => {
                     {v.fileInfo.title}
                   </div>
                   <div className="text-gray-af">
-                    上传于：{format(v.date, 'yyyy-MM-dd hh:mm:ss')}
+                    上传于：{format(v.time, 'yyyy-MM-dd hh:mm:ss')}
                   </div>
                 </div>
                 <Tooltip title="当前阅读">

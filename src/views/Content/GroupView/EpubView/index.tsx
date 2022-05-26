@@ -185,6 +185,9 @@ export const EpubView = observer((props: Props) => {
       state.bookTrxId = bookItem.trxId;
       state.loadingFirstBook = false;
     });
+
+    epubService.markBookOpened(groupId, bookItem.trxId);
+
     book.loaded.metadata.then(action((v) => {
       state.bookMetadata = { ...v };
     }));
@@ -345,9 +348,25 @@ export const EpubView = observer((props: Props) => {
     }
   };
 
+  const loadPendingBook = () => {
+    const pendingBookToLoad = epubService.state.pendingBookTrxToOpen;
+    const pendingBook = state.groupItem.books.find((v) => v.trxId === pendingBookToLoad);
+    if (pendingBook) {
+      loadBook(pendingBook).then(action(() => {
+        if (epubService.state.pendingBookTrxToOpen === pendingBookToLoad) {
+          epubService.state.pendingBookTrxToOpen = '';
+        }
+      }));
+      return true;
+    }
+    return false;
+  };
+
   React.useEffect(() => {
     const groupId = nodeService.state.activeGroupId;
     const loadFirstBook = async () => {
+      const loadedPendingBook = loadPendingBook();
+      if (loadedPendingBook) { return; }
       const readingProgress = await epubService.getReadingProgress(
         groupId,
       );
@@ -378,21 +397,6 @@ export const EpubView = observer((props: Props) => {
         });
       });
     };
-
-    const watchGroupSyncDispose = reaction(
-      () => nodeService.state.groupMap[groupId]?.highest_height,
-      async () => {
-        await epubService.parseNewTrx(groupId);
-        if (!state.book && !state.currentUploadItem) {
-          const epub = state.groupItem.books.at(0);
-          if (epub) {
-            loadBook(epub);
-          }
-        }
-      },
-    );
-
-    loadFirstBook();
 
     const handleKeydown = (e: KeyboardEvent) => {
       const targetTagName = (e.target as HTMLElement)?.tagName.toLowerCase();
@@ -434,13 +438,36 @@ export const EpubView = observer((props: Props) => {
     const ro = new ResizeObserver(handleResize);
     ro.observe(state.renderBox.current!);
 
-    const dispose = reaction(
-      () => state.bookItem,
-      action(() => {
-        epubService.state.currentBookItem = state.bookItem;
-      }),
-      { fireImmediately: true },
-    );
+    const disposes = [
+      // sync current book to epubService
+      reaction(
+        () => state.bookItem,
+        action(() => {
+          epubService.state.currentBookItem = state.bookItem;
+        }),
+        { fireImmediately: true },
+      ),
+      // load pending book
+      reaction(
+        () => epubService.state.pendingBookTrxToOpen,
+        loadPendingBook,
+      ),
+      // watch group sync
+      reaction(
+        () => nodeService.state.groupMap[groupId]?.highest_height,
+        async () => {
+          await epubService.parseNewTrx(groupId);
+          if (!state.book && !state.currentUploadItem) {
+            const epub = state.groupItem.books.at(0);
+            if (epub) {
+              loadBook(epub);
+            }
+          }
+        },
+      ),
+    ];
+
+    loadFirstBook();
 
     return () => {
       try {
@@ -451,8 +478,7 @@ export const EpubView = observer((props: Props) => {
       window.removeEventListener('keydown', handleKeydown);
       window.removeEventListener('mousemove', handleMouseMove);
       ro.disconnect();
-      dispose();
-      watchGroupSyncDispose();
+      disposes.forEach((v) => v());
     };
   }, []);
 

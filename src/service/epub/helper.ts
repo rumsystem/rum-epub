@@ -143,7 +143,8 @@ export interface EpubItem {
     loadingPromise: null | Promise<unknown>
     cover: null | string
   }
-  date: Date
+  time: number
+  openTime: number
 }
 
 const checkTrx = async (groupId: string, trxId: string) => {

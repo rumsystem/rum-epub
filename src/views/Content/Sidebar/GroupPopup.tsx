@@ -8,6 +8,7 @@ import { IGroup } from '~/apis';
 import { groupInfo } from '~/standaloneModals/groupInfo';
 
 import { lang, sleep } from '~/utils';
+import { dialogService, loadingService, nodeService, tooltipService } from '~/service';
 
 interface Props {
   group: IGroup
@@ -17,7 +18,9 @@ interface Props {
 
 export const GroupPopup = observer((props: Props) => {
   // const state = useLocalObservable(() => ({
-  //   profile: null as IProfile | null,
+  //   get book() {
+  //     return epubService.getGroupItem(props.group.group_id).books.at(0);
+  //   },
   // }));
   // const db = useDatabase();
   // const leaveGroup = useLeaveGroup();
@@ -39,30 +42,29 @@ export const GroupPopup = observer((props: Props) => {
   // };
   // const isOwner = props.group.role === 'owner';
 
-  const handleLeaveGroup = () => {
-    // let confirmText = '';
-    // const latestStatus = latestStatusStore.map[props.group.group_id] || latestStatusStore.DEFAULT_LATEST_STATUS;
-    // if (latestStatus.producerCount === 1 && isOwner) {
-    //   confirmText = lang.singleProducerConfirm;
-    // }
-    // confirmText += lang.confirmToExit;
-    // confirmDialogStore.show({
-    //   content: `<div>${confirmText}</div>`,
-    //   okText: lang.yes,
-    //   isDangerous: true,
-    //   maxWidth: 340,
-    //   ok: () => {
-    //     if (confirmDialogStore.loading) {
-    //       return;
-    //     }
-    //     confirmDialogStore.setLoading(true);
-    //     leaveGroup(props.group.group_id).then(() => {
-    //       confirmDialogStore.hide();
-    //     }).finally(() => {
-    //       confirmDialogStore.setLoading(false);
-    //     });
-    //   },
-    // });
+  const handleLeaveGroup = async () => {
+    const result = await dialogService.open({
+      content: lang.confirmToExit,
+      danger: true,
+    });
+    if (result === 'cancel') { return; }
+    const loading = loadingService.add('正在退出群组');
+    nodeService.leaveGroup(props.group.group_id).then(
+      () => {
+        tooltipService.show({
+          content: lang.exited,
+        });
+      },
+      (err) => {
+        console.error(err);
+        tooltipService.show({
+          content: lang.somethingWrong,
+          type: 'error',
+        });
+      },
+    ).finally(() => {
+      loading.close();
+    });
   };
 
   React.useEffect(() => {

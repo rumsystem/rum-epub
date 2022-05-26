@@ -60,7 +60,8 @@ export interface BookDatabaseItem {
   fileInfo: FileInfo
   size: number
   status: 'incomplete' | 'complete' | 'broken'
-  date: Date
+  time: number
+  openTime: number
 }
 
 export interface GroupLatestParsedTrxItem {

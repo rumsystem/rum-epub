@@ -131,7 +131,6 @@ export const TitleBar = observer((props: Props) => {
       action: () => myLibrary(),
     },
     !!nodeService.state.pollingStarted && {
-      // TODO:
       text: (
         <div className="flex flex-center gap-x-2">
           <div
