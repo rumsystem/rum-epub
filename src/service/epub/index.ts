@@ -707,6 +707,8 @@ const parseNewTrx = action((groupId: string) => {
             },
             fileInfo: v.fileInfo,
             trxId: v.bookTrx,
+            time: v.time,
+            openTime: v.openTime,
           };
           currentBooks.push(item);
         });
