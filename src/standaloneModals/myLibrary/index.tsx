@@ -8,6 +8,7 @@ import { createRoot } from 'react-dom/client';
 import { useTable, useResizeColumns, useFlexLayout } from 'react-table';
 import {
   Checkbox,
+  CircularProgress,
   Fade,
   FormControl,
   FormControlLabel,
@@ -73,6 +74,7 @@ interface LibBookItem {
 const MyLibrary = observer((props: { rs: () => unknown }) => {
   const state = useLocalObservable(() => ({
     open: false,
+    booksLoading: true,
     sidebarCollapsed: false,
     allBooks: [] as Array<LibBookItem>,
     coverCache: [] as Array<string>,
@@ -292,6 +294,7 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
 
     runInAction(() => {
       state.allBooks = allBooks;
+      state.booksLoading = false;
     });
   };
 
@@ -472,179 +475,195 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
               </button>
             </div>
           </div>
-          <div className="flex items-stretch flex-1 h-0">
-            {state.viewMode === 'grid' && (
-              <Scrollable className="flex-1">
-                <div
-                  className="grid p-10 gap-x-15 gap-y-8 justify-center"
-                  style={{
-                    gridTemplateColumns: 'repeat(auto-fill, 150px)',
-                  }}
-                >
-                  {state.filteredBooks.map((v) => (
-                    <div className="flex-col items-center" key={v.book.bookTrx}>
-                      <div
-                        className={classNames(
-                          'relative group w-[150px] h-[200px] cursor-pointer',
-                          'from-black/10 via-black/20 to-black/40 bg-gradient-to-b bg-cover bg-center',
-                        )}
-                        style={{
-                          backgroundImage: v.cover ? `url("${v.cover}")` : undefined,
-                        }}
-                        onClick={(e) => e.target === e.currentTarget && handleOpenDetailView(v)}
-                      >
+          {state.booksLoading && (
+            <div className="flex flex-center flex-1">
+              <CircularProgress className="text-gray-bd" />
+            </div>
+          )}
+          {!state.booksLoading && !state.allBooks.length && (
+            <div className="flex-col flex-center flex-1">
+              <div className="flex flex-center flex-1 grow-[2] text-gray-6d">
+                加入种子网络后，种子网络里的书籍都会呈现在这里
+              </div>
+              <div className="flex-1" />
+            </div>
+          )}
+          {!state.booksLoading && !!state.allBooks.length && (
+            <div className="flex items-stretch flex-1 h-0">
+              {state.viewMode === 'grid' && (
+                <Scrollable className="flex-1">
+                  <div
+                    className="grid p-10 gap-x-15 gap-y-8 justify-center"
+                    style={{
+                      gridTemplateColumns: 'repeat(auto-fill, 150px)',
+                    }}
+                  >
+                    {state.filteredBooks.map((v) => (
+                      <div className="flex-col items-center" key={v.book.bookTrx}>
                         <div
-                          className="absolute hidden right-0 top-0 p-1 group-hover:block bg-white/50 hover:bg-white/75"
-                          onClick={() => handleLeaveGroup(v.book.groupId)}
+                          className={classNames(
+                            'relative group w-[150px] h-[200px] cursor-pointer',
+                            'from-black/10 via-black/20 to-black/40 bg-gradient-to-b bg-cover bg-center',
+                          )}
+                          style={{
+                            backgroundImage: v.cover ? `url("${v.cover}")` : undefined,
+                          }}
+                          onClick={(e) => e.target === e.currentTarget && handleOpenDetailView(v)}
                         >
-                          <TrashIcon className="text-20 text-[#5fc0e9]" />
+                          <div
+                            className="absolute hidden right-0 top-0 p-1 group-hover:block bg-white/50 hover:bg-white/75"
+                            onClick={() => handleLeaveGroup(v.book.groupId)}
+                          >
+                            <TrashIcon className="text-20 text-[#5fc0e9]" />
+                          </div>
+                        </div>
+                        <div
+                          className="text-14 font-bold text-center mt-2 cursor-pointer"
+                          onClick={() => handleOpenDetailView(v)}
+                        >
+                          {v.book.fileInfo.title}
+                        </div>
+                        <div
+                          className="text-12 text-gray-88 cursor-pointer"
+                          onClick={() => handleOpenDetailView(v)}
+                        >
+                          {v.metadata?.author}
+                          {v.metadata?.translator}
+                        </div>
+                        <div
+                          className="text-12 text-nice-blue cursor-pointer"
+                          onClick={() => handleOpenBook(v)}
+                        >
+                          epub {Number((v.book.size / 1048576).toFixed(2))}MB
                         </div>
                       </div>
-                      <div
-                        className="text-14 font-bold text-center mt-2 cursor-pointer"
-                        onClick={() => handleOpenDetailView(v)}
-                      >
-                        {v.book.fileInfo.title}
-                      </div>
-                      <div
-                        className="text-12 text-gray-88 cursor-pointer"
-                        onClick={() => handleOpenDetailView(v)}
-                      >
-                        {v.metadata?.author}
-                        {v.metadata?.translator}
-                      </div>
-                      <div
-                        className="text-12 text-nice-blue cursor-pointer"
-                        onClick={() => handleOpenBook(v)}
-                      >
-                        epub {Number((v.book.size / 1048576).toFixed(2))}MB
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Scrollable>
-            )}
-            {state.viewMode === 'list' && (
-              <div className="flex flex-1 p-4">
-                <div
-                  className="flex-col flex-1 w-0 max-h-[100%] overflow-x-auto px-1"
-                  {...tableInstance.getTableProps()}
-                >
-                  <div className="border-b border-black">
-                    {tableInstance.headerGroups.map((headerGroup) => (
-                      <div
-                        className="divide-x divide-gray-de"
-                        {...headerGroup.getHeaderGroupProps()}
-                      >
-                        {headerGroup.headers.map((column: any) => (
-                          <div
-                            className="relative px-2 py-3 text-center"
-                            {...column.getHeaderProps()}
-                          >
-                            {column.render('Header')}
-                            <div
-                              className={classNames(
-                                'w-2 h-full z-20 absolute right-0 top-0 translate-x-1/2',
-                                // column.isResizing && 'bg-red-400',
-                              )}
-                              {...column.getResizerProps()}
-                            />
-                          </div>
-                        ))}
-                      </div>
                     ))}
                   </div>
-                  <Scrollable>
-                    <div
-                      className="divide-y divide-gray-de"
-                      {...tableInstance.getTableBodyProps()}
-                    >
-                      {tableInstance.rows.map((row) => {
-                        tableInstance.prepareRow(row);
-                        return (
-                          <div
-                            className="divide-x divide-gray-de"
-                            {...row.getRowProps()}
-                          >
-                            {row.cells.map((cell) => (
-                              <div
-                                className="relative px-2 py-4"
-                                {...cell.getCellProps()}
-                              >
-                                {cell.render('Cell')}
-                              </div>
-                            ))}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </Scrollable>
-                </div>
-              </div>
-            )}
-            {!!state.selectedBook && (
-              <Scrollable className="bg-gray-33 w-[350px] relative" light>
-                <button
-                  className="absolute right-0 top-0 p-2"
-                  onClick={action(() => { state.selectedBook = null; })}
-                >
-                  <Close className="text-white" />
-                </button>
-                <div className="flex-none text-white px-10 py-8">
+                </Scrollable>
+              )}
+              {state.viewMode === 'list' && (
+                <div className="flex flex-1 p-4">
                   <div
-                    className={classNames(
-                      'w-[270px] h-[360px] cursor-pointer border-2 border-gray-f2',
-                      'from-white/60 via-white/45 to-white/20 bg-gradient-to-b bg-cover bg-center',
-                    )}
-                    style={{
-                      backgroundImage: state.selectedBook.cover ? `url("${state.selectedBook.cover}")` : undefined,
-                    }}
-                    onClick={() => state.selectedBook && handleOpenBook(state.selectedBook)}
-                  />
-                  <div
-                    className="text-center text-18 font-bold my-4"
-                    onClick={() => state.selectedBook && handleOpenBook(state.selectedBook)}
+                    className="flex-col flex-1 w-0 max-h-[100%] overflow-x-auto px-1"
+                    {...tableInstance.getTableProps()}
                   >
-                    《{state.selectedBook.book.fileInfo.title}》
-                  </div>
-                  <div className="">
-                    {[
-                      { name: '副标题', text: state.selectedBook.metadata?.subTitle },
-                      { name: 'ISBN', text: state.selectedBook.metadata?.isbn },
-                      { name: '作者', text: state.selectedBook.metadata?.author },
-                      { name: '译者', text: state.selectedBook.metadata?.translator },
-                      { name: '出版日期', text: state.selectedBook.metadata?.publishDate },
-                      { name: '出版商', text: state.selectedBook.metadata?.publisher },
-                      { name: '语言', text: state.selectedBook.metadata?.languages },
-                      { name: '丛书', text: state.selectedBook.metadata?.series },
-                      { name: '丛书编号', text: state.selectedBook.metadata?.seriesNumber },
-                      // { name: '字数', text: state.selectedBook.metadata?.seriesNumber },
-                      // 分类：
-                      // 评分：
-                      // 标签：
-                    ].map((v, i) => (
-                      <div className="leading-relaxed mt-px" key={i}>
-                        <span className="text-gray-af">{v.name}：</span>
-                        {v.text}
-                      </div>
-                    ))}
-                  </div>
-
-                  {!!state.selectedBook.metadata?.description && (
-                    <div className="flex mt-6">
-                      <div
-                        className="mylib-detail-desc max-w-[100%] flex-1 w-0"
-                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(state.selectedBook.metadata?.description ?? '') }}
-                      />
+                    <div className="border-b border-black">
+                      {tableInstance.headerGroups.map((headerGroup) => (
+                        <div
+                          className="divide-x divide-gray-de"
+                          {...headerGroup.getHeaderGroupProps()}
+                        >
+                          {headerGroup.headers.map((column: any) => (
+                            <div
+                              className="relative px-2 py-3 text-center"
+                              {...column.getHeaderProps()}
+                            >
+                              {column.render('Header')}
+                              <div
+                                className={classNames(
+                                  'w-2 h-full z-20 absolute right-0 top-0 translate-x-1/2',
+                                  // column.isResizing && 'bg-red-400',
+                                )}
+                                {...column.getResizerProps()}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      ))}
                     </div>
-                  )}
-                  <style>
-                    {'.mylib-detail-desc * { font-size: 14px !important; }'}
-                  </style>
+                    <Scrollable>
+                      <div
+                        className="divide-y divide-gray-de"
+                        {...tableInstance.getTableBodyProps()}
+                      >
+                        {tableInstance.rows.map((row) => {
+                          tableInstance.prepareRow(row);
+                          return (
+                            <div
+                              className="divide-x divide-gray-de"
+                              {...row.getRowProps()}
+                            >
+                              {row.cells.map((cell) => (
+                                <div
+                                  className="relative px-2 py-4"
+                                  {...cell.getCellProps()}
+                                >
+                                  {cell.render('Cell')}
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </Scrollable>
+                  </div>
                 </div>
-              </Scrollable>
-            )}
-          </div>
+              )}
+              {!!state.selectedBook && (
+                <Scrollable className="bg-gray-33 w-[350px] relative" light>
+                  <button
+                    className="absolute right-0 top-0 p-2"
+                    onClick={action(() => { state.selectedBook = null; })}
+                  >
+                    <Close className="text-white" />
+                  </button>
+                  <div className="flex-none text-white px-10 py-8">
+                    <div
+                      className={classNames(
+                        'w-[270px] h-[360px] cursor-pointer border-2 border-gray-f2',
+                        'from-white/60 via-white/45 to-white/20 bg-gradient-to-b bg-cover bg-center',
+                      )}
+                      style={{
+                        backgroundImage: state.selectedBook.cover ? `url("${state.selectedBook.cover}")` : undefined,
+                      }}
+                      onClick={() => state.selectedBook && handleOpenBook(state.selectedBook)}
+                    />
+                    <div
+                      className="text-center text-18 font-bold my-4"
+                      onClick={() => state.selectedBook && handleOpenBook(state.selectedBook)}
+                    >
+                      《{state.selectedBook.book.fileInfo.title}》
+                    </div>
+                    <div className="">
+                      {[
+                        { name: '副标题', text: state.selectedBook.metadata?.subTitle },
+                        { name: 'ISBN', text: state.selectedBook.metadata?.isbn },
+                        { name: '作者', text: state.selectedBook.metadata?.author },
+                        { name: '译者', text: state.selectedBook.metadata?.translator },
+                        { name: '出版日期', text: state.selectedBook.metadata?.publishDate },
+                        { name: '出版商', text: state.selectedBook.metadata?.publisher },
+                        { name: '语言', text: state.selectedBook.metadata?.languages },
+                        { name: '丛书', text: state.selectedBook.metadata?.series },
+                        { name: '丛书编号', text: state.selectedBook.metadata?.seriesNumber },
+                        // { name: '字数', text: state.selectedBook.metadata?.seriesNumber },
+                        // 分类：
+                        // 评分：
+                        // 标签：
+                      ].map((v, i) => (
+                        <div className="leading-relaxed mt-px" key={i}>
+                          <span className="text-gray-af">{v.name}：</span>
+                          {v.text}
+                        </div>
+                      ))}
+                    </div>
+
+                    {!!state.selectedBook.metadata?.description && (
+                      <div className="flex mt-6">
+                        <div
+                          className="mylib-detail-desc max-w-[100%] flex-1 w-0"
+                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(state.selectedBook.metadata?.description ?? '') }}
+                        />
+                      </div>
+                    )}
+                    <style>
+                      {'.mylib-detail-desc * { font-size: 14px !important; }'}
+                    </style>
+                  </div>
+                </Scrollable>
+              )}
+            </div>
+          )}
+
         </div>
         {/* <div className="flex-col flex-center flex-1 h-0 p-12">
           <div className="overflow-auto w-[800px]">
