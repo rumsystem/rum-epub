@@ -109,29 +109,22 @@ export default observer((props: Props) => {
           }}
         />
 
-        {/* {!state.searchText && (
-          <ListTypeSwitcher
-            listType={state.listType}
-            setListType={(listType) => {
-              state.listType = listType;
-              localStorage.setItem(LIST_TYPE_STORAGE_KEY, listType);
-            }}
-          />
-        )} */}
-        <div className="flex p-1 pb-0">
-          {(['recent-open', 'recent-add'] as const).map((v) => (
-            <button
-              className={classNames(
-                'flex-1 py-1 text-12 leading-relaxed',
-                state.mode !== v && 'bg-gray-ec',
-              )}
-              key={v}
-              onClick={() => handleSwitchFilter(v)}
-            >
-              {v === 'recent-open' && '最近打开'}
-              {v === 'recent-add' && '最近添加'}
-            </button>
-          ))}
+        <div className="flex relative -top-2 z-30 px-2">
+          <div className="border flex flex-1 rounded">
+            {(['recent-open', 'recent-add'] as const).map((v) => (
+              <button
+                className={classNames(
+                  'flex-1 py-[2px] text-12 leading-relaxed',
+                  state.mode !== v && 'bg-gray-ec text-gray-bd',
+                )}
+                key={v}
+                onClick={() => handleSwitchFilter(v)}
+              >
+                {v === 'recent-open' && '最近打开'}
+                {v === 'recent-add' && '最近添加'}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto">

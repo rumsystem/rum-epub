@@ -64,7 +64,7 @@ export default observer((props: Props) => {
           'sidebar w-[280px] relative flex flex-col h-full z-20 bg-white',
         )}
       >
-        <div className="flex items-center justify-between h-[70px] border-b border-gray-ec">
+        <div className="flex items-center justify-between h-[70px]">
           {!state.searchMode && (<>
             <div className="px-4 text-16 text-gray-4a">共{nodeService.state.groups.length}个</div>
             <div className="flex-1" />
