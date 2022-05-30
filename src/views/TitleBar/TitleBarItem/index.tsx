@@ -24,7 +24,7 @@ export const TitleBarItem = observer((props: Props) => {
     <>
       <button
         className={classNames(
-          'px-4 mx-1 cursor-pointer flex items-center focus:bg-gray-4a',
+          'px-4 mx-1 cursor-pointer flex items-center active:bg-gray-4a outline-none',
           open && 'bg-gray-4a',
         )}
         onClick={v.action ?? (() => setOpen(true))}
