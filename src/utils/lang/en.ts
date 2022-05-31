@@ -422,4 +422,8 @@ export const content = {
   normalSizeFont: 'Normal Size',
   largeSizeFont: 'Large Size',
   extraLargeSizeFont: 'Extra Large Size',
+  traffic: 'traffic',
+  lastHour: 'last hour',
+  lastDay: 'last day',
+  lastMouth: 'last mouth',
 };

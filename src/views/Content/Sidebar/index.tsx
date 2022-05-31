@@ -2,24 +2,26 @@ import React from 'react';
 import { action, reaction } from 'mobx';
 import classNames from 'classnames';
 import { observer, useLocalObservable } from 'mobx-react-lite';
+import escapeStringRegexp from 'escape-string-regexp';
 
 import { lang } from '~/utils';
 import { GROUP_TEMPLATE_TYPE } from '~/utils/constant';
-
 import { nodeService } from '~/service';
 import IconFold from '~/assets/fold.svg?react';
+
 import GroupItem from './GroupItem';
 import { sidebarService } from './service';
 import Toolbar from './Toolbar';
-import escapeStringRegexp from 'escape-string-regexp';
 
 interface Props {
   className?: string
 }
 
+type GroupSortMode = 'recent-open' | 'recent-add';
+
 export default observer((props: Props) => {
   const state = useLocalObservable(() => ({
-    mode: 'recent-open' as 'recent-open' | 'recent-add',
+    mode: 'recent-open' as GroupSortMode,
     groupTypeFilter: 'all' as 'all' | GROUP_TEMPLATE_TYPE,
     search: '',
 
@@ -28,9 +30,7 @@ export default observer((props: Props) => {
       const orderArr = state.mode === 'recent-add'
         ? nodeService.state.groupJoinOrder
         : state.clickOrder;
-      const reg = this.search
-        ? new RegExp(escapeStringRegexp(this.search))
-        : null;
+      const reg = this.search ? new RegExp(escapeStringRegexp(this.search)) : null;
       return [
         ...orderArr
           .map((v) => nodeService.state.groupMap[v])
@@ -39,10 +39,6 @@ export default observer((props: Props) => {
       ].filter((v) => !reg || reg.test(v.group_name));
     },
   }));
-
-  const handleSwitchFilter = action((v: 'recent-open' | 'recent-add') => {
-    state.mode = v;
-  });
 
   React.useEffect(() => reaction(
     () => state.mode,
@@ -53,12 +49,7 @@ export default observer((props: Props) => {
   ), []);
 
   return (
-    <div
-      className={classNames(
-        'sidebar-box relative',
-        props.className,
-      )}
-    >
+    <div className={classNames('sidebar-box relative', props.className)}>
       <div
         className={classNames(
           'sidebar-toggle flex-col justify-center items-center gap-y-2 py-4',
@@ -68,23 +59,15 @@ export default observer((props: Props) => {
           sidebarService.state.collapsed && 'text-white bg-black',
           !sidebarService.state.collapsed && 'text-black bg-white',
         )}
-        style={{
-          boxShadow: '0 1px 6px 0 rgba(0, 0, 0, 0.16)',
-        }}
+        style={{ boxShadow: '0 1px 6px 0 rgba(0, 0, 0, 0.16)' }}
         onClick={sidebarService.toggleSidebar}
       >
         <IconFold
-          className={classNames(
-            '',
-            !sidebarService.state.collapsed && 'rotate-180',
-          )}
+          className={classNames(!sidebarService.state.collapsed && 'rotate-180')}
         />
         {sidebarService.state.collapsed && (
           <div className="leading-tight">
-            最<br />
-            近<br />
-            阅<br />
-            读
+            最<br />近<br />阅<br />读
           </div>
         )}
       </div>
@@ -94,19 +77,13 @@ export default observer((props: Props) => {
           'sidebar w-[280px] relative flex-col h-full z-20 bg-white',
           sidebarService.state.collapsed && 'hidden',
         )}
-        style={{
-          boxShadow: '3px 0 6px 0 rgba(0, 0, 0, 0.16)',
-        }}
+        style={{ boxShadow: '3px 0 6px 0 rgba(0, 0, 0, 0.16)' }}
       >
         <Toolbar
           groupTypeFilter={state.groupTypeFilter}
-          setGroupTypeFilter={(value) => {
-            state.groupTypeFilter = value;
-          }}
+          setGroupTypeFilter={action((value) => { state.groupTypeFilter = value; })}
           searchText={state.search}
-          setSearchText={(value) => {
-            state.search = value;
-          }}
+          setSearchText={action((value) => { state.search = value; })}
         />
 
         <div className="flex relative -top-2 z-30 px-2">
@@ -118,7 +95,7 @@ export default observer((props: Props) => {
                   state.mode !== v && 'bg-gray-ec text-gray-bd',
                 )}
                 key={v}
-                onClick={() => handleSwitchFilter(v)}
+                onClick={action(() => { state.mode = v; })}
               >
                 {v === 'recent-open' && '最近打开'}
                 {v === 'recent-add' && '最近添加'}

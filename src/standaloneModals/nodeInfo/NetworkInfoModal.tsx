@@ -1,7 +1,9 @@
-import { observer } from 'mobx-react-lite';
+import { observer, useLocalObservable } from 'mobx-react-lite';
 import { Dialog } from '~/components';
 import { lang } from '~/utils';
 import { nodeService } from '~/service';
+import { fetchNetworkStats, INetworkStats } from '~/apis';
+import React from 'react';
 
 interface IProps {
   open: boolean
@@ -9,8 +11,28 @@ interface IProps {
 }
 
 const NetworkInfo = observer(() => {
+  const state = useLocalObservable(() => ({
+    hour: 0,
+    day: 0,
+    mouth: 0,
+  }));
   const network = nodeService.state.network;
   const peerMap = nodeService.state.nodeInfo.peers;
+
+  const loadNetworkStats = async () => {
+    const [hour, day, mouth] = await Promise.all([
+      getNetworkStats(1),
+      getNetworkStats(24),
+      getNetworkStats(30 * 24),
+    ]);
+    state.hour = countTraffic(hour);
+    state.day = countTraffic(day);
+    state.mouth = countTraffic(mouth);
+  };
+
+  React.useEffect(() => {
+    loadNetworkStats();
+  }, []);
 
   return (
     <div className="max-h-[80vh] overflow-y-auto">
@@ -35,6 +57,20 @@ const NetworkInfo = observer(() => {
                 </div>
               )}
             </div>
+
+            <div className="mt-8">
+              <div className="flex">
+                <div className="text-gray-500 font-bold bg-gray-100 rounded-0 pt-2 pb-3 px-4">
+                  {lang.traffic}
+                </div>
+              </div>
+              <div className="-mt-3 justify-center text-12 text-gray-99 bg-gray-100 rounded-0 pt-3 px-6 pb-3 leading-7 tracking-wide">
+                <div>{lang.lastHour}: <span className="text-red-400">{state.hour}M</span></div>
+                <div>{lang.lastDay}: <span className="text-red-400">{state.day}M</span></div>
+                <div>{lang.lastMouth}: <span className="text-red-400">{state.mouth}M</span></div>
+              </div>
+            </div>
+
             <div className="mt-8">
               <div className="flex">
                 <div className="text-gray-500 font-bold bg-gray-100 rounded-0 pt-2 pb-3 px-4">
@@ -76,3 +112,24 @@ export default observer((props: IProps) => (
     <NetworkInfo />
   </Dialog>
 ));
+
+const getNetworkStats = (period: number) => {
+  const end: Date = new Date();
+  const start: Date = new Date(Number(end) - period * 60 * 60 * 1000);
+  return fetchNetworkStats(start.toISOString(), end.toISOString());
+};
+
+const countTraffic = (stats: INetworkStats) => {
+  let count = 0;
+  const { summary } = stats;
+  if (!summary) {
+    return count;
+  }
+  for (const key in summary) {
+    if (summary[key]) {
+      count += summary[key].in_size || 0;
+      count += summary[key].out_size || 0;
+    }
+  }
+  return Math.floor(count / 1024 / 1024);
+};

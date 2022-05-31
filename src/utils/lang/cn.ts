@@ -422,6 +422,10 @@ export const content = {
   normalSizeFont: '普通字体',
   largeSizeFont: '大字体',
   extraLargeSizeFont: '超大字体',
+  traffic: '流量',
+  lastHour: '最近一小时',
+  lastDay: '最近24小时',
+  lastMouth: '最近一个月',
 };
 
 export type Content = typeof content;

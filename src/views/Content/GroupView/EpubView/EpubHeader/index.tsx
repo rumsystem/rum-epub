@@ -16,14 +16,14 @@ import { groupInfo } from '~/standaloneModals/groupInfo';
 
 import { GroupStatus } from '~/apis';
 import { lang } from '~/utils';
-import { EpubItem, nodeService } from '~/service';
+import { GroupBookItem, nodeService } from '~/service';
 
 import { action } from 'mobx';
 import { EpubInfoPopup } from './EpubInfoPopup';
 import { uploadEpub, UploadEpubButton } from '~/standaloneModals/uploadEpub';
 
 interface Props {
-  book?: EpubItem | null
+  book?: GroupBookItem | null
 }
 
 export const EpubHeader = observer((props: Props) => {

@@ -13,7 +13,7 @@ import { AddCircleOutline, CalendarMonth, DeleteOutline } from '@mui/icons-mater
 
 import { Dialog } from '~/components';
 import { ThemeRoot } from '~/utils/theme';
-import { dialogService, EpubItem, epubService, nodeService, tooltipService } from '~/service';
+import { dialogService, GroupBookItem, epubService, nodeService, tooltipService } from '~/service';
 import { postContent } from '~/apis';
 import { runLoading } from '~/utils';
 import { format } from 'date-fns';
@@ -53,7 +53,7 @@ const EditEpubMetadata = observer((props: Props) => {
     loading: false,
     submitting: false,
     groupId: '',
-    bookItem: null as null | EpubItem,
+    bookItem: null as null | GroupBookItem,
     publisherDatePicker: false,
 
     form: {

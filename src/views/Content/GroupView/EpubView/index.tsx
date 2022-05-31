@@ -16,7 +16,7 @@ import EditAltIcon from 'boxicons/svg/regular/bx-edit-alt.svg?fill';
 
 import {
   nodeService,
-  EpubItem,
+  GroupBookItem,
   epubService,
   linkTheme,
   progressBarTheme,
@@ -44,7 +44,7 @@ interface Props {
 
 export const EpubView = observer((props: Props) => {
   const state = useLocalObservable(() => observable({
-    bookItem: null as null | EpubItem,
+    bookItem: null as null | GroupBookItem,
     book: null as null | Book,
 
     // book states
@@ -96,16 +96,12 @@ export const EpubView = observer((props: Props) => {
   }));
 
   const handlePrev = () => {
-    if (state.atStart) {
-      return;
-    }
+    if (state.atStart) { return; }
     state.book?.rendition?.prev?.();
   };
 
   const handleNext = () => {
-    if (state.atEnd) {
-      return;
-    }
+    if (state.atEnd) { return; }
     state.book?.rendition?.next?.();
   };
 
@@ -152,6 +148,36 @@ export const EpubView = observer((props: Props) => {
     } catch (e) {}
   };
 
+  const handleOpenRecentlyUploadedBook = () => {
+    const book = state.currentUploadItem?.recentUploadBook;
+    epubService.upload.resetEpub(nodeService.state.activeGroupId);
+    if (book) {
+      loadBook(book);
+    }
+  };
+
+  const handleAddHighlight = () => {
+    if (!state.highlightButton || !state.book) {
+      return;
+    }
+    const annotations: Array<Annotation> = Object.values((state.book.rendition.annotations as any)._annotations);
+    if (annotations.some((v) => v.cfiRange === state.highlightButton!.range)) {
+      return;
+    }
+
+    highLightRange({
+      groupId: nodeService.state.activeGroupId,
+      bookTrx: state.bookTrxId,
+      cfiRange: state.highlightButton.range,
+      book: state.book,
+    });
+
+    const iframe: HTMLIFrameElement = (state.book as any).rendition?.manager?.views?._views?.[0]?.iframe;
+    if (iframe) {
+      iframe.contentWindow?.getSelection()?.removeAllRanges();
+    }
+  };
+
   const unloadBook = action(() => {
     state.book?.destroy();
     state.bookTrxId = '';
@@ -168,7 +194,7 @@ export const EpubView = observer((props: Props) => {
     state.bookItem = null;
   });
 
-  const loadBook = async (bookItem: EpubItem, readingProgress?: ReadingProgressItem | null) => {
+  const loadBook = async (bookItem: GroupBookItem, readingProgress?: ReadingProgressItem | null) => {
     const groupId = nodeService.state.activeGroupId;
     unloadBook();
     const renderBox = state.renderBox.current;
@@ -318,36 +344,6 @@ export const EpubView = observer((props: Props) => {
     }));
   };
 
-  const handleLoadRecentUpload = () => {
-    const book = state.currentUploadItem?.recentUploadBook;
-    epubService.upload.resetEpub(nodeService.state.activeGroupId);
-    if (book) {
-      loadBook(book);
-    }
-  };
-
-  const handleAddHighlight = () => {
-    if (!state.highlightButton || !state.book) {
-      return;
-    }
-    const annotations: Array<Annotation> = Object.values((state.book.rendition.annotations as any)._annotations);
-    if (annotations.some((v) => v.cfiRange === state.highlightButton!.range)) {
-      return;
-    }
-
-    highLightRange({
-      groupId: nodeService.state.activeGroupId,
-      bookTrx: state.bookTrxId,
-      cfiRange: state.highlightButton.range,
-      book: state.book,
-    });
-
-    const iframe: HTMLIFrameElement = (state.book as any).rendition?.manager?.views?._views?.[0]?.iframe;
-    if (iframe) {
-      iframe.contentWindow?.getSelection()?.removeAllRanges();
-    }
-  };
-
   const loadPendingBook = () => {
     const pendingBookToLoad = epubService.state.pendingBookTrxToOpen;
     const pendingBook = state.groupItem.books.find((v) => v.trxId === pendingBookToLoad);
@@ -364,12 +360,10 @@ export const EpubView = observer((props: Props) => {
 
   React.useEffect(() => {
     const groupId = nodeService.state.activeGroupId;
-    const loadFirstBook = async () => {
+    const loadBookInit = async () => {
       const loadedPendingBook = loadPendingBook();
       if (loadedPendingBook) { return; }
-      const readingProgress = await epubService.getReadingProgress(
-        groupId,
-      );
+      const readingProgress = await epubService.getReadingProgress(groupId);
       const loadBookFromReadingProgress = async () => {
         await epubService.tryLoadBookFromDB(groupId);
         const books = state.groupItem.books;
@@ -383,9 +377,7 @@ export const EpubView = observer((props: Props) => {
         loadBookFromReadingProgress(),
         epubService.parseNewTrx(groupId),
       ]).then(() => {
-        if (state.book) {
-          return;
-        }
+        if (state.book) { return; }
         const books = state.groupItem.books;
         const book = books?.find((v) => v.trxId === readingProgress?.bookTrx) ?? books?.at(0);
         if (book) {
@@ -467,7 +459,7 @@ export const EpubView = observer((props: Props) => {
       ),
     ];
 
-    loadFirstBook();
+    loadBookInit();
 
     return () => {
       try {
@@ -486,7 +478,6 @@ export const EpubView = observer((props: Props) => {
   const noBook = !state.currentUploadItem?.uploading && !state.currentUploadItem?.recentUploadBook;
   const uploading = !!state.currentUploadItem?.uploading;
   const uploadDone = !state.currentUploadItem?.uploading && !!state.currentUploadItem?.recentUploadBook;
-
   const lightTheme = ['white', 'light'].includes(readerSettingsService.state.theme);
   const darkTheme = ['dark', 'black'].includes(readerSettingsService.state.theme);
 
@@ -629,7 +620,7 @@ export const EpubView = observer((props: Props) => {
             {uploadDone && (
               <Button
                 className="rounded-full text-20 px-12"
-                onClick={handleLoadRecentUpload}
+                onClick={handleOpenRecentlyUploadedBook}
               >
                 开始阅读
               </Button>

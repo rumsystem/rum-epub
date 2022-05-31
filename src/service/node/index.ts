@@ -388,6 +388,8 @@ const startPolling = (restart = false) => {
   state.pollings.updateAllGroupTrxAuthType = new PollingTask(updateAllGroupTrxAuthType, 30 * 1000, true, true);
   state.pollings.updateToken = new PollingTask(updateToken, 300 * 1000, true, true);
   state.pollingStarted = true;
+
+  return stopPolling;
 };
 
 const stopPolling = action(() => {

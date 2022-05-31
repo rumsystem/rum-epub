@@ -123,14 +123,29 @@ const MyNodeInfo = observer((props: Props) => {
             </div>
           </div>
 
+          {nodeService.state.nodeInfoConfig?.type === NODE_TYPE.INTERNAL && (
+            <div className="mt-6">
+              <div className="text-gray-500 font-bold opacity-90">{lang.storageDir}</div>
+              <div className="mt-2 text-12 text-gray-500 bg-gray-100 border border-gray-200 rounded-0 py-2 px-4">
+                <Tooltip
+                  placement="top"
+                  title={nodeService.state.nodeInfoConfig.internalNode?.dir ?? ''}
+                  arrow
+                >
+                  <div className="tracking-wide truncate">
+                    {nodeService.state.nodeInfoConfig.internalNode?.dir}
+                  </div>
+                </Tooltip>
+              </div>
+            </div>
+          )}
+
           <div className="mt-6">
             <div className="text-gray-500 font-bold opacity-90">{lang.detail}</div>
             <div className="mt-2 flex items-center justify-center text-12 text-gray-500 bg-gray-100 border border-gray-200 rounded-0 py-2 px-4">
               <Tooltip
                 placement="top"
-                title={`quorum latest commit: ${
-                  nodeService.state.nodeInfo.node_version.split(' - ')[1]
-                }`}
+                title={`quorum latest commit: ${nodeService.state.nodeInfo.node_version.split(' - ')[1]}`}
                 arrow
               >
                 <div>{lang.version} {process.env.IS_ELECTRON ? app.getVersion() : ''}</div>

@@ -130,7 +130,7 @@ export const parseEpub = async (fileName: string, buffer: Buffer | Uint8Array): 
   });
 };
 
-export interface EpubItem {
+export interface GroupBookItem {
   fileInfo: FileInfo
   trxId: string
   metadata: {

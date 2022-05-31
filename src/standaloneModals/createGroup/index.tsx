@@ -5,7 +5,6 @@ import { createRoot } from 'react-dom/client';
 import classNames from 'classnames';
 import { action, reaction, runInAction } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
-import { MdEdit } from 'react-icons/md';
 import {
   Button,
   CircularProgress,
@@ -18,7 +17,6 @@ import {
 import { ChevronLeft, Check } from '@mui/icons-material';
 
 import NotebookIcon from '~/assets/template/template_icon_notebook.svg?react';
-// import PermissionCommentIcon from '~/assets/permission/comment.svg?react';
 import PermissionWriteIcon from '~/assets/permission/write.svg?react';
 import PermissionReadOnlyIcon from '~/assets/permission/readonly.svg?react';
 import SeedNoopenIcon from '~/assets/icon_seed_noopen.svg?react';
@@ -27,7 +25,6 @@ import { dialogService, escService, nodeService, tooltipService } from '~/servic
 import { lang, runLoading } from '~/utils';
 import { GROUP_CONFIG_KEY, GROUP_TEMPLATE_TYPE } from '~/utils/constant';
 import { ThemeRoot } from '~/utils/theme';
-import { GroupIcon, ImageEditor } from '~/components';
 import { AuthType, changeGroupConfig, setChainConfig } from '~/apis';
 
 import { StepBox } from './StepBox';
@@ -335,6 +332,7 @@ const CreateGroup = observer((props: Props) => {
                 <div className="text-14 mt-7 px-5">
                   {state.type === GROUP_TEMPLATE_TYPE.EPUB && (
                     <div className="animate-fade-in text-center">
+                      {/* TODO: */}
                       epub desc
                       <br />
                       epub desc
@@ -432,7 +430,7 @@ const CreateGroup = observer((props: Props) => {
                 </div>
 
                 <div className="flex flex-center mt-4">
-                  <div className="w-20 h-20 rounded-sm border border-gray-400 relative overflow-hidden bg-gray-c4">
+                  {/* <div className="w-20 h-20 rounded-sm border border-gray-400 relative overflow-hidden bg-gray-c4">
                     <ImageEditor
                       className="opacity-0 !absolute !m-0 -inset-px"
                       width={200}
@@ -458,7 +456,7 @@ const CreateGroup = observer((props: Props) => {
                     >
                       <MdEdit />
                     </div>
-                  </div>
+                  </div> */}
                 </div>
 
                 <FormControl className="mt-8 w-full" variant="outlined">
@@ -523,42 +521,6 @@ const CreateGroup = observer((props: Props) => {
             </div>
           </div>
         </div>
-
-        {/* <div className="flex self-stretch justify-center items-center h-30 bg-white">
-          <div className="flex items-center gap-x-8 absolute left-0 ml-20">
-            <Button
-              className='w-40 h-12 border'
-              outline
-              onClick={() => {
-                if (!state.creating) {
-                  handleClose();
-                }
-              }}
-            >
-              <span
-                className={classNames(
-                  'text-16',
-                )}
-              >
-                {lang.cancel}
-              </span>
-            </Button>
-          </div>
-          <div className="flex items-center gap-x-8 absolute right-0 mr-20">
-            {state.step === 0 && (
-              <Button
-                className="h-12"
-                onClick={handleConfirm}
-                isDoing={state.creating}
-                data-test-id="group-create-confirm"
-              >
-                <span className="text-16 px-2">
-                  {lang.createGroup}
-                </span>
-              </Button>
-            )}
-          </div>
-        </div> */}
       </div>
     </Fade>
   );

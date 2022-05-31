@@ -187,7 +187,6 @@ export const Init = observer((props: Props) => {
   };
 
   const postStartInit = async () => {
-    nodeService.startPolling(true);
     await Promise.all([
       nodeService.updateGroups(true),
       nodeService.updateNodeInfo().then(() => {

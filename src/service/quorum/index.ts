@@ -17,8 +17,6 @@ const state = observable({
   port: 0,
   jwt: '',
   cert: '',
-
-  serviceInited: false,
 });
 
 const ping = async (retries = 60) => {

@@ -11,12 +11,12 @@ import BookContentIcon from 'boxicons/svg/regular/bx-book-content.svg?fill';
 import BookOpenIcon from 'boxicons/svg/regular/bx-book-open.svg?fill';
 
 import { BookCoverImgTooltip } from '~/components';
-import { EpubItem, epubService, nodeService, readerSettingsService } from '~/service';
+import { GroupBookItem, epubService, nodeService, readerSettingsService } from '~/service';
 
 
 interface Props {
   className?: string
-  onSelect?: (v: EpubItem) => unknown
+  onSelect?: (v: GroupBookItem) => unknown
   currentBookTrxId?: string
 }
 
@@ -33,7 +33,7 @@ export const EpubSelectBookButton = observer((props: Props) => {
   }));
   const buttonRef = React.useRef<HTMLDivElement>(null);
 
-  const handleSelectFile = (v: EpubItem) => {
+  const handleSelectFile = (v: GroupBookItem) => {
     if (v.trxId !== props.currentBookTrxId) {
       props.onSelect?.(v);
     }

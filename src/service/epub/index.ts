@@ -7,7 +7,7 @@ import { fetchContents, IPostContentResult, postContent } from '~/apis';
 import { PollingTask, promiseAllSettledThrottle, runLoading, sleep } from '~/utils';
 import { dbService, FileInfo, CoverFileInfo, EpubMetadata, BookMetadataItem } from '~/service/db';
 import { busService } from '~/service/bus';
-import { parseEpub, ParsedEpubBook, checkTrxAndAck, EpubItem, hashBufferSha256, splitFile } from './helper';
+import { parseEpub, ParsedEpubBook, checkTrxAndAck, GroupBookItem, hashBufferSha256, splitFile } from './helper';
 import { createHash } from 'crypto';
 import { nodeService } from '../node';
 
@@ -24,7 +24,7 @@ interface GroupUploadState {
     uploading: boolean
     uploadDone: boolean
     progress: Array<UploadStatusItem>
-    recentUploadBook: EpubItem | null
+    recentUploadBook: GroupBookItem | null
   }
   cover: {
     file: ArrayBuffer | null
@@ -40,7 +40,7 @@ interface GroupUploadState {
 
 interface GroupStateItem {
   upload: GroupUploadState
-  books: Array<EpubItem>
+  books: Array<GroupBookItem>
   trxParsinsPromise: null | Promise<unknown>
 }
 
@@ -48,7 +48,7 @@ const state = observable({
   groupMap: new Map<string, GroupStateItem>(),
   bookBufferLRUCache: new Map<string, { buf: Uint8Array, time: number }>(),
 
-  currentBookItem: null as null | EpubItem,
+  currentBookItem: null as null | GroupBookItem,
   pendingBookTrxToOpen: '',
   polling: null as null | PollingTask,
 });
@@ -694,7 +694,7 @@ const parseNewTrx = action((groupId: string) => {
       booksToCaculate
         .filter((v) => v.file && currentBooks.every((u) => u.trxId !== v.bookTrx))
         .forEach((v) => {
-          const item: EpubItem = {
+          const item: GroupBookItem = {
             metadata: {
               type: 'notloaded',
               loadingPromise: null,
@@ -731,7 +731,7 @@ const tryLoadBookFromDB = async (groupId: string) => {
     books
       .filter((v) => currentBooks.every((u) => u.trxId !== v.bookTrx))
       .forEach((v) => {
-        const item: EpubItem = {
+        const item: GroupBookItem = {
           metadata: {
             type: 'notloaded',
             loadingPromise: null,

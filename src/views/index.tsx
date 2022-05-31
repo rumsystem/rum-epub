@@ -1,16 +1,11 @@
 import React from 'react';
-import classNames from 'classnames';
 import { action } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 
 import { ThemeRoot } from '~/utils/theme';
 import { loadInspect } from '~/utils/inspect';
 
-import { initService, quorumService } from '~/service';
-import { ConfirmDialogContainer } from '~/service/dialog/ConfirmDialogContainer';
-import { LoadingContainer } from '~/service/loading/LoadingContainer';
-import { TooltipContainer } from '~/service/tooltip/TooltipContainer';
-import { UpdateContainer } from '~/service/update/UpdateContainer';
+import { initService, serviceViewContainers } from '~/service';
 
 import { TitleBar } from './TitleBar';
 import { Init } from './Init';
@@ -18,20 +13,21 @@ import Content from './Content';
 
 export const App = observer(() => {
   const state = useLocalObservable(() => ({
-    inited: false,
+    serviceInited: false,
+    quorumInited: false,
   }));
 
   React.useEffect(action(() => {
     const disposeInspect = loadInspect();
     const dispose = initService();
-    state.inited = true;
+    state.serviceInited = true;
     return () => {
       dispose();
       disposeInspect();
     };
   }), []);
 
-  if (!state.inited) {
+  if (!state.serviceInited) {
     return null;
   }
 
@@ -40,28 +36,19 @@ export const App = observer(() => {
       <div className="flex flex-col h-screen w-screen">
         <TitleBar />
 
-        <div
-          className={classNames(
-            'flex-1 h-0 relative',
+        <div className="flex-1 h-0 relative">
+          {!state.quorumInited && (
+            <Init onInitSuccess={action(() => { state.quorumInited = true; })} />
           )}
-        >
-          {!quorumService.state.serviceInited && (
-            <Init
-              onInitSuccess={action(() => {
-                quorumService.state.serviceInited = true;
-              })}
-            />
-          )}
-          {quorumService.state.serviceInited && (
+          {state.quorumInited && (
             <Content />
           )}
         </div>
       </div>
 
-      <ConfirmDialogContainer />
-      <LoadingContainer />
-      <TooltipContainer />
-      <UpdateContainer />
+      {serviceViewContainers.map((C, i) => (
+        <C key={i} />
+      ))}
     </ThemeRoot>
   );
 });

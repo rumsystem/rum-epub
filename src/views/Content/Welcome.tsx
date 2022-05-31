@@ -1,4 +1,3 @@
-import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Button } from '~/components';
 import { joinGroup } from '~/standaloneModals/joinGroup';
