@@ -20,6 +20,7 @@ import {
   getAllowList,
   AllowOrDenyListItem,
   getDenyList,
+  refreshToken,
 } from '~/apis';
 import { PollingTask, sleep } from '~/utils';
 import { dbService } from '~/service/db';
@@ -83,6 +84,7 @@ const state = observable({
     updateNetworkInfo: null as null | PollingTask,
     updateAllGroupConfig: null as null | PollingTask,
     updateAllGroupTrxAuthType: null as null | PollingTask,
+    updateToken: null as null | PollingTask,
   },
   pollingStarted: false,
 });
@@ -178,6 +180,27 @@ const updateAllGroupTrxAuthType = async () => {
   for (const group of state.groups) {
     await updateTrxAuthType(group.group_id);
   }
+};
+
+const updateToken = async () => {
+  if (state.nodeInfoConfig?.type !== NODE_TYPE.EXTERNAL) {
+    return;
+  }
+
+  const { token } = await refreshToken();
+  const externalNode = state.nodeInfoConfig.externalNode;
+  const historyExtenralNodes = state.nodeInfoConfig.historyExtenralNodes;
+  runInAction(() => {
+    if (externalNode && historyExtenralNodes) {
+      historyExtenralNodes
+        .filter((v) => (['jwt', 'port', 'host'] as const).forEach((k) => v[k] === externalNode[k]))
+        .forEach((v) => {
+          v.jwt = token;
+        });
+      externalNode.jwt = token;
+    }
+  });
+  saveNodeConfig();
 };
 
 export const createGroup = async (params: Parameters<typeof createGroupApi>[0]) => {
@@ -358,11 +381,12 @@ const startPolling = (restart = false) => {
     stopPolling();
   }
 
-  state.pollings.updateGroups = new PollingTask(updateGroups, 5000, true, true);
-  state.pollings.updateNodeInfo = new PollingTask(updateNodeInfo, 10000, true, true);
-  state.pollings.updateNetworkInfo = new PollingTask(updateNetworkInfo, 10000, true, true);
-  state.pollings.updateAllGroupConfig = new PollingTask(updateAllGroupConfig, 20000, true, true);
-  state.pollings.updateAllGroupTrxAuthType = new PollingTask(updateAllGroupTrxAuthType, 30000, true, true);
+  state.pollings.updateGroups = new PollingTask(updateGroups, 5 * 1000, true, true);
+  state.pollings.updateNodeInfo = new PollingTask(updateNodeInfo, 10 * 1000, true, true);
+  state.pollings.updateNetworkInfo = new PollingTask(updateNetworkInfo, 10 * 1000, true, true);
+  state.pollings.updateAllGroupConfig = new PollingTask(updateAllGroupConfig, 20 * 1000, true, true);
+  state.pollings.updateAllGroupTrxAuthType = new PollingTask(updateAllGroupTrxAuthType, 30 * 1000, true, true);
+  state.pollings.updateToken = new PollingTask(updateToken, 300 * 1000, true, true);
   state.pollingStarted = true;
 };
 
