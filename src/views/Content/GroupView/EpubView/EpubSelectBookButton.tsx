@@ -6,10 +6,9 @@ import { observer, useLocalObservable } from 'mobx-react-lite';
 import { format } from 'date-fns';
 import { Popover, Tooltip } from '@mui/material';
 import { ArrowDropDown } from '@mui/icons-material';
-
-import BookContentIcon from 'boxicons/svg/regular/bx-book-content.svg?fill';
 import BookOpenIcon from 'boxicons/svg/regular/bx-book-open.svg?fill';
 
+import BookIcon from '~/assets/icon_book.svg?fill-icon';
 import { BookCoverImgTooltip } from '~/components';
 import { GroupBookItem, epubService, nodeService, readerSettingsService } from '~/service';
 
@@ -68,21 +67,22 @@ export const EpubSelectBookButton = observer((props: Props) => {
       )}
       ref={buttonRef}
     >
-      <BookContentIcon
+      <BookIcon
         className={classNames(
+          'text-20',
+          !readerSettingsService.state.dark && 'text-gray-88',
           readerSettingsService.state.dark && 'text-gray-af',
         )}
-        width="24"
-        height="24"
       />
       <div
         className={classNames(
-          'flex flex-center border-b border-gray-33 pb-[3px] pl-1 text-16 cursor-pointer select-none',
+          'flex flex-center border-b pb-[3px] pl-1 text-16 cursor-pointer select-none',
+          !readerSettingsService.state.dark && 'text-gray-88 border-gray-88',
           readerSettingsService.state.dark && 'text-gray-af border-gray-af',
         )}
         onClick={handleOpen}
       >
-        切换书籍
+        <span className="mr-2">切换书籍</span>
         <ArrowDropDown />
       </div>
     </div>

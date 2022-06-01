@@ -6,9 +6,9 @@ import escapeStringRegexp from 'escape-string-regexp';
 import { Popover, Tooltip, Pagination, Input } from '@mui/material';
 import { Book } from 'epubjs';
 import { Annotation } from 'epubjs/types/annotations';
-import EditAltIcon from 'boxicons/svg/regular/bx-edit-alt.svg?fill-icon';
 import TrashIcon from 'boxicons/svg/regular/bx-trash.svg?fill';
 
+import MarkerIcon from '~/assets/icon_marker.svg?fill';
 import { modifierKeys, splitByHighlightText } from '~/utils';
 import { readerSettingsService } from '~/service';
 
@@ -114,7 +114,7 @@ export const EpubAllHighlightButton = observer((props: Props) => {
         onClick={handleOpen}
         ref={buttonRef}
       >
-        <EditAltIcon
+        <MarkerIcon
           className={classNames(
             'text-22',
             !readerSettingsService.state.dark && 'text-black',

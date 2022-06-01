@@ -12,7 +12,6 @@ import { Button, CircularProgress, ClickAwayListener, Tooltip } from '@mui/mater
 import { ChevronLeft, ChevronRight } from '@mui/icons-material';
 import FullscreenIcon from 'boxicons/svg/regular/bx-fullscreen.svg?fill-icon';
 import ExitFullscreenIcon from 'boxicons/svg/regular/bx-exit-fullscreen.svg?fill-icon';
-import EditAltIcon from 'boxicons/svg/regular/bx-edit-alt.svg?fill';
 
 import {
   nodeService,
@@ -28,6 +27,7 @@ import { addLinkOpen, modifierKeys } from '~/utils';
 import { BookCoverImgTooltip } from '~/components';
 
 import BookImage from '~/assets/illustration_book.svg';
+import MarkerIcon from '~/assets/icon_marker.svg?fill';
 import ArrowImage from '~/assets/arrow.svg';
 
 import { EpubShortCutPopover } from './EpubShortCutPopover';
@@ -747,7 +747,8 @@ export const EpubView = observer((props: Props) => {
             }}
             onClick={handleAddHighlight}
           >
-            <EditAltIcon className="text-producer-blue" />
+            <MarkerIcon className="text-producer-blue" />
+            {/* <EditAltIcon className="text-producer-blue" /> */}
           </div>
         </ClickAwayListener>
       </div>
