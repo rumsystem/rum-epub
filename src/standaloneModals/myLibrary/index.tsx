@@ -19,7 +19,7 @@ import {
   SelectChangeEvent,
   Tooltip,
 } from '@mui/material';
-import { Close, Search } from '@mui/icons-material';
+import { ChevronLeft, Close, Search } from '@mui/icons-material';
 import GridAltIcon from 'boxicons/svg/regular/bx-grid-alt.svg?fill-icon';
 import ListUlIcon from 'boxicons/svg/regular/bx-list-ul.svg?fill-icon';
 import TrashIcon from 'boxicons/svg/regular/bx-trash.svg?fill-icon';
@@ -423,6 +423,10 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
         <div className="flex-col items-stretch flex-1">
           <div className="flex justify-between items-center border-b border-gray-99 py-4 px-8">
             <div className="flex items-center gap-x-4">
+              <ChevronLeft
+                className="text-34 -ml-5 -mr-2 text-gray-33 cursor-pointer"
+                onClick={handleClose}
+              />
               <IconLib />
               <span>
                 <span className="text-20 text-gray-9c font-medium">
