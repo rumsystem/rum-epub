@@ -498,10 +498,13 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
           )}
           {!state.booksLoading && !state.allBooks.length && (
             <div className="flex-col flex-center flex-1">
-              <div className="flex flex-center flex-1 grow-[2] text-gray-6d">
-                加入种子网络后，种子网络里的书籍都会呈现在这里
+              <div className="flex flex-center flex-1 grow-[3] text-gray-4a text-center text-16 font-bold">
+                暂时空空如也~
+                <br />
+                <br />
+                加入种子网络后，种子网络内的书籍内容将会呈现在这里
               </div>
-              <div className="flex-1" />
+              <div className="flex-1 grow-[2]" />
             </div>
           )}
           {!state.booksLoading && !!state.allBooks.length && (
