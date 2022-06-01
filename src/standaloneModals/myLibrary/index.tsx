@@ -175,6 +175,18 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
         width: 80,
         accessor: () => 'TODO',
       },
+      {
+        Header: '操作',
+        width: 80,
+        accessor: (row: LibBookItem) => (
+          <div className="flex flex-center">
+            <TrashIcon
+              className="text-20 text-[#5fc0e9] cursor-pointer"
+              onClick={() => handleLeaveGroup(row.book.groupId)}
+            />
+          </div>
+        ),
+      },
     ],
     [],
   );
