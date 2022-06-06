@@ -56,7 +56,10 @@ const main = () => {
       state.win.loadFile('dist/index.html');
     }
 
-    const menuBuilder = new MenuBuilder(state.win);
+    const menuBuilder = new MenuBuilder({
+      win: state.win,
+      prepareQuit,
+    });
     menuBuilder.buildMenu();
 
     state.win.on('close', async (e) => {

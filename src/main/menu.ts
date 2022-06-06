@@ -10,6 +10,8 @@ import { format } from 'date-fns';
 
 export class MenuBuilder {
   public language = 'cn' as 'cn' | 'en';
+  private mainWindow: BrowserWindow;
+  private prepareQuit: () => unknown;
   public cn = {
     service: '服务',
     hide: '隐藏',
@@ -74,7 +76,12 @@ export class MenuBuilder {
     return this[this.language];
   }
 
-  constructor(public mainWindow: BrowserWindow) {
+  constructor(params: {
+    win: BrowserWindow
+    prepareQuit: () => unknown
+  }) {
+    this.mainWindow = params.win;
+    this.prepareQuit = params.prepareQuit;
     ipcMain.on('change-language', (_, lang) => {
       this.language = lang;
       this.rebuildMenu();
