@@ -221,6 +221,7 @@ export class MenuBuilder {
           label: this.lang.quit,
           accelerator: 'Command+Q',
           click: () => {
+            this.prepareQuit();
             app.quit();
           },
         },
