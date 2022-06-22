@@ -751,6 +751,7 @@ const loadAndParseBooks = action((groupId: string, loadDone?: () => unknown) => 
       file: v.file!,
     }));
 
+    // TODO: remove segments from db after file is composed
     await dbService.db.transaction(
       'rw',
       [

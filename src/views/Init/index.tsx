@@ -188,7 +188,7 @@ export const Init = observer((props: Props) => {
 
   const postStartInit = async () => {
     await Promise.all([
-      nodeService.updateGroups(true),
+      nodeService.updateGroups(),
       nodeService.updateNodeInfo().then(() => {
         if (nodeService.state.nodeInfo.node_publickey) {
           dbService.initDb(nodeService.state.nodeInfo.node_publickey);
