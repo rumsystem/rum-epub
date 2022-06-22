@@ -28,7 +28,8 @@ export const setIntervalAsTimeout = (fn: (...a: Array<any>) => any, interval?: n
   };
 };
 
-export const createPromise = <T extends unknown>() => {
+// eslint-disable-next-line @typescript-eslint/no-invalid-void-type
+export const createPromise = <T extends unknown = void>() => {
   let rs!: (v: T) => unknown;
   let rj!: (v: any) => unknown;
 
@@ -105,7 +106,7 @@ export const promiseAllSettledThrottle = <T extends readonly (() => Promise<unkn
   const result: Array<any> = [];
   let current = 0;
 
-  const p = createPromise();
+  const p = createPromise<unknown>();
 
   const run = () => {
     if (current === values.length) {

@@ -21,7 +21,7 @@ import PermissionWriteIcon from '~/assets/permission/write.svg?react';
 import PermissionReadOnlyIcon from '~/assets/permission/readonly.svg?react';
 import SeedNoopenIcon from '~/assets/icon_seed_noopen.svg?react';
 
-import { dialogService, escService, nodeService, tooltipService } from '~/service';
+import { dialogService, epubService, escService, nodeService, tooltipService } from '~/service';
 import { lang, runLoading } from '~/utils';
 import { GROUP_CONFIG_KEY, GROUP_TEMPLATE_TYPE } from '~/utils/constant';
 import { ThemeRoot } from '~/utils/theme';
@@ -148,9 +148,9 @@ const CreateGroup = observer((props: Props) => {
       content: lang.created,
       timeout: 1000,
     });
-    nodeService.changeActiveGroup(createGroupResult.right);
-    handleClose();
     const groupId = createGroupResult.right.group_id;
+    epubService.openBook(groupId);
+    handleClose();
 
     const changeAuthTypeResult = TE.tryCatch(
       async () => {
@@ -332,7 +332,7 @@ const CreateGroup = observer((props: Props) => {
                 <div className="text-14 mt-7 px-5">
                   {state.type === GROUP_TEMPLATE_TYPE.EPUB && (
                     <div className="animate-fade-in text-center">
-                      {/* TODO: */}
+                      {/* TODO: epub 种子网络描述 */}
                       epub desc
                       <br />
                       epub desc

@@ -33,12 +33,10 @@ export { NODE_TYPE } from './helper';
 export type { NodeInfoStore } from './helper';
 
 export type GroupTrxAuthRecord = Partial<Record<TrxType, AuthType | undefined>>;
-export const GROUP_ORDER_STORAGE_KEY = 'GROUP_ORDER_STORAGE_KEY';
 export const GROUP_JOIN_ORDER_STORAGE_KEY = 'GROUP_JOIN_ORDER_STORAGE_KEY';
 
 const state = observable({
   groups: [] as Array<IGroup>,
-  activeGroupId: '',
   nodeInfoConfig: null as null | NodeInfoStore,
   nodeInfo: {
     node_id: '',
@@ -61,12 +59,7 @@ const state = observable({
   denyListMap: new Map<string, Array<AllowOrDenyListItem>>(),
   configMap: new Map<string, Record<string, string | boolean | number>>(),
 
-  groupOrder: [] as Array<string>,
   groupJoinOrder: [] as Array<string>,
-
-  get activeGroup() {
-    return this.groups.find((v) => v.group_id === this.activeGroupId) ?? null;
-  },
 
   get groupMap() {
     return Object.fromEntries(this.groups.map((v) => [v.group_id, v])) as Record<string, IGroup | undefined>;
@@ -89,7 +82,7 @@ const state = observable({
   pollingStarted: false,
 });
 
-const updateGroups = async (init = false) => {
+const updateGroups = async () => {
   const data = await fetchMyGroups();
   const groups = data.groups ?? [];
   groups.sort((a, b) => {
@@ -107,11 +100,6 @@ const updateGroups = async (init = false) => {
     });
     state.groupJoinOrder = state.groupJoinOrder.filter((v) => groups.some((u) => u.group_id === v));
     state.groups = groups;
-    if (init) {
-      state.activeGroupId = state.groups.length
-        ? state.groups[0]?.group_id
-        : '';
-    }
   });
 };
 
@@ -250,9 +238,6 @@ export const leaveGroup = async (group: string | IGroup) => {
       state.groups.findIndex((v) => v.group_id === groupId),
       1,
     );
-    if (state.activeGroupId === groupId) {
-      state.activeGroupId = state.groups.at(0)?.group_id ?? '';
-    }
   });
 
   busService.emit({
@@ -290,24 +275,7 @@ export const syncGroup = async (group: string | IGroup) => {
   state.pollings.updateGroups?.runImmediately();
 };
 
-const changeActiveGroup = action((group: string | IGroup) => {
-  let groupId = group;
-  if (typeof groupId !== 'string') {
-    groupId = groupId.group_id;
-  }
-  if (state.groups.every((v) => v.group_id !== groupId)) {
-    throw new Error(`group ${groupId} not exist`);
-  }
-  state.activeGroupId = groupId;
-});
-
 const init = action(() => {
-  state.groupOrder = pipe(
-    J.parse(localStorage.getItem(GROUP_ORDER_STORAGE_KEY) ?? ''),
-    E.map((v) => (Array.isArray(v) ? v as Array<string> : [])),
-    E.getOrElse(() => [] as Array<string>),
-  );
-
   state.groupJoinOrder = pipe(
     J.parse(localStorage.getItem(GROUP_JOIN_ORDER_STORAGE_KEY) ?? ''),
     E.map((v) => (Array.isArray(v) ? v as Array<string> : [])),
@@ -316,31 +284,12 @@ const init = action(() => {
 
   const disposes = [
     reaction(
-      () => state.activeGroupId,
-      action(() => {
-        const index = state.groupOrder.indexOf(state.activeGroupId);
-        if (index !== -1) {
-          state.groupOrder.splice(index, 1);
-        }
-        state.groupOrder.unshift(state.activeGroupId);
-        const newOrder = state.groupOrder.filter((v) => state.groups.some((u) => u.group_id === v));
-        state.groups.forEach((v) => {
-          if (!newOrder.includes(v.group_id)) {
-            newOrder.push(v.group_id);
-          }
-        });
-        state.groupOrder = newOrder;
-        localStorage.setItem(GROUP_ORDER_STORAGE_KEY, JSON.stringify(newOrder));
-      }),
-    ),
-    reaction(
       () => JSON.stringify(state.groupJoinOrder),
       action(() => {
         localStorage.setItem(GROUP_JOIN_ORDER_STORAGE_KEY, JSON.stringify(state.groupJoinOrder));
       }),
     ),
   ];
-
 
   return () => {
     disposes.forEach((v) => v());
@@ -409,7 +358,6 @@ export const nodeService = {
   joinGroup,
   leaveGroup,
   syncGroup,
-  changeActiveGroup,
   updateGroups,
   updateNodeInfo,
   updateGroupConfig,

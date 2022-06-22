@@ -10,3 +10,4 @@ export * from './manageGroup';
 export * from './mixinOAuth';
 export * from './nodeInfo';
 export * from './shareGroup';
+export * from './uploadEpub';

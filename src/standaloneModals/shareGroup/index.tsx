@@ -11,7 +11,7 @@ import { sleep, runLoading, lang } from '~/utils';
 import { ThemeRoot } from '~/utils/theme';
 import { setClipboard } from '~/utils/setClipboard';
 import { fetchSeed } from '~/apis';
-import { nodeService, tooltipService } from '~/service';
+import { epubService, nodeService, tooltipService } from '~/service';
 
 export const shareGroup = async (groupId: string) => new Promise<void>((rs) => {
   const div = document.createElement('div');
@@ -71,7 +71,7 @@ const ShareGroup = observer((props: Props) => {
       return nodeService.state.groups.some((v) => v.group_id === state.seed?.group_id);
     },
     get isActiveGroupSeed() {
-      return nodeService.state.activeGroupId && state.seed?.group_id === nodeService.state.activeGroupId;
+      return epubService.state.current.groupId && state.seed?.group_id === epubService.state.current.groupId;
     },
   }));
 
@@ -80,7 +80,6 @@ const ShareGroup = observer((props: Props) => {
       const seed = JSON.stringify(state.seed, null, 2);
       const seedName = `seed.${state.groupName}.json`;
       if (!process.env.IS_ELECTRON) {
-        // TODO: remove any in future
         const handle = await (window as any).showSaveFilePicker({
           suggestedName: seedName,
           types: [{
@@ -128,7 +127,7 @@ const ShareGroup = observer((props: Props) => {
   const handleJoinOrOpen = async () => {
     const groupId = state.seed?.group_id;
     if (state.inGroup) {
-      nodeService.changeActiveGroup(groupId);
+      epubService.openBook(groupId);
       handleClose();
       return;
     }
@@ -141,7 +140,7 @@ const ShareGroup = observer((props: Props) => {
       async () => {
         try {
           const group = await nodeService.joinGroup(state.seed as any);
-          nodeService.changeActiveGroup(group);
+          epubService.openBook(group.group_id);
         } catch (err: any) {
           console.error(err);
           if (err.message.includes('existed')) {

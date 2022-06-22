@@ -1,7 +1,6 @@
-/* eslint-disable react/jsx-key */
 import React from 'react';
 import classNames from 'classnames';
-import { action, observable, runInAction } from 'mobx';
+import { action, runInAction } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import DOMPurify from 'dompurify';
 import { createRoot } from 'react-dom/client';
@@ -28,15 +27,13 @@ import IconFold from '~/assets/fold.svg?react';
 import IconLib from '~/assets/icon_lib.svg?fill';
 import { ThemeRoot } from '~/utils/theme';
 import {
-  BookDatabaseItem,
-  BookMetadataItem,
   epubService,
-  dbService,
   dialogService,
   escService,
   loadingService,
   nodeService,
   tooltipService,
+  GroupBookItem,
 } from '~/service';
 import { Scrollable } from '~/components';
 import { lang } from '~/utils';
@@ -65,19 +62,14 @@ export const myLibrary = async () => new Promise<void>((rs) => {
   );
 });
 
-interface LibBookItem {
-  book: BookDatabaseItem
-  cover: string
-  metadata: BookMetadataItem['metadata'] | null
-}
+interface LibBookItem { groupId: string, book: GroupBookItem }
 
 const MyLibrary = observer((props: { rs: () => unknown }) => {
   const state = useLocalObservable(() => ({
     open: false,
-    booksLoading: true,
+    loading: true,
+    books: [] as Array<LibBookItem>,
     sidebarCollapsed: false,
-    allBooks: [] as Array<LibBookItem>,
-    coverCache: [] as Array<string>,
     languageFilter: [] as Array<string>,
     subjectFilter: [] as Array<string>,
     nameFilter: '',
@@ -86,24 +78,24 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
     selectedBook: null as null | LibBookItem,
     dispose: escService.noop,
     get allSubjects() {
-      const list = Array.from(new Set(state.allBooks.flatMap((v) => v.metadata?.subjects ?? [])));
+      const list = Array.from(new Set(state.books.flatMap((v) => v.book.metadata?.subjects ?? [])));
       list.sort((a, b) => (a > b ? 1 : a < b ? -1 : 0));
       return list;
     },
     get allLanguages() {
       const allLangs = Array.from(new Set(
-        state.allBooks.flatMap((v) => v.metadata?.languages ?? '').filter(Boolean),
+        state.books.flatMap((v) => v.book.metadata?.languages ?? '').filter(Boolean),
       ));
       allLangs.sort((a, b) => (a > b ? 1 : a < b ? -1 : 0));
       return allLangs;
     },
     get filteredBooks() {
-      const filteredBooks = this.allBooks.filter((v) => {
+      const filteredBooks = this.books.filter((v) => {
         const languageMatch = this.languageFilter.length
-          ? v.metadata && v.metadata.languages.some((v) => this.languageFilter.some((u) => u === v))
+          ? v.book.metadata && v.book.metadata.languages.some((v) => this.languageFilter.some((u) => u === v))
           : true;
         const subjectMatch = this.subjectFilter.length
-          ? v.metadata && v.metadata.subjects.some((v) => this.subjectFilter.some((u) => u === v))
+          ? v.book.metadata && v.book.metadata.subjects.some((v) => this.subjectFilter.some((u) => u === v))
           : true;
         const words = state.nameFilter.split(' ').map((v) => v.toLowerCase());
         const nameFilter = words.every((word) => v.book.fileInfo.title.toLowerCase().includes(word));
@@ -117,7 +109,7 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
       }
       return filteredBooks;
     },
-  }), { coverCache: observable.shallow });
+  }));
 
   const columns = React.useMemo(
     () => [
@@ -126,7 +118,7 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
         width: 240,
         minWidth: 80,
         accessor: (row: LibBookItem) => {
-          const title = `${row.book.fileInfo.title}${row.metadata?.subTitle && ` - ${row.metadata?.subTitle}`}`;
+          const title = `${row.book.fileInfo.title}${row.book.metadata?.subTitle && ` - ${row.book.metadata?.subTitle}`}`;
           return (
             <Tooltip title={title} placement="bottom" disableInteractive>
               <div
@@ -143,13 +135,13 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
         Header: '作者',
         width: 240,
         minWidth: 80,
-        accessor: (row: LibBookItem) => `${row.metadata?.author}${row.metadata?.translator && `[译]${row.metadata?.translator}`}`,
+        accessor: (row: LibBookItem) => `${row.book.metadata?.author}${row.book.metadata?.translator && `[译]${row.book.metadata?.translator}`}`,
       },
       {
         Header: '标签',
         width: 160,
         accessor: (row: LibBookItem) => {
-          const tags = row.metadata?.subjects.join(', ') ?? '';
+          const tags = row.book.metadata?.subjects.join(', ') ?? '';
           if (!tags) { return null; }
           return (
             <Tooltip title={tags} placement="bottom" disableInteractive>
@@ -182,7 +174,7 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
           <div className="flex flex-center">
             <TrashIcon
               className="text-20 text-[#5fc0e9] cursor-pointer"
-              onClick={() => handleLeaveGroup(row.book.groupId)}
+              onClick={() => handleLeaveGroup(row.groupId)}
             />
           </div>
         ),
@@ -199,13 +191,6 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
     useFlexLayout,
     useResizeColumns,
   );
-
-  const clearCache = () => {
-    state.coverCache.forEach((v) => URL.revokeObjectURL(v));
-    runInAction(() => {
-      state.coverCache = [];
-    });
-  };
 
   const handleChangeLanguageFilter = action((lang: string, checked: boolean) => {
     let langs = [...state.languageFilter];
@@ -241,10 +226,7 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
   });
 
   const handleOpenBook = action((v: LibBookItem) => {
-    epubService.state.pendingBookTrxToOpen = v.book.bookTrx;
-    if (nodeService.state.activeGroupId !== v.book.groupId) {
-      nodeService.changeActiveGroup(v.book.groupId);
-    }
+    epubService.openBook(v.groupId, v.book.trxId);
     handleClose();
   });
 
@@ -274,39 +256,18 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
   };
 
   const loadBooks = async () => {
-    const [books, metadata, coverBuffer] = await dbService.db.transaction(
-      'r',
-      [
-        dbService.db.book,
-        dbService.db.bookMetadata,
-        dbService.db.coverBuffer,
-      ],
-      async () => Promise.all([
-        dbService.db.book.where({ status: 'complete' }).toArray(),
-        dbService.db.bookMetadata.toArray(),
-        dbService.db.coverBuffer.toArray(),
-      ]),
-    );
-
-    const allBooks = books.map((book) => {
-      const coverFile = coverBuffer.find((v) => v.bookTrx === book.bookTrx)?.file;
-      const coverBase64 = coverFile
-        ? URL.createObjectURL(new Blob([coverFile]))
-        : '';
-      if (coverBase64) {
-        state.coverCache.push(coverBase64);
-      }
-      const metadataItem = metadata.find((v) => v.bookTrx === book.bookTrx);
-      return {
-        book,
-        cover: coverBase64,
-        metadata: metadataItem?.metadata ?? null,
-      };
-    });
+    for (const group of nodeService.state.groups) {
+      await new Promise<void>((rs) => epubService.loadAndParseBooks(group.group_id, rs));
+    }
 
     runInAction(() => {
-      state.allBooks = allBooks;
-      state.booksLoading = false;
+      const books = Array.from(epubService.state.groupMap.entries())
+        .flatMap(([groupId, item]) => item.books.map((book) => ({
+          groupId,
+          book,
+        })));
+      state.books = books;
+      state.loading = false;
     });
   };
 
@@ -315,9 +276,6 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
     loadBooks();
     runInAction(() => { state.open = true; });
     state.dispose = escService.add(handleClose);
-    return () => {
-      clearCache();
-    };
   }, []);
 
   return (
@@ -374,7 +332,7 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
             </div>
             <div className="flex-col py-3 pl-4 overflow-hidden">
               {state.allSubjects.map((sub, i) => (
-                <Tooltip title={sub} placement="right">
+                <Tooltip title={sub} placement="right" key={i}>
                   <FormControlLabel
                     className="-mt-3"
                     key={i}
@@ -491,12 +449,12 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
               </button>
             </div>
           </div>
-          {state.booksLoading && (
+          {state.loading && (
             <div className="flex flex-center flex-1">
               <CircularProgress className="text-gray-bd" />
             </div>
           )}
-          {!state.booksLoading && !state.allBooks.length && (
+          {!state.loading && !state.books.length && (
             <div className="flex-col flex-center flex-1">
               <div className="flex flex-center flex-1 grow-[3] text-gray-4a text-center text-16 font-bold">
                 暂时空空如也~
@@ -507,7 +465,7 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
               <div className="flex-1 grow-[2]" />
             </div>
           )}
-          {!state.booksLoading && !!state.allBooks.length && (
+          {!state.loading && !!state.books.length && (
             <div className="flex items-stretch flex-1 h-0">
               {state.viewMode === 'grid' && (
                 <Scrollable className="flex-1">
@@ -518,20 +476,20 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
                     }}
                   >
                     {state.filteredBooks.map((v) => (
-                      <div className="flex-col items-center" key={v.book.bookTrx}>
+                      <div className="flex-col items-center" key={v.book.trxId}>
                         <div
                           className={classNames(
                             'relative group w-[150px] h-[200px] cursor-pointer',
                             'from-black/10 via-black/20 to-black/40 bg-gradient-to-b bg-cover bg-center',
                           )}
                           style={{
-                            backgroundImage: v.cover ? `url("${v.cover}")` : undefined,
+                            backgroundImage: v.book.cover ? `url("${v.book.cover}")` : undefined,
                           }}
                           onClick={(e) => e.target === e.currentTarget && handleOpenDetailView(v)}
                         >
                           <div
                             className="absolute hidden right-0 top-0 p-1 group-hover:block bg-white/50 hover:bg-white/75"
-                            onClick={() => handleLeaveGroup(v.book.groupId)}
+                            onClick={() => handleLeaveGroup(v.groupId)}
                           >
                             <TrashIcon className="text-20 text-[#5fc0e9]" />
                           </div>
@@ -546,8 +504,8 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
                           className="text-12 text-gray-88 cursor-pointer"
                           onClick={() => handleOpenDetailView(v)}
                         >
-                          {v.metadata?.author}
-                          {v.metadata?.translator}
+                          {v.book.metadata?.author}
+                          {v.book.metadata?.translator && ` [译]${v.book.metadata?.translator}`}
                         </div>
                         <div
                           className="text-12 text-nice-blue cursor-pointer"
@@ -568,11 +526,13 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
                   >
                     <div className="border-b border-black">
                       {tableInstance.headerGroups.map((headerGroup) => (
+                        // eslint-disable-next-line react/jsx-key
                         <div
                           className="divide-x divide-gray-de"
                           {...headerGroup.getHeaderGroupProps()}
                         >
                           {headerGroup.headers.map((column: any) => (
+                            // eslint-disable-next-line react/jsx-key
                             <div
                               className="relative px-2 py-3 text-center"
                               {...column.getHeaderProps()}
@@ -598,11 +558,13 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
                         {tableInstance.rows.map((row) => {
                           tableInstance.prepareRow(row);
                           return (
+                            // eslint-disable-next-line react/jsx-key
                             <div
                               className="divide-x divide-gray-de"
                               {...row.getRowProps()}
                             >
                               {row.cells.map((cell) => (
+                                // eslint-disable-next-line react/jsx-key
                                 <div
                                   className="relative px-2 py-4"
                                   {...cell.getCellProps()}
@@ -633,7 +595,7 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
                         'from-white/60 via-white/45 to-white/20 bg-gradient-to-b bg-cover bg-center',
                       )}
                       style={{
-                        backgroundImage: state.selectedBook.cover ? `url("${state.selectedBook.cover}")` : undefined,
+                        backgroundImage: state.selectedBook.book.cover ? `url("${state.selectedBook.book.cover}")` : undefined,
                       }}
                       onClick={() => state.selectedBook && handleOpenBook(state.selectedBook)}
                     />
@@ -645,16 +607,16 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
                     </div>
                     <div className="">
                       {[
-                        { name: '副标题', text: state.selectedBook.metadata?.subTitle },
-                        { name: 'ISBN', text: state.selectedBook.metadata?.isbn },
-                        { name: '作者', text: state.selectedBook.metadata?.author },
-                        { name: '译者', text: state.selectedBook.metadata?.translator },
-                        { name: '出版日期', text: state.selectedBook.metadata?.publishDate },
-                        { name: '出版商', text: state.selectedBook.metadata?.publisher },
-                        { name: '语言', text: state.selectedBook.metadata?.languages },
-                        { name: '丛书', text: state.selectedBook.metadata?.series },
-                        { name: '丛书编号', text: state.selectedBook.metadata?.seriesNumber },
-                        // { name: '字数', text: state.selectedBook.metadata?.seriesNumber },
+                        { name: '副标题', text: state.selectedBook.book.metadata?.subTitle },
+                        { name: 'ISBN', text: state.selectedBook.book.metadata?.isbn },
+                        { name: '作者', text: state.selectedBook.book.metadata?.author },
+                        { name: '译者', text: state.selectedBook.book.metadata?.translator },
+                        { name: '出版日期', text: state.selectedBook.book.metadata?.publishDate },
+                        { name: '出版商', text: state.selectedBook.book.metadata?.publisher },
+                        { name: '语言', text: state.selectedBook.book.metadata?.languages },
+                        { name: '丛书', text: state.selectedBook.book.metadata?.series },
+                        { name: '丛书编号', text: state.selectedBook.book.metadata?.seriesNumber },
+                        // { name: '字数', text: state.selectedBook.book.metadata?.seriesNumber },
                         // 分类：
                         // 评分：
                         // 标签：
@@ -666,11 +628,11 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
                       ))}
                     </div>
 
-                    {!!state.selectedBook.metadata?.description && (
+                    {!!state.selectedBook.book.metadata?.description && (
                       <div className="flex mt-6">
                         <div
                           className="mylib-detail-desc max-w-[100%] flex-1 w-0"
-                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(state.selectedBook.metadata?.description ?? '') }}
+                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(state.selectedBook.book.metadata?.description ?? '') }}
                         />
                       </div>
                     )}

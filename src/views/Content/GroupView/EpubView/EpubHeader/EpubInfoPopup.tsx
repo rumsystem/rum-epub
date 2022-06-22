@@ -37,7 +37,7 @@ export const EpubInfoPopup = observer((props: Props) => {
   }, []);
 
   React.useEffect(() => {
-    const cover = state.bookItem?.cover.cover;
+    const cover = state.bookItem?.cover;
     if (!cover) {
       runInAction(() => {
         state.bgSize = {
@@ -61,13 +61,13 @@ export const EpubInfoPopup = observer((props: Props) => {
       });
     });
     // epubService.parseSubData();
-  }, [state.bookItem?.cover.cover]);
+  }, [state.bookItem?.cover]);
 
 
   const { ...rest } = props;
   const title = state.bookItem?.fileInfo.title;
-  const cover = state.bookItem?.cover.cover;
-  const metadata = state.bookItem?.metadata.metadata;
+  const cover = state.bookItem?.cover;
+  const metadata = state.bookItem?.metadata;
   const epubDesc = React.useMemo(
     () => DOMPurify.sanitize(metadata?.description || '暂无描述'),
     [metadata?.description],

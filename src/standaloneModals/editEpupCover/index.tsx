@@ -14,11 +14,11 @@ import FileBlankIcon from 'boxicons/svg/regular/bx-file-blank.svg?fill-icon';
 
 import { Dialog } from '~/components';
 import { ThemeRoot } from '~/utils/theme';
-import { epubService, nodeService, tooltipService } from '~/service';
+import { epubService, tooltipService } from '~/service';
 import scrollIntoView from 'scroll-into-view-if-needed';
 
 export const editEpubCover = async () => new Promise<void>((rs) => {
-  if (!epubService.state.currentBookItem) {
+  if (!epubService.state.current.bookTrx) {
     return;
   }
   const div = document.createElement('div');
@@ -58,7 +58,7 @@ const EditEpubCover = observer((props: Props) => {
     src: '',
 
     get groupItem() {
-      return epubService.getGroupItem(nodeService.state.activeGroupId);
+      return epubService.getGroupItem(this.groupId);
     },
     get uploadState() {
       return this.groupItem.upload.cover;
@@ -72,8 +72,8 @@ const EditEpubCover = observer((props: Props) => {
     },
     get currentCover() {
       const book = this.groupItem.books.find((v) => v.trxId === state.bookTrx);
-      return typeof book?.cover.cover === 'string'
-        ? book.cover.cover
+      return typeof book?.cover === 'string'
+        ? book.cover
         : null;
     },
   }));
@@ -209,7 +209,7 @@ const EditEpubCover = observer((props: Props) => {
   });
 
   const loadCover = () => {
-    epubService.parseSubData(state.groupId, state.bookTrx);
+    epubService.parseMetadataAndCover(state.groupId, state.bookTrx);
   };
 
   const scrollProgressIntoView = () => {
@@ -225,13 +225,13 @@ const EditEpubCover = observer((props: Props) => {
   };
 
   React.useEffect(() => {
-    if (!epubService.state.currentBookItem) {
+    if (!epubService.state.current.bookTrx) {
       handleClose();
       return;
     }
     runInAction(() => {
-      state.groupId = nodeService.state.activeGroupId;
-      state.bookTrx = epubService.state.currentBookItem!.trxId;
+      state.groupId = epubService.state.current.groupId;
+      state.bookTrx = epubService.state.current.bookTrx;
     });
     loadCover();
   }, []);

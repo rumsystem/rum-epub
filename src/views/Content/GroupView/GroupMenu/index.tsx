@@ -7,13 +7,18 @@ import { Menu, MenuItem } from '@mui/material';
 import { EditOutlined } from '@mui/icons-material';
 
 import { IGroup } from '~/apis';
-import { manageGroup, groupInfo, editEpubMetadata } from '~/standaloneModals';
 import { lang } from '~/utils';
 import { nodeService, dialogService, loadingService, tooltipService, epubService } from '~/service';
 
 import IconSeednetManage from '~/assets/icon_seednet_manage.svg';
-import { editEpubCover } from '~/standaloneModals/editEpupCover';
-import { uploadEpub, UploadEpubButton } from '~/standaloneModals/uploadEpub';
+import {
+  editEpubCover,
+  uploadEpub,
+  UploadEpubButton,
+  manageGroup,
+  editEpubMetadata,
+  groupInfo,
+} from '~/standaloneModals';
 import UploadIcon from 'boxicons/svg/regular/bx-upload.svg?fill-icon';
 
 interface Props {
@@ -26,8 +31,8 @@ export const GroupMenu = observer((props: Props) => {
     open: false,
     showMutedListModal: false,
 
-    get currentBook() {
-      return epubService.state.currentBookItem;
+    get currentBookId() {
+      return epubService.state.current.bookTrx;
     },
   }));
   const isGroupOwner = props.group.user_pubkey === props.group.owner_pubkey;
@@ -89,7 +94,7 @@ export const GroupMenu = observer((props: Props) => {
   };
 
   const handleManageGroup = () => {
-    manageGroup(nodeService.state.activeGroupId);
+    manageGroup(props.group.group_id);
     handleMenuClose();
   };
 
@@ -170,7 +175,7 @@ export const GroupMenu = observer((props: Props) => {
           )}
         </UploadEpubButton>
       )}
-      {isGroupOwner && !!state.currentBook && (
+      {isGroupOwner && !!state.currentBookId && (
         <MenuItem onClick={handleEditMetadata}>
           <div className="flex items-center text-gray-600 leading-none pl-1 py-2">
             <span className="flex items-center w-7 flex-none">
@@ -180,7 +185,7 @@ export const GroupMenu = observer((props: Props) => {
           </div>
         </MenuItem>
       )}
-      {isGroupOwner && !!state.currentBook && (
+      {isGroupOwner && !!state.currentBookId && (
         <MenuItem onClick={handleEditCover}>
           <div className="flex items-center text-gray-600 leading-none pl-1 py-2">
             <span className="flex items-center w-7 flex-none">

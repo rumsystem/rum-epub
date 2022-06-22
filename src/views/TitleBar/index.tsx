@@ -36,7 +36,7 @@ export const TitleBar = observer((props: Props) => {
         {
           text: '关于 Rum Epub',
           action: () => {
-            // TODO:
+            // TODO: 关于页面
           },
         },
         {
@@ -114,7 +114,7 @@ export const TitleBar = observer((props: Props) => {
   ].filter(<T extends unknown>(v: false | T): v is T => !!v);
   const menuRight: Array<TitleBarMenuItem> = [
     // {
-    //   // TODO:
+    //   // TODO: 发现
     //   text: (
     //     <div className="text-bright-orange">
     //       发现内容

@@ -9,6 +9,7 @@ import { groupInfo } from '~/standaloneModals/groupInfo';
 
 import { lang, sleep } from '~/utils';
 import { dialogService, loadingService, nodeService, tooltipService } from '~/service';
+import { GROUP_CONFIG_KEY } from '~/utils/constant';
 
 interface Props {
   group: IGroup
@@ -17,31 +18,6 @@ interface Props {
 }
 
 export const GroupPopup = observer((props: Props) => {
-  // const state = useLocalObservable(() => ({
-  //   get book() {
-  //     return epubService.getGroupItem(props.group.group_id).books.at(0);
-  //   },
-  // }));
-  // const db = useDatabase();
-  // const leaveGroup = useLeaveGroup();
-  // const getData = async () => {
-  //   const [user, block] = await db.transaction(
-  //     'r',
-  //     db.persons,
-  //     db.objects,
-  //     () => Promise.all([
-  //       getUser(db, {
-  //         GroupId: props.group.group_id,
-  //         Publisher: props.group.user_pubkey,
-  //       }),
-  //       getFirstBlock(db, props.group.group_id),
-  //     ]),
-  //   );
-  //   state.profile = user.profile;
-  //   state.createdTime = (block?.TimeStamp ?? 0) / 1000000;
-  // };
-  // const isOwner = props.group.role === 'owner';
-
   const handleLeaveGroup = async () => {
     const result = await dialogService.open({
       content: lang.confirmToExit,
@@ -67,13 +43,8 @@ export const GroupPopup = observer((props: Props) => {
     });
   };
 
-  React.useEffect(() => {
-    // epubService.parseMetadata(props.group.group_id)
-  }, []);
-
-  // const GroupTypeIcon = getGroupIcon(props.group.app_key);
-  // const groupDesc = (groupStore.configMap.get(props.group.group_id)?.[GROUP_CONFIG_KEY.GROUP_DESC] ?? '') as string;
-  // const groupDesc = '';
+  // const isOwner = props.group.user_pubkey === props.group.owner_pubkey;
+  const groupDesc = (nodeService.state.configMap.get(props.group.group_id)?.[GROUP_CONFIG_KEY.GROUP_DESC] ?? '') as string;
 
   return (
     <ClickAwayListener
@@ -88,11 +59,11 @@ export const GroupPopup = observer((props: Props) => {
         </div>
         <div className="flex bg-white text-black">
           <div className="flex-1 p-4 max-h-[200px] overflow-y-auto">
-            {/* {groupDesc && (
+            {groupDesc && (
               <div className="text-gray-9c text-12 pb-3 leading-normal">
                 {groupDesc}
               </div>
-            )} */}
+            )}
             {/* <div className="flex items-center justify-center">
               <Avatar
                 className="flex-none"
@@ -117,16 +88,6 @@ export const GroupPopup = observer((props: Props) => {
                 )}
               </div>
             </div> */}
-            {/* TODO: epub metadata desc */}
-            {/* <div
-              className="group-popup-desc"
-              dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(epubService.state.currentBookItem?.metadata.metadata?.description ?? ''),
-              }}
-            /> */}
-            <style>{`
-              .group-popup-desc * { font-size: 14px !important; }
-            `}</style>
           </div>
           <div className="flex-none text-16 bg-gray-f2 py-3 select-none">
             <div

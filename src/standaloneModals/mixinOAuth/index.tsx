@@ -15,7 +15,7 @@ import { lang } from '~/utils';
 import { epubService, tooltipService } from '~/service';
 
 export const mixinOAuth = async () => new Promise<string | undefined>((rs) => {
-  if (!epubService.state.currentBookItem) {
+  if (!epubService.state.current.groupId) {
     return;
   }
   const div = document.createElement('div');

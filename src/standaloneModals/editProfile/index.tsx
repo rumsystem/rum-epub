@@ -123,29 +123,6 @@ const EditProfile = observer((props: { rs: () => unknown }) => {
         setTimeout(handleClose);
       },
     );
-
-    // const payload = {
-    //   type: 'Update',
-    //   person: profile,
-    //   target: {
-    //     // id: data.groupId,
-    //     type: 'Group',
-    //   },
-    // };
-    // const res = await TE.tryCatch(
-    //   () => updateProfile(payload),
-    //   identity,
-    // )();
-    // if (E.isLeft(res)) {
-    //   return;
-    // }
-    // TODO: set global profile
-    // dbService.db.profile.put({
-    //   status: 'syncing',
-    //   groupId,
-    //   profile,
-    //   publisher,
-    // });
   };
 
   const loadProfile = () => {

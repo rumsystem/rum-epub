@@ -9,7 +9,7 @@ import { GoChevronRight } from 'react-icons/go';
 
 import { Dialog, Button } from '~/components';
 import { ICreateGroupsResult } from '~/apis';
-import { tooltipService, nodeService } from '~/service';
+import { tooltipService, nodeService, epubService } from '~/service';
 import { sleep, runLoading, lang } from '~/utils';
 import { ThemeRoot } from '~/utils/theme';
 
@@ -71,7 +71,7 @@ const JoinGroup = observer((props: Props) => {
       async () => {
         try {
           const group = await nodeService.joinGroup(seed);
-          nodeService.changeActiveGroup(group);
+          epubService.openBook(group.group_id);
           runInAction(() => { state.done = true; });
           handleClose();
         } catch (err: any) {

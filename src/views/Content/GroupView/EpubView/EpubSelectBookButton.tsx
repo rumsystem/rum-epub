@@ -10,21 +10,24 @@ import BookOpenIcon from 'boxicons/svg/regular/bx-book-open.svg?fill';
 
 import BookIcon from '~/assets/icon_book.svg?fill-icon';
 import { BookCoverImgTooltip } from '~/components';
-import { GroupBookItem, epubService, nodeService, readerSettingsService } from '~/service';
-
+import { GroupBookItem, epubService, readerSettingsService } from '~/service';
 
 interface Props {
   className?: string
-  onSelect?: (v: GroupBookItem) => unknown
-  currentBookTrxId?: string
 }
 
 export const EpubSelectBookButton = observer((props: Props) => {
   const state = useLocalObservable(() => ({
     open: false,
 
+    get groupId() {
+      return epubService.state.current.groupId;
+    },
+    get currentBookTrx() {
+      return epubService.state.current.bookTrx;
+    },
     get groupItem() {
-      return epubService.getGroupItem(nodeService.state.activeGroupId);
+      return epubService.getGroupItem(this.groupId);
     },
     get books() {
       return this.groupItem.books;
@@ -33,8 +36,8 @@ export const EpubSelectBookButton = observer((props: Props) => {
   const buttonRef = React.useRef<HTMLDivElement>(null);
 
   const handleSelectFile = (v: GroupBookItem) => {
-    if (v.trxId !== props.currentBookTrxId) {
-      props.onSelect?.(v);
+    if (v.trxId !== state.currentBookTrx) {
+      epubService.openBook(state.groupId, v.trxId);
     }
     handleClose();
   };
@@ -70,14 +73,14 @@ export const EpubSelectBookButton = observer((props: Props) => {
       <BookIcon
         className={classNames(
           'text-20',
-          !readerSettingsService.state.dark && 'text-gray-88',
+          !readerSettingsService.state.dark && 'text-gray-6f',
           readerSettingsService.state.dark && 'text-gray-af',
         )}
       />
       <div
         className={classNames(
           'flex flex-center border-b pb-[3px] pl-1 text-16 cursor-pointer select-none',
-          !readerSettingsService.state.dark && 'text-gray-88 border-gray-88',
+          !readerSettingsService.state.dark && 'text-gray-6f border-gray-6f',
           readerSettingsService.state.dark && 'text-gray-af border-gray-af',
         )}
         onClick={handleOpen}
@@ -111,7 +114,7 @@ export const EpubSelectBookButton = observer((props: Props) => {
           )}
           {state.books.map((v, i) => (
             <BookCoverImgTooltip
-              groupId={nodeService.state.activeGroupId}
+              groupId={state.groupId}
               bookTrx={v?.trxId ?? ''}
               key={i}
             >
@@ -131,7 +134,7 @@ export const EpubSelectBookButton = observer((props: Props) => {
                   <div
                     className={classNames(
                       'px-2',
-                      v.trxId !== props.currentBookTrxId && 'opacity-0',
+                      v.trxId !== state.currentBookTrx && 'opacity-0',
                     )}
                   >
                     <BookOpenIcon className="text-blue-400" />

@@ -133,16 +133,11 @@ export const parseEpub = async (fileName: string, buffer: Buffer | Uint8Array): 
 export interface GroupBookItem {
   fileInfo: FileInfo
   trxId: string
-  metadata: {
-    type: 'notloaded' | 'loading' | 'loaded'
-    loadingPromise: null | Promise<unknown>
-    metadata: null | EpubMetadata
-  }
-  cover: {
-    type: 'notloaded' | 'loading' | 'loaded'
-    loadingPromise: null | Promise<unknown>
-    cover: null | string
-  }
+  metadata: null | EpubMetadata
+  cover: null | string
+  size: number
+  metadataAndCoverType: 'notloaded' | 'loading' | 'loaded'
+  metadataAndCoverPromise: null | Promise<unknown>
   time: number
   openTime: number
 }

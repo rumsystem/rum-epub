@@ -16,16 +16,26 @@ type Props = {
   groupName: string
 } | {
   group: IGroup
+} | {
+  groupId: string
 });
 
 export const GroupIcon = observer((props: Props) => {
-  const groupIconFromConfig = 'group' in props
-    ? nodeService.state.configMap.get(props.group.group_id)?.[GROUP_CONFIG_KEY.GROUP_ICON] as string ?? ''
+  const group = React.useMemo(() => {
+    if ('group' in props) {
+      return props.group;
+    }
+    if ('groupId' in props) {
+      return nodeService.state.groupMap[props.groupId] ?? null;
+    }
+    return null;
+  }, ['group' in props, 'groupId' in props]);
+
+  const groupIconFromConfig = group
+    ? nodeService.state.configMap.get(group.group_id)?.[GROUP_CONFIG_KEY.GROUP_ICON] as string ?? ''
     : '';
   const groupIcon = props.groupIcon ?? groupIconFromConfig;
-  const groupName = 'group' in props
-    ? props.group.group_name
-    : props.groupName;
+  const groupName = group?.group_name || ('groupName' in props && props.groupName) || '';
 
   if (!groupIcon) {
     return (

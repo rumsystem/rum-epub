@@ -12,12 +12,9 @@ export default observer(() => (
       </div>
     )}
 
-    {nodeService.state.groups.length !== 0 && (
+    {nodeService.state.groups.length !== 0 && (<>
       <Sidebar className="select-none flex-none z-20" />
-    )}
-
-    {!!nodeService.state.activeGroup && (
       <GroupView className="flex-1 w-0" />
-    )}
+    </>)}
   </div>
 ));

@@ -15,18 +15,19 @@ interface BookCoverImgProps extends Omit<TooltipProps, 'title'> {
 export const BookCoverImgTooltip = observer((props: BookCoverImgProps) => {
   const state = useLocalObservable(() => ({
     open: false,
-    groupId: '',
-    bookTrx: '',
+    groupId: props.groupId,
+    bookTrx: props.bookTrx,
     get img() {
+      if (!state.groupId) { return null; }
       const groupItem = epubService.getGroupItem(state.groupId);
       const book = groupItem.books.find((v) => v.trxId === state.bookTrx);
-      const img = book?.cover.cover || null;
+      const img = book?.cover || null;
       return img;
     },
   }));
 
   const handleOpen = action(() => {
-    epubService.parseSubData(props.groupId, props.bookTrx);
+    epubService.parseMetadataAndCover(props.groupId, props.bookTrx);
     state.open = true;
   });
 
@@ -35,6 +36,7 @@ export const BookCoverImgTooltip = observer((props: BookCoverImgProps) => {
   });
 
   React.useEffect(() => {
+    epubService.parseMetadataAndCover(props.groupId, props.bookTrx);
     runInAction(() => {
       state.groupId = props.groupId;
       state.bookTrx = props.bookTrx;

@@ -13,13 +13,13 @@ import { AddCircleOutline, CalendarMonth, DeleteOutline } from '@mui/icons-mater
 
 import { Dialog } from '~/components';
 import { ThemeRoot } from '~/utils/theme';
-import { dialogService, GroupBookItem, epubService, nodeService, tooltipService } from '~/service';
+import { dialogService, epubService, tooltipService } from '~/service';
 import { postContent } from '~/apis';
 import { runLoading } from '~/utils';
 import { format } from 'date-fns';
 
 export const editEpubMetadata = async () => new Promise<void>((rs) => {
-  if (!epubService.state.currentBookItem) {
+  if (!epubService.state.current.bookTrx) {
     return;
   }
   const div = document.createElement('div');
@@ -53,7 +53,7 @@ const EditEpubMetadata = observer((props: Props) => {
     loading: false,
     submitting: false,
     groupId: '',
-    bookItem: null as null | GroupBookItem,
+    bookTrx: '',
     publisherDatePicker: false,
 
     form: {
@@ -116,14 +116,11 @@ const EditEpubMetadata = observer((props: Props) => {
 
   const handleSubmit = async () => {
     if (!state.formValid) { return; }
-    const bookItem = state.bookItem;
-    if (!bookItem) { return; }
-    const bookTrxId = bookItem.trxId;
     const groupId = state.groupId;
     const data = {
       type: 'Add',
       object: {
-        id: bookTrxId,
+        id: state.bookTrx,
         type: 'Note',
         name: 'epubMetadata',
         content: JSON.stringify(state.form),
@@ -161,10 +158,10 @@ const EditEpubMetadata = observer((props: Props) => {
     runLoading(
       (l) => { state.loading = l; },
       async () => {
-        await epubService.parseNewTrx(state.groupId);
-        await epubService.parseSubData(state.groupId, state.bookItem!.trxId);
-        const book = epubService.state.groupMap.get(state.groupId)?.books.find((v) => v.trxId === state.bookItem?.trxId);
-        const metadata = book?.metadata.metadata ?? null;
+        await epubService.loadAndParseBooks(state.groupId);
+        await epubService.parseMetadataAndCover(state.groupId, state.bookTrx);
+        const book = epubService.state.groupMap.get(state.groupId)?.books.find((v) => v.trxId === state.bookTrx);
+        const metadata = book?.metadata ?? null;
         runInAction(() => {
           const createForm = () => ({
             description: '',
@@ -195,13 +192,12 @@ const EditEpubMetadata = observer((props: Props) => {
   };
 
   React.useEffect(() => {
-    if (!epubService.state.currentBookItem) {
+    if (!epubService.state.current.bookTrx) {
       handleClose();
       return;
     }
     runInAction(() => {
-      state.groupId = nodeService.state.activeGroupId;
-      state.bookItem = epubService.state.currentBookItem!;
+      state.groupId = epubService.state.current.groupId;
     });
     loadBookMetadata();
   }, []);

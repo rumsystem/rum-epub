@@ -1,10 +1,10 @@
-import { action, observable, runInAction } from 'mobx';
+import { action, observable, reaction, runInAction } from 'mobx';
 import * as J from 'fp-ts/lib/Json';
 import * as E from 'fp-ts/lib/Either';
 import * as O from 'fp-ts/lib/Option';
 import { pipe } from 'fp-ts/lib/function';
 import { fetchContents, IPostContentResult, postContent } from '~/apis';
-import { PollingTask, promiseAllSettledThrottle, runLoading, sleep } from '~/utils';
+import { createPromise, PollingTask, promiseAllSettledThrottle, runLoading, sleep } from '~/utils';
 import { dbService, FileInfo, CoverFileInfo, EpubMetadata, BookMetadataItem } from '~/service/db';
 import { busService } from '~/service/bus';
 import { parseEpub, ParsedEpubBook, checkTrxAndAck, GroupBookItem, hashBufferSha256, splitFile } from './helper';
@@ -41,15 +41,21 @@ interface GroupUploadState {
 interface GroupStateItem {
   upload: GroupUploadState
   books: Array<GroupBookItem>
-  trxParsinsPromise: null | Promise<unknown>
+  loadAndParseBooksPromise: null | Promise<unknown>
+  loadBooksPromise: null | Promise<unknown>
 }
 
+export const GROUP_ORDER_STORAGE_KEY = 'GROUP_ORDER_STORAGE_KEY';
+
 const state = observable({
+  current: {
+    groupId: '',
+    bookTrx: '',
+  },
   groupMap: new Map<string, GroupStateItem>(),
   bookBufferLRUCache: new Map<string, { buf: Uint8Array, time: number }>(),
+  groupOrder: [] as Array<string>,
 
-  currentBookItem: null as null | GroupBookItem,
-  pendingBookTrxToOpen: '',
   polling: null as null | PollingTask,
 });
 
@@ -78,8 +84,9 @@ const getGroupItem = action((groupId: string) => {
       },
       books: [],
       highlights: [],
-      trxParsinsPromise: null,
-    });
+      loadAndParseBooksPromise: null,
+      loadBooksPromise: null,
+    } as GroupStateItem);
     state.groupMap.set(groupId, item);
   }
   return item;
@@ -223,7 +230,7 @@ const upload = {
           (l) => changeProgressStatus('trxcheck', l ? 'uploading' : 'done'),
           async () => {
             for (let i = 0; i < 30; i += 1) {
-              await parseNewTrx(groupId);
+              await loadAndParseBooks(groupId);
               const theBook = groupItem.books.find((v) => v.trxId === fileInfoTrx.trx_id);
               await sleep(1000);
               if (theBook) {
@@ -355,7 +362,7 @@ const upload = {
           (l) => changeProgressStatus('trxcheck', l ? 'uploading' : 'done'),
           async () => {
             for (let i = 0; i < 30; i += 1) {
-              await parseNewTrx(groupId);
+              await loadAndParseBooks(groupId);
               const coverCount = await dbService.db.cover.where({
                 coverTrx: fileInfoTrx.trx_id,
               }).count();
@@ -370,13 +377,78 @@ const upload = {
         runInAction(() => {
           uploadState.uploadDone = true;
         });
-        parseSubData(groupId, uploadState.bookTrx);
+        parseMetadataAndCover(groupId, uploadState.bookTrx);
       },
     );
   },
 };
 
-const markBookOpened = async (groupId: string, bookTrx: string) => {
+const highlight = {
+  get: async (groupId: string, bookTrx: string) => {
+    const items = await dbService.db.highlights.where({
+      groupId,
+      bookTrx,
+    }).toArray();
+    return items;
+  },
+
+  save: async (groupId: string, bookTrx: string, cfiRange: string) => {
+    await dbService.db.transaction('rw', [dbService.db.highlights], async () => {
+      const count = await dbService.db.highlights.where({
+        groupId,
+        bookTrx,
+        cfiRange,
+      }).count();
+      if (count) { return; }
+      dbService.db.highlights.add({
+        groupId,
+        bookTrx,
+        cfiRange,
+      });
+    });
+  },
+
+  delete: async (groupId: string, bookTrx: string, cfiRange: string) => {
+    await dbService.db.highlights.where({
+      groupId,
+      bookTrx,
+      cfiRange,
+    }).delete();
+  },
+};
+
+const readingProgress = {
+  get: async (groupId: string, bookTrx?: string) => {
+    const item = await dbService.db.readingProgress.where({
+      groupId,
+      ...bookTrx ? { bookTrx } : {},
+    }).last();
+    return item ?? null;
+  },
+
+  save: async (groupId: string, bookTrx: string, readingProgress: string) => {
+    await dbService.db.transaction('rw', [dbService.db.readingProgress], async () => {
+      await dbService.db.readingProgress.where({
+        groupId,
+        bookTrx,
+      }).delete();
+      await dbService.db.readingProgress.add({
+        groupId,
+        bookTrx,
+        readingProgress,
+      });
+    });
+  },
+};
+
+const openBook = action((groupId: string | null, bookTrx?: string) => {
+  state.current = {
+    groupId: groupId ?? '',
+    bookTrx: bookTrx ?? '',
+  };
+});
+
+const updateBookLastOpenTime = async (groupId: string, bookTrx: string) => {
   const groupItem = getGroupItem(groupId);
   const book = groupItem.books.find((v) => v.trxId === bookTrx);
   const now = Date.now();
@@ -393,34 +465,68 @@ const markBookOpened = async (groupId: string, bookTrx: string) => {
   });
 };
 
-const parseNewTrx = action((groupId: string) => {
+const loadAndParseBooks = action((groupId: string, loadDone?: () => unknown) => {
   const groupItem = getGroupItem(groupId);
-  let p = groupItem.trxParsinsPromise;
+  let p = groupItem.loadAndParseBooksPromise;
+  if (groupItem.loadBooksPromise) {
+    groupItem.loadBooksPromise.then(() => loadDone?.());
+  }
   if (p) { return p; }
   const run = async () => {
+    // load existed book in db
+    const p = createPromise();
+    runInAction(() => {
+      groupItem.loadBooksPromise = p.p;
+    });
+    const books = await dbService.db.book.where({ groupId, status: 'complete' }).toArray();
+    runInAction(() => {
+      books
+        .filter((v) => groupItem.books.every((u) => u.trxId !== v.bookTrx))
+        .forEach((v) => {
+          const item: GroupBookItem = {
+            metadata: null,
+            cover: null,
+            metadataAndCoverType: 'notloaded',
+            metadataAndCoverPromise: null,
+            size: v.size,
+            time: v.time,
+            openTime: v.openTime,
+            fileInfo: v.fileInfo,
+            trxId: v.bookTrx,
+          };
+          groupItem.books.push(item);
+          parseMetadataAndCover(groupId, v.bookTrx);
+        });
+    });
+    p.rs();
+    loadDone?.();
+
+    // if latest trx already parsed
+    const lastTrxItem = await dbService.db.groupLatestParsedTrx.where({ groupId }).last();
+    const lastTrx = lastTrxItem?.trxId ?? '';
+    if (nodeService.state.groupMap[groupId]?.highest_block_id === lastTrx) {
+      return;
+    }
+
+    // parse new book from trxs
     const [
       booksToCaculate,
       coversToCaculate,
-      lastTrxItem,
     ] = await dbService.db.transaction(
       'r',
       [
-        dbService.db.groupLatestParsedTrx,
         dbService.db.book,
         dbService.db.bookSegment,
         dbService.db.cover,
         dbService.db.coverSegment,
       ],
       async () => {
-        const [dbBooks, lastTrxItem] = await Promise.all([
+        const [dbBooks, segments, dbCovers, coverSegments] = await Promise.all([
           dbService.db.book.where({ groupId, status: 'incomplete' }).toArray(),
-          dbService.db.groupLatestParsedTrx.where({ groupId }).last(),
+          dbService.db.bookSegment.where({ groupId }).toArray(),
+          dbService.db.cover.where({ groupId }).toArray(),
+          dbService.db.coverSegment.where({ groupId }).toArray(),
         ]);
-
-        const segments = await dbService.db.bookSegment.where({
-          groupId,
-        }).toArray();
-
         const books = dbBooks.map((v) => ({
           ...v,
           file: null as null | Buffer,
@@ -430,15 +536,6 @@ const parseNewTrx = action((groupId: string) => {
             groupId,
           },
         }));
-
-        const dbCovers = await dbService.db.cover.where({
-          groupId,
-        }).toArray();
-
-        const coverSegments = await dbService.db.coverSegment.where({
-          groupId,
-        }).toArray();
-
         const covers = dbCovers.map((v) => ({
           ...v,
           file: null as null | Buffer,
@@ -449,11 +546,9 @@ const parseNewTrx = action((groupId: string) => {
           },
         }));
 
-        return [books, covers, lastTrxItem];
+        return [books, covers];
       },
     );
-
-    const lastTrx = lastTrxItem?.trxId ?? '';
 
     let nextTrx = lastTrx;
     for (;;) {
@@ -689,76 +784,39 @@ const parseNewTrx = action((groupId: string) => {
       ]),
     );
 
-    const currentBooks = groupItem.books;
     runInAction(() => {
       booksToCaculate
-        .filter((v) => v.file && currentBooks.every((u) => u.trxId !== v.bookTrx))
+        .filter((v) => v.file && groupItem.books.every((u) => u.trxId !== v.bookTrx))
         .forEach((v) => {
           const item: GroupBookItem = {
-            metadata: {
-              type: 'notloaded',
-              loadingPromise: null,
-              metadata: null,
-            },
-            cover: {
-              type: 'notloaded',
-              loadingPromise: null,
-              cover: null,
-            },
+            metadata: null,
+            cover: null,
+            metadataAndCoverType: 'notloaded',
+            metadataAndCoverPromise: null,
+            size: v.size,
             fileInfo: v.fileInfo,
             trxId: v.bookTrx,
             time: v.time,
             openTime: v.openTime,
           };
-          currentBooks.push(item);
+          groupItem.books.push(item);
         });
     });
   };
 
   p = run().then(action(() => {
-    groupItem.trxParsinsPromise = null;
+    groupItem.loadAndParseBooksPromise = null;
   }));
-  groupItem.trxParsinsPromise = p;
+  groupItem.loadAndParseBooksPromise = p;
   return p;
 });
 
-const tryLoadBookFromDB = async (groupId: string) => {
-  const groupItem = getGroupItem(groupId);
-  const books = await dbService.db.book.where({ groupId, status: 'complete' }).toArray();
-  const currentBooks = groupItem.books;
-
-  runInAction(() => {
-    books
-      .filter((v) => currentBooks.every((u) => u.trxId !== v.bookTrx))
-      .forEach((v) => {
-        const item: GroupBookItem = {
-          metadata: {
-            type: 'notloaded',
-            loadingPromise: null,
-            metadata: null,
-          },
-          cover: {
-            type: 'notloaded',
-            loadingPromise: null,
-            cover: null,
-          },
-          time: v.time,
-          openTime: v.openTime,
-          fileInfo: v.fileInfo,
-          trxId: v.bookTrx,
-        };
-        currentBooks.push(item);
-      });
-  });
-};
-
-/** parse cover and metadata */
-const parseSubData = async (groupId: string, bookTrx: string) => {
+const parseMetadataAndCover = async (groupId: string, bookTrx: string) => {
   const groupItem = getGroupItem(groupId);
   const item = groupItem.books.find((v) => v.trxId === bookTrx);
   if (!item) { return; }
 
-  await parseNewTrx(groupId);
+  await loadAndParseBooks(groupId);
 
   const doParse = async () => {
     let cover: string | null = null;
@@ -809,32 +867,23 @@ const parseSubData = async (groupId: string, bookTrx: string) => {
     }
 
     runInAction(() => {
-      if (item.cover.cover) {
-        URL.revokeObjectURL(item.cover.cover);
+      if (item.cover) {
+        URL.revokeObjectURL(item.cover);
       }
-      item.cover = {
-        type: 'loaded',
-        cover,
-        loadingPromise: null,
-      };
-      item.metadata = {
-        type: 'loaded',
-        metadata,
-        loadingPromise: null,
-      };
+      item.cover = cover;
+      item.metadataAndCoverType = 'loaded';
+      item.metadata = metadata;
     });
   };
 
-  if (item.cover.loadingPromise || item.metadata.loadingPromise) {
-    return item.cover.loadingPromise || item.metadata.loadingPromise;
+  if (item.metadataAndCoverPromise) {
+    return item.metadataAndCoverPromise;
   }
 
   const p = doParse();
   runInAction(() => {
-    item.metadata.type = 'loading';
-    item.cover.type = 'loading';
-    item.metadata.loadingPromise = p;
-    item.cover.loadingPromise = p;
+    item.metadataAndCoverType = 'loading';
+    item.metadataAndCoverPromise = p;
   });
   return p;
 };
@@ -877,81 +926,77 @@ const getBookBuffer = async (groupId: string, bookTrx: string) => {
   return O.none;
 };
 
-const getHighlights = async (groupId: string, bookTrx: string) => {
-  const items = await dbService.db.highlights.where({
-    groupId,
-    bookTrx,
-  }).toArray();
-  return items;
-};
+const init = () => {
+  state.groupOrder = pipe(
+    J.parse(localStorage.getItem(GROUP_ORDER_STORAGE_KEY) ?? ''),
+    E.map((v) => (Array.isArray(v) ? v as Array<string> : [])),
+    E.getOrElse(() => [] as Array<string>),
+  );
 
-const saveHighlight = async (groupId: string, bookTrx: string, cfiRange: string) => {
-  await dbService.db.transaction('rw', [dbService.db.highlights], async () => {
-    const count = await dbService.db.highlights.where({
-      groupId,
-      bookTrx,
-      cfiRange,
-    }).count();
-    if (count) { return; }
-    dbService.db.highlights.add({
-      groupId,
-      bookTrx,
-      cfiRange,
-    });
-  });
-};
+  const disposes = [
+    busService.on('group_leave', (v) => {
+      const groupId = v.data.groupId;
+      state.groupMap.delete(groupId);
+      if (state.current.groupId === groupId) {
+        state.current.groupId = nodeService.state.groups.at(0)?.group_id ?? '';
+      }
+    }),
 
-const deleteHighlight = async (groupId: string, bookTrx: string, cfiRange: string) => {
-  await dbService.db.highlights.where({
-    groupId,
-    bookTrx,
-    cfiRange,
-  }).delete();
-};
-
-const getReadingProgress = async (groupId: string, bookTrx?: string) => {
-  const item = await dbService.db.readingProgress.where({
-    groupId,
-    ...bookTrx ? { bookTrx } : {},
-  }).last();
-  return item ?? null;
-};
-
-const saveReadingProgress = async (groupId: string, bookTrx: string, readingProgress: string) => {
-  await dbService.db.transaction('rw', [dbService.db.readingProgress], async () => {
-    await dbService.db.readingProgress.where({
-      groupId,
-      bookTrx,
-    }).delete();
-    dbService.db.readingProgress.add({
-      groupId,
-      bookTrx,
-      readingProgress,
-    });
-  });
+    reaction(
+      () => state.current.groupId,
+      action(() => {
+        const index = state.groupOrder.indexOf(state.current.groupId);
+        if (index !== -1) {
+          state.groupOrder.splice(index, 1);
+        }
+        state.groupOrder.unshift(state.current.groupId);
+        const newOrder = state.groupOrder.filter((v) => nodeService.state.groups.some((u) => u.group_id === v));
+        nodeService.state.groups.forEach((v) => {
+          if (!newOrder.includes(v.group_id)) {
+            newOrder.push(v.group_id);
+          }
+        });
+        state.groupOrder = newOrder;
+        localStorage.setItem(GROUP_ORDER_STORAGE_KEY, JSON.stringify(newOrder));
+      }),
+    ),
+  ];
+  return () => disposes.forEach((v) => v());
 };
 
 const initAfterDB = () => {
   state.polling = new PollingTask(
     async () => {
       for (const group of nodeService.state.groups) {
-        await parseNewTrx(group.group_id);
+        await loadAndParseBooks(group.group_id);
       }
     },
-    60000,
+    30000,
     true,
   );
 
-  return () => 1;
-};
+  dbService.db.readingProgress.toCollection().last().then((v) => {
+    if (v) {
+      openBook(v.groupId, v.bookTrx);
+    }
+  });
 
-const init = () => {
   const disposes = [
-    busService.on('group_leave', (v) => {
-      const groupId = v.data.groupId;
-      state.groupMap.delete(groupId);
-    }),
+    // load books for new group
+    reaction(
+      () => nodeService.state.groups.map((v) => v.group_id),
+      async () => {
+        for (const group of nodeService.state.groups) {
+          const groupItem = getGroupItem(group.group_id);
+          if (!groupItem.books.length) {
+            await loadAndParseBooks(group.group_id);
+          }
+        }
+      },
+      { fireImmediately: true },
+    ),
   ];
+
   return () => disposes.forEach((v) => v());
 };
 
@@ -961,15 +1006,14 @@ export const epubService = {
   initAfterDB,
 
   getGroupItem,
+
   upload,
-  markBookOpened,
-  parseNewTrx,
-  tryLoadBookFromDB,
-  parseSubData,
+  highlight,
+  readingProgress,
+
+  openBook,
+  updateBookLastOpenTime,
+  loadAndParseBooks,
+  parseMetadataAndCover,
   getBookBuffer,
-  getHighlights,
-  saveHighlight,
-  deleteHighlight,
-  getReadingProgress,
-  saveReadingProgress,
 };

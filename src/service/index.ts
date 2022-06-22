@@ -1,5 +1,6 @@
 import { nodeService } from './node';
 import { quorumService } from './quorum';
+import { dbService } from './db';
 import { epubService } from './epub';
 import { readerSettingsService } from './readerSettings';
 import { updateService } from './update';
@@ -34,6 +35,7 @@ export const initService = () => {
       quorumService,
       epubService,
       updateService,
+      dbService,
     }).forEach(([k, v]) => {
       (window as any)[k] = v;
     });

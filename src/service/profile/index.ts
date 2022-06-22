@@ -29,7 +29,7 @@ const setProfile = async (profile: GlobalProfile['profile']) => {
 };
 
 const init = () => {
-  dbService.db.globalProfile.where({}).last().then((profile) => {
+  dbService.db.globalProfile.toCollection().last().then((profile) => {
     runInAction(() => {
       if (profile?.profile) {
         state.currentProfile = profile.profile;

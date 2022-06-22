@@ -50,8 +50,14 @@ const UploadEpub = observer((props: Props) => {
     open: true,
     scrollDebounceTimer: 0,
 
+    get groupId() {
+      return epubService.state.current.groupId;
+    },
+    get group() {
+      return nodeService.state.groupMap[this.groupId];
+    },
     get groupItem() {
-      return epubService.getGroupItem(nodeService.state.activeGroupId);
+      return epubService.getGroupItem(this.groupId);
     },
     get uploadState() {
       return this.groupItem.upload.epub;
@@ -67,11 +73,11 @@ const UploadEpub = observer((props: Props) => {
       return `${(progress * 100).toFixed(2)}%`;
     },
     get hasWritePermission() {
-      const groupId = nodeService.state.activeGroupId;
+      const groupId = state.groupId;
       const postAuthType = nodeService.state.trxAuthTypeMap.get(groupId)?.POST;
       const allowList = nodeService.state.allowListMap.get(groupId) ?? [];
       const denyList = nodeService.state.denyListMap.get(groupId) ?? [];
-      const userPublicKey = nodeService.state.activeGroup?.user_pubkey ?? '';
+      const userPublicKey = state.group?.user_pubkey ?? '';
       if (postAuthType === 'FOLLOW_ALW_LIST' && allowList.every((v) => v.Pubkey !== userPublicKey)) {
         return false;
       }
@@ -115,11 +121,11 @@ const UploadEpub = observer((props: Props) => {
   };
 
   const handleReset = () => {
-    epubService.upload.resetEpub(nodeService.state.activeGroupId);
+    epubService.upload.resetEpub(state.groupId);
   };
 
   const setFile = async (fileName: string, buffer: Buffer) => {
-    const result = await epubService.upload.selectEpub(nodeService.state.activeGroupId, fileName, buffer);
+    const result = await epubService.upload.selectEpub(state.groupId, fileName, buffer);
     if (E.isLeft(result)) {
       tooltipService.show({
         content: '解析文件失败！',
@@ -168,7 +174,7 @@ const UploadEpub = observer((props: Props) => {
   });
 
   const handleConfirmUpload = () => {
-    epubService.upload.doUploadEpub(nodeService.state.activeGroupId);
+    epubService.upload.doUploadEpub(state.groupId);
   };
 
   const scrollProgressIntoView = () => {
@@ -203,6 +209,10 @@ const UploadEpub = observer((props: Props) => {
         <DialogTitle className="text-center font-medium text-24">
           上传Epub文件
         </DialogTitle>
+
+        <div className="text-center mb-4">
+          上传到种子网络 &quot;{state.group?.group_name}&quot;
+        </div>
 
         {!state.uploadState.epub && (
           <div className="px-8">
@@ -361,8 +371,14 @@ export const UploadEpubButton = observer((props: UploadEpubButtonProps) => {
     open: true,
     scrollDebounceTimer: 0,
 
+    get groupId() {
+      return epubService.state.current.groupId;
+    },
+    get group() {
+      return nodeService.state.groupMap[this.groupId];
+    },
     get groupItem() {
-      return epubService.getGroupItem(nodeService.state.activeGroupId);
+      return epubService.getGroupItem(state.groupId);
     },
     get uploadState() {
       return this.groupItem.upload.epub;
@@ -378,11 +394,11 @@ export const UploadEpubButton = observer((props: UploadEpubButtonProps) => {
       return `${(progress * 100).toFixed(2)}%`;
     },
     get hasWritePermission() {
-      const groupId = nodeService.state.activeGroupId;
+      const groupId = state.groupId;
       const postAuthType = nodeService.state.trxAuthTypeMap.get(groupId)?.POST;
       const allowList = nodeService.state.allowListMap.get(groupId) ?? [];
       const denyList = nodeService.state.denyListMap.get(groupId) ?? [];
-      const userPublicKey = nodeService.state.activeGroup?.user_pubkey ?? '';
+      const userPublicKey = state.group?.user_pubkey ?? '';
       if (postAuthType === 'FOLLOW_ALW_LIST' && allowList.every((v) => v.Pubkey !== userPublicKey)) {
         return false;
       }
