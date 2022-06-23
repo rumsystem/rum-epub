@@ -418,14 +418,20 @@ const highlight = {
 };
 
 const readingProgress = {
-  get: async (groupId: string, bookTrx?: string) => {
+  getLast: async (groupId: string, bookTrx?: string) => {
     const item = await dbService.db.readingProgress.where({
       groupId,
       ...bookTrx ? { bookTrx } : {},
     }).last();
     return item ?? null;
   },
-
+  getAll: async (groupId: string, bookTrx?: string) => {
+    const items = await dbService.db.readingProgress.where({
+      groupId,
+      ...bookTrx ? { bookTrx } : {},
+    }).toArray();
+    return items;
+  },
   save: async (groupId: string, bookTrx: string, readingProgress: string) => {
     await dbService.db.transaction('rw', [dbService.db.readingProgress], async () => {
       await dbService.db.readingProgress.where({
@@ -475,12 +481,10 @@ const loadAndParseBooks = action((groupId: string, loadDone?: () => unknown) => 
   const run = async () => {
     // load existed book in db
     const p = createPromise();
+    runInAction(() => { groupItem.loadBooksPromise = p.p; });
+    const existedBooks = await dbService.db.book.where({ groupId, status: 'complete' }).toArray();
     runInAction(() => {
-      groupItem.loadBooksPromise = p.p;
-    });
-    const books = await dbService.db.book.where({ groupId, status: 'complete' }).toArray();
-    runInAction(() => {
-      books
+      existedBooks
         .filter((v) => groupItem.books.every((u) => u.trxId !== v.bookTrx))
         .forEach((v) => {
           const item: GroupBookItem = {
@@ -509,10 +513,7 @@ const loadAndParseBooks = action((groupId: string, loadDone?: () => unknown) => 
     }
 
     // parse new book from trxs
-    const [
-      booksToCaculate,
-      coversToCaculate,
-    ] = await dbService.db.transaction(
+    const [dbBooks, dbBookSegments, dbCovers, dbCoverSegments] = await dbService.db.transaction(
       'r',
       [
         dbService.db.book,
@@ -521,34 +522,37 @@ const loadAndParseBooks = action((groupId: string, loadDone?: () => unknown) => 
         dbService.db.coverSegment,
       ],
       async () => {
-        const [dbBooks, segments, dbCovers, coverSegments] = await Promise.all([
+        const [dbBooks, dbBookSegments, dbCovers, dbCoverSegments] = await Promise.all([
           dbService.db.book.where({ groupId, status: 'incomplete' }).toArray(),
           dbService.db.bookSegment.where({ groupId }).toArray(),
           dbService.db.cover.where({ groupId }).toArray(),
           dbService.db.coverSegment.where({ groupId }).toArray(),
         ]);
-        const books = dbBooks.map((v) => ({
-          ...v,
-          file: null as null | Buffer,
-          segmentItem: segments.find((s) => s.bookTrx === v.bookTrx) ?? {
-            bookTrx: v.bookTrx,
-            segments: {},
-            groupId,
-          },
-        }));
-        const covers = dbCovers.map((v) => ({
-          ...v,
-          file: null as null | Buffer,
-          segmentItem: coverSegments.find((s) => s.coverTrx === v.coverTrx) ?? {
-            coverTrx: v.coverTrx,
-            segments: {},
-            groupId,
-          },
-        }));
-
-        return [books, covers];
+        return [dbBooks, dbBookSegments, dbCovers, dbCoverSegments];
       },
     );
+
+    const parseState = {
+      book: dbBooks.map((v) => ({
+        book: v,
+        file: null as null | Buffer,
+        segment: dbBookSegments.find((s) => s.bookTrx === v.bookTrx) ?? {
+          bookTrx: v.bookTrx,
+          segments: {},
+          groupId,
+        },
+      })),
+      cover: dbCovers.map((v) => ({
+        cover: v,
+        file: null as null | Buffer,
+        segment: dbCoverSegments.find((s) => s.coverTrx === v.coverTrx) ?? {
+          coverTrx: v.coverTrx,
+          segments: {},
+          groupId,
+        },
+      })),
+      metadata: [] as Array<BookMetadataItem>,
+    };
 
     let nextTrx = lastTrx;
     for (;;) {
@@ -570,23 +574,25 @@ const loadAndParseBooks = action((groupId: string, loadDone?: () => unknown) => 
         if (isFileInfo) {
           try {
             const fileData: FileInfo = JSON.parse(Buffer.from(trx.Content.file.content, 'base64').toString());
-            const fileInfoExisted = booksToCaculate.some((v) => v.fileInfo.sha256 === fileData.sha256);
-            booksToCaculate.push({
-              bookTrx: trx.TrxId,
-              fileInfo: fileData,
-              size: 0,
-              status: fileInfoExisted
-                ? 'broken'
-                : 'incomplete',
+            const fileInfoExisted = parseState.book.some((v) => v.book.fileInfo.sha256 === fileData.sha256);
+            parseState.book.push({
+              book: {
+                bookTrx: trx.TrxId,
+                fileInfo: fileData,
+                size: 0,
+                status: fileInfoExisted
+                  ? 'broken'
+                  : 'incomplete',
+                groupId,
+                time: trx.TimeStamp / 1000000,
+                openTime: 0,
+              },
               file: null,
-              groupId,
-              segmentItem: {
+              segment: {
                 bookTrx: trx.TrxId,
                 groupId,
                 segments: {},
               },
-              time: trx.TimeStamp / 1000000,
-              openTime: 0,
             });
           } catch (e) {
             console.error(e);
@@ -596,14 +602,16 @@ const loadAndParseBooks = action((groupId: string, loadDone?: () => unknown) => 
         if (isCoverFileInfo) {
           try {
             const fileinfo: CoverFileInfo = JSON.parse(Buffer.from(trx.Content.file.content, 'base64').toString());
-            coversToCaculate.push({
-              coverTrx: trx.TrxId,
+            parseState.cover.push({
+              cover: {
+                coverTrx: trx.TrxId,
+                fileInfo: fileinfo,
+                bookTrx: fileinfo.bookTrx,
+                groupId,
+                status: 'incomplete',
+              },
               file: null,
-              fileInfo: fileinfo,
-              bookTrx: fileinfo.bookTrx,
-              groupId,
-              status: 'incomplete',
-              segmentItem: {
+              segment: {
                 coverTrx: trx.TrxId,
                 groupId,
                 segments: {},
@@ -618,22 +626,20 @@ const loadAndParseBooks = action((groupId: string, loadDone?: () => unknown) => 
           const name = trx.Content.name;
           const buf = Buffer.from(trx.Content.file.content, 'base64');
           const sha256 = hashBufferSha256(buf);
-          booksToCaculate.forEach((book) => {
-            if (book.status !== 'incomplete') { return; }
-            const segment = book.fileInfo.segments.find((v) => v.id === name);
-            if (!segment) { return; }
-            if (segment.sha256 !== sha256) { return; }
-            book.segmentItem.segments[name] = {
+          parseState.book.forEach((v) => {
+            if (v.book.status !== 'incomplete') { return; }
+            const segment = v.book.fileInfo.segments.find((v) => v.id === name);
+            if (!segment || segment.sha256 !== sha256) { return; }
+            v.segment.segments[name] = {
               id: name,
               sha256,
               buf,
             };
           });
-          coversToCaculate.forEach((cover) => {
-            const segment = cover.fileInfo?.segments.find((v) => v.id === name);
-            if (!segment) { return; }
-            if (segment.sha256 !== sha256) { return; }
-            cover.segmentItem.segments[name] = {
+          parseState.cover.forEach((v) => {
+            const segment = v.cover.fileInfo?.segments.find((v) => v.id === name);
+            if (!segment || segment.sha256 !== sha256) { return; }
+            v.segment.segments[name] = {
               id: name,
               sha256,
               buf,
@@ -645,113 +651,116 @@ const loadAndParseBooks = action((groupId: string, loadDone?: () => unknown) => 
           const content = trx.Content.content;
           const metadata = J.parse(content);
           if (E.isRight(metadata)) {
-            const item = {
+            parseState.metadata.push({
               groupId,
               bookTrx: trx.Content.id,
               metadata: metadata.right as any,
-            };
-            await dbService.db.transaction('rw', [dbService.db.bookMetadata], async () => {
-              await dbService.db.bookMetadata.add(item);
             });
+          } else {
+            console.error(metadata.left);
           }
         }
       }
       nextTrx = res.at(-1)!.TrxId;
     }
 
-    booksToCaculate
-      .filter((v) => v.fileInfo.segments.length === Object.keys(v.segmentItem.segments).length)
-      .forEach((book) => {
-        const segments = Object.values(book.segmentItem.segments).map((v) => ({
+    // combine book segments
+    parseState.book
+      // have enough segments
+      .filter((v) => v.book.fileInfo.segments.length === Object.keys(v.segment.segments).length)
+      .forEach((item) => {
+        const segments = Object.values(item.segment.segments).map((v) => ({
           ...v,
           num: Number(v.id.replace('seg-', '')),
         }));
         segments.sort((a, b) => a.num - b.num);
         const file = Buffer.concat(segments.map((v) => v.buf));
         const fileSha256 = hashBufferSha256(file);
-        if (fileSha256 === book.fileInfo.sha256) {
-          book.file = file;
-          book.status = 'complete';
+        if (fileSha256 === item.book.fileInfo.sha256) {
+          item.file = file;
+          item.book.status = 'complete';
         } else {
-          book.status = 'broken';
+          item.book.status = 'broken';
         }
       });
 
-    const metadataToWrite: Array<BookMetadataItem> = [];
-
-    const bookParsing = booksToCaculate.filter((v) => v.status === 'complete').map(async (v) => {
+    // parse completed books
+    const completedBooks = parseState.book.filter((v) => v.book.status === 'complete');
+    for (const v of completedBooks) {
+      v.book.size = v.file?.length ?? 0;
       const epub = await parseEpub('', v.file!);
       if (E.isLeft(epub)) { return; }
       if (epub.right.cover) {
-        coversToCaculate.push({
-          bookTrx: v.bookTrx,
-          coverTrx: '',
+        parseState.cover.push({
+          cover: {
+            bookTrx: v.book.bookTrx,
+            coverTrx: '',
+            fileInfo: null,
+            groupId,
+            status: 'complete',
+          },
           file: epub.right.cover,
-          fileInfo: null,
-          groupId,
-          segmentItem: {
+          segment: {
             coverTrx: '',
             groupId,
             segments: {},
           },
-          status: 'complete',
         });
       }
       if (epub.right.metadata) {
-        metadataToWrite.push({
-          bookTrx: v.bookTrx,
+        parseState.metadata.push({
+          bookTrx: v.book.bookTrx,
           groupId,
           metadata: epub.right.metadata,
         });
       }
-    });
+    }
 
-    await Promise.all(bookParsing);
-
-    coversToCaculate
-      .filter((v) => v.fileInfo?.segments.length === Object.keys(v.segmentItem.segments).length)
-      .forEach((cover) => {
-        const segments = Object.values(cover.segmentItem.segments).map((v) => ({
+    parseState.cover
+      .filter((v) => v.cover.fileInfo?.segments.length === Object.keys(v.segment.segments).length)
+      .forEach((item) => {
+        const segments = Object.values(item.segment.segments).map((v) => ({
           ...v,
           num: Number(v.id.replace('seg-', '')),
         }));
         segments.sort((a, b) => a.num - b.num);
         const file = Buffer.concat(segments.map((v) => v.buf));
         const fileSha256 = hashBufferSha256(file);
-        if (fileSha256 === cover.fileInfo?.sha256) {
-          cover.file = file;
-          cover.status = 'complete';
+        if (fileSha256 === item.cover.fileInfo?.sha256) {
+          item.file = file;
+          item.cover.status = 'complete';
         } else {
-          cover.status = 'broken';
+          item.cover.status = 'broken';
         }
       });
 
-    const booksToWrite = booksToCaculate.map((v) => {
-      const { file, segmentItem, ...u } = v;
-      return {
-        ...u,
-        size: file?.length ?? 0,
-      };
-    });
-    const coversToWrite = coversToCaculate.map((v) => {
-      const { file, segmentItem, ...u } = v;
-      return u;
-    });
-    const segmentsToWrite = booksToCaculate.map((v) => v.segmentItem);
-    const coverSegmentsToWrite = coversToCaculate.map((v) => v.segmentItem);
-    const bookBuffersToWrite = booksToCaculate.filter((v) => v.file).map((v) => ({
-      groupId: v.groupId,
-      bookTrx: v.bookTrx,
+    const completedCovers = parseState.cover.filter((v) => v.cover.status === 'complete');
+    const booksToWrite = parseState.book.map((v) => v.book);
+    const coversToWrite = parseState.cover.map((v) => v.cover);
+    const segmentsToWrite = parseState.book
+      .filter((v) => v.book.status !== 'complete')
+      .map((v) => v.segment);
+    const coverSegmentsToWrite = parseState.cover
+      .filter((v) => v.cover.status !== 'complete')
+      .map((v) => v.segment);
+    const segmentsIdsToDelete = completedBooks
+      .map((v) => v.segment.id)
+      .filter(<T>(v: T | undefined): v is T => typeof v === 'number');
+    const coverSegmentsIdsToDelete = completedCovers
+      .map((v) => v.segment.id)
+      .filter(<T>(v: T | undefined): v is T => typeof v === 'number');
+    const bookBuffersToWrite = parseState.book.filter((v) => v.file).map((v) => ({
+      groupId: v.book.groupId,
+      bookTrx: v.book.bookTrx,
       file: v.file!,
     }));
-    const coverBuffersToWrite = coversToCaculate.filter((v) => v.file).map((v) => ({
-      groupId: v.groupId,
-      bookTrx: v.bookTrx,
-      coverTrx: v.coverTrx,
+    const coverBuffersToWrite = parseState.cover.filter((v) => v.file).map((v) => ({
+      groupId: v.cover.groupId,
+      bookTrx: v.cover.bookTrx,
+      coverTrx: v.cover.coverTrx,
       file: v.file!,
     }));
 
-    // TODO: remove segments from db after file is composed
     await dbService.db.transaction(
       'rw',
       [
@@ -766,17 +775,19 @@ const loadAndParseBooks = action((groupId: string, loadDone?: () => unknown) => 
       ],
       async () => Promise.all([
         dbService.db.book.bulkPut(booksToWrite),
-        dbService.db.bookSegment.bulkPut(segmentsToWrite),
-        dbService.db.bookBuffer.bulkPut(bookBuffersToWrite),
-
         dbService.db.cover.bulkPut(coversToWrite),
-        dbService.db.coverSegment.bulkPut(coverSegmentsToWrite),
-        dbService.db.coverBuffer.bulkPut(coverBuffersToWrite),
-        dbService.db.bookMetadata.bulkPut(metadataToWrite),
 
-        dbService.db.groupLatestParsedTrx.where({
-          groupId,
-        }).delete().then(() => {
+        dbService.db.bookSegment.bulkPut(segmentsToWrite),
+        dbService.db.coverSegment.bulkPut(coverSegmentsToWrite),
+
+        dbService.db.bookBuffer.bulkPut(bookBuffersToWrite),
+        dbService.db.coverBuffer.bulkPut(coverBuffersToWrite),
+
+        dbService.db.bookSegment.bulkDelete(segmentsIdsToDelete),
+        dbService.db.coverSegment.bulkDelete(coverSegmentsIdsToDelete),
+
+        dbService.db.bookMetadata.bulkPut(parseState.metadata),
+        dbService.db.groupLatestParsedTrx.where({ groupId }).delete().then(() => {
           dbService.db.groupLatestParsedTrx.add({
             groupId,
             trxId: nextTrx,
@@ -785,28 +796,31 @@ const loadAndParseBooks = action((groupId: string, loadDone?: () => unknown) => 
       ]),
     );
 
+    // update state
     runInAction(() => {
-      booksToCaculate
-        .filter((v) => v.file && groupItem.books.every((u) => u.trxId !== v.bookTrx))
+      parseState.book
+        .filter((v) => v.file && groupItem.books.every((u) => u.trxId !== v.book.bookTrx))
         .forEach((v) => {
           const item: GroupBookItem = {
             metadata: null,
             cover: null,
             metadataAndCoverType: 'notloaded',
             metadataAndCoverPromise: null,
-            size: v.size,
-            fileInfo: v.fileInfo,
-            trxId: v.bookTrx,
-            time: v.time,
-            openTime: v.openTime,
+            size: v.book.size,
+            fileInfo: v.book.fileInfo,
+            trxId: v.book.bookTrx,
+            time: v.book.time,
+            openTime: v.book.openTime,
           };
           groupItem.books.push(item);
+          parseMetadataAndCover(groupId, v.book.bookTrx);
         });
     });
   };
 
   p = run().then(action(() => {
     groupItem.loadAndParseBooksPromise = null;
+    groupItem.loadBooksPromise = null;
   }));
   groupItem.loadAndParseBooksPromise = p;
   return p;

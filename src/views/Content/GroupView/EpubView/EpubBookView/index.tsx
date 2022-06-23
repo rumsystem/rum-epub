@@ -211,7 +211,7 @@ export const EpubBookView = observer((props: Props) => {
       minSpreadWidth: 950,
     });
 
-    Promise.resolve(readingProgress || epubService.readingProgress.get(
+    Promise.resolve(readingProgress || epubService.readingProgress.getLast(
       groupId,
       bookItem.trxId,
     )).then((p) => {
@@ -364,7 +364,7 @@ export const EpubBookView = observer((props: Props) => {
       const { bookTrx, groupId } = epubService.state.current;
       await new Promise<void>((rs) => epubService.loadAndParseBooks(groupId, rs));
       const book = epubService.getGroupItem(groupId)?.books.find((v) => v.trxId === bookTrx);
-      const readingProgress = await epubService.readingProgress.get(groupId, bookTrx);
+      const readingProgress = await epubService.readingProgress.getLast(groupId, bookTrx);
       if (book) {
         loadBook(groupId, book, readingProgress);
       } else {

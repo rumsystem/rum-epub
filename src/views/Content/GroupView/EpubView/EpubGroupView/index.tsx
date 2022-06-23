@@ -38,9 +38,7 @@ export const EpubGroupView = observer((props: { className?: string }) => {
   };
 
   React.useEffect(() => {
-    dbService.db.readingProgress.where({
-      groupId: state.groupId,
-    }).toArray().then((v) => {
+    epubService.readingProgress.getAll(state.groupId).then((v) => {
       state.readingProgress = Object.fromEntries(v.map((v) => [v.bookTrx, v]));
     });
     new Promise<void>((rs) => epubService.loadAndParseBooks(state.groupId, rs))

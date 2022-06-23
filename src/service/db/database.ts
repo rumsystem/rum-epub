@@ -1,4 +1,5 @@
 import Dexie from 'dexie';
+import { createSchema } from './helper';
 import { applyOldVersions } from './oldVersions';
 
 export interface FileInfo {
@@ -176,90 +177,74 @@ export class Database extends Dexie {
     super(name);
     applyOldVersions(this);
 
-    this.version(10).stores({
+    this.version(11).stores(createSchema({
       book: [
-        '++id',
         'groupId',
         'bookTrx',
         'status',
         '[groupId+bookTrx]',
         '[groupId+status]',
-      ].join(','),
+      ],
       bookBuffer: [
-        '++id',
         'groupId',
         'bookTrx',
         '[groupId+bookTrx]',
-      ].join(','),
+      ],
       bookSegment: [
-        '++id',
         'groupId',
         'bookTrx',
         '[groupId+bookTrx]',
-      ].join(','),
+      ],
       coverSegment: [
-        '++id',
         'groupId',
         'bookTrx',
         'coverTrx',
         '[groupId+bookTrx]',
-      ].join(','),
+      ],
       cover: [
-        '++id',
         'groupId',
         'bookTrx',
         'coverTrx',
         'status',
         '[groupId+bookTrx]',
         '[groupId+bookTrx+status]',
-      ].join(','),
+      ],
       coverBuffer: [
-        '++id',
         'groupId',
         'coverTrx',
         '[groupId+coverTrx]',
-      ].join(','),
+      ],
       groupLatestParsedTrx: [
-        '++id',
         'groupId',
         'trxId',
-      ].join(','),
+      ],
       highlights: [
-        '++id',
         'groupId',
         'bookTrx',
         '[groupId+bookTrx]',
         '[groupId+bookTrx+cfiRange]',
-      ].join(','),
+      ],
       readingProgress: [
-        '++id',
         'groupId',
         'bookTrx',
         '[groupId+bookTrx]',
-      ].join(','),
+      ],
       bookMetadata: [
-        '++id',
         'groupId',
         'bookTrx',
         '[groupId+bookTrx]',
-      ].join(','),
+      ],
       profile: [
-        '++id',
         'groupId',
         'publisher',
         'status',
         '[groupId+status]',
         '[groupId+publisher+status]',
-      ].join(','),
+      ],
       globalProfile: [
-        '++id',
         'profile',
-      ].join(','),
-    }).upgrade(async () => {
-      await Promise.all(
-        this.allTables.map((v) => v.clear()),
-      );
-    });
+      ],
+    }));
 
     this.book = this.table('book');
     this.bookBuffer = this.table('bookBuffer');
@@ -274,6 +259,19 @@ export class Database extends Dexie {
     this.bookMetadata = this.table('bookMetadata');
     this.profile = this.table('profile');
     this.globalProfile = this.table('globalProfile');
+  }
+
+  public get parsingRelatedTables() {
+    return [
+      this.book,
+      this.bookBuffer,
+      this.bookSegment,
+      this.cover,
+      this.coverBuffer,
+      this.coverSegment,
+      this.groupLatestParsedTrx,
+      this.bookMetadata,
+    ];
   }
 
   public get groupRelatedTables() {
