@@ -19,6 +19,7 @@ import SliderAltIcon from 'boxicons/svg/regular/bx-slider-alt.svg?fill-icon';
 
 import { readerSettingsService, ReaderThemes, epubService } from '~/service';
 import { highLightRange } from './helper';
+import { lang } from '~/utils';
 
 interface Props {
   className?: string
@@ -123,7 +124,7 @@ export const EpubSettings = observer((props: Props) => {
   };
 
   return (<>
-    <Tooltip title="显示设置">
+    <Tooltip title={lang.epubSettings.displaySetting}>
       <div
         className={classNames(
           'flex flex-center cursor-pointer',
@@ -160,9 +161,9 @@ export const EpubSettings = observer((props: Props) => {
       <div className="flex flex-col gap-y-3 p-5">
         <div className="">
           <div className="leading-loose text-14">
-            字号:
+            {lang.epubSettings.fontSize}:
             &nbsp;{readerSettingsService.state.fontSize}pt
-            &nbsp;{readerSettingsService.state.fontSize === 16 && '(默认)'}
+            &nbsp;{readerSettingsService.state.fontSize === 16 && `(${lang.epubSettings.default})`}
           </div>
           <Slider
             className="w-70"
@@ -180,9 +181,9 @@ export const EpubSettings = observer((props: Props) => {
 
         <div className="">
           <div className="leading-loose text-14">
-            行距:
+            {lang.epubSettings.lineHeight}:
             &nbsp;{readerSettingsService.state.lineHeight }
-            &nbsp;{readerSettingsService.state.lineHeight === 1.75 && '(默认)'}
+            &nbsp;{readerSettingsService.state.lineHeight === 1.75 && `(${lang.epubSettings.default})`}
           </div>
           <Slider
             className="w-70"
@@ -200,16 +201,16 @@ export const EpubSettings = observer((props: Props) => {
 
         <div className="flex flex-col">
           <div className="leading-loose text-14">
-            主题
+            {lang.epubSettings.theme}
           </div>
 
           <FormControl className="mt-1">
             <RadioGroup className="grid grid-cols-2" value={readerSettingsService.state.theme} onChange={handleChangeTheme}>
               {[
-                ['white', '默认'],
-                ['light', '浅色'],
-                ['dark', '深色'],
-                ['black', '黑色'],
+                ['white', lang.epubSettings.default],
+                ['light', lang.epubSettings.light],
+                ['dark', lang.epubSettings.dark],
+                ['black', lang.epubSettings.black],
               ].map((v) => (
                 <FormControlLabel
                   classes={{ label: 'text-14' }}
@@ -226,15 +227,15 @@ export const EpubSettings = observer((props: Props) => {
 
         <div className="flex flex-col">
           <div className="leading-loose text-14">
-            字体
+            {lang.epubSettings.font}
           </div>
 
           <FormControl className="mt-1">
             <RadioGroup value={readerSettingsService.state.font} onChange={handleChangeFont}>
               {[
-                ['default', '默认'],
-                ['serif', '衬线'],
-                ['sans-serif', '非衬线'],
+                ['default', lang.epubSettings.default],
+                ['serif', lang.epubSettings.serif],
+                ['sans-serif', lang.epubSettings.sansSerif],
               ].map((v) => (
                 <FormControlLabel
                   className="-mt-2"
@@ -259,17 +260,16 @@ export const EpubSettings = observer((props: Props) => {
                       classes={{
                         input: 'text-14',
                       }}
-                      placeholder="自定义"
+                      placeholder={lang.epubSettings.custom}
                       value={readerSettingsService.state.customFont}
                       onChange={(e) => handleChangeCustomFont(e.target.value)}
                     />
                   )}
                 />
-                <Tooltip title="输入你想使用的字体名称，如 微软雅黑, 黑体, Arial, Source Han Sans, 幼圆 等等">
+                <Tooltip title={lang.epubSettings.customFontTip}>
                   <Help className="text-20" />
                 </Tooltip>
               </div>
-
             </RadioGroup>
           </FormControl>
         </div>

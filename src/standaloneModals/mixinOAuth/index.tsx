@@ -66,7 +66,7 @@ const MixinOAuth = observer((props: { rs: (v?: string) => unknown }) => {
   const handleOauthFailure = () => {
     handleClose();
     tooltipService.show({
-      content: lang.failToFetchMixinProfile,
+      content: lang.mixin.failToFetchMixinProfile,
       type: 'error',
     });
   };
@@ -129,12 +129,13 @@ const MixinOAuth = observer((props: { rs: (v?: string) => unknown }) => {
       <div className="bg-white rounded-0 text-center p-8">
         <div className="bg-white rounded-0 text-center">
           <div className="py-8 px-14 text-center">
-            <div className="text-18 font-bold text-gray-700 flex items-center justify-center">连接 Mixin 账号
+            <div className="text-18 font-bold text-gray-700 flex items-center justify-center">
+              {lang.mixin.connectMixin}
               <Tooltip
                 enterDelay={200}
                 enterNextDelay={200}
                 placement="top"
-                title={lang.connectMixinPrivacyTip}
+                title={lang.mixin.connectMixinPrivacyTip}
                 arrow
               >
                 <div>
@@ -143,7 +144,7 @@ const MixinOAuth = observer((props: { rs: (v?: string) => unknown }) => {
               </Tooltip>
             </div>
             <div className="text-12 mt-2 text-gray-6d">
-              {lang.mixinScanToConnect}
+              {lang.mixin.mixinScanToConnect}
             </div>
             <div className="relative overflow-hidden">
               {state.oauthUrl && (
@@ -178,21 +179,21 @@ const MixinOAuth = observer((props: { rs: (v?: string) => unknown }) => {
             </div>
             <div className="flex justify-center mt-2">
               <Button onClick={handleClose}>
-                {lang.cancel}
+                {lang.operations.cancel}
               </Button>
             </div>
             <div className="flex justify-center items-center mt-5 text-gray-400 text-12">
               <span className="flex items-center mr-1">
                 <MdInfo className="text-16" />
               </span>
-              {lang.noMixinOnYourPhone}
+              {lang.mixin.noMixinOnYourPhone}
               <a
                 className="text-gray-700 ml-1"
                 href="https://mixin.one/messenger"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                {lang.toDownload}
+                {lang.mixin.toDownload}
               </a>
             </div>
           </div>

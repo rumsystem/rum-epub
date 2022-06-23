@@ -16,6 +16,7 @@ import { Dialog } from '~/components';
 import { ThemeRoot } from '~/utils/theme';
 import { epubService, tooltipService } from '~/service';
 import scrollIntoView from 'scroll-into-view-if-needed';
+import { lang } from '~/utils';
 
 export const editEpubCover = async () => new Promise<void>((rs) => {
   if (!epubService.state.current.bookTrx) {
@@ -110,7 +111,7 @@ const EditEpubCover = observer((props: Props) => {
       TE.matchW(
         () => {
           tooltipService.show({
-            content: '文件读取错误！',
+            content: lang.epubCover.readFailed,
             type: 'error',
           });
         },
@@ -143,7 +144,7 @@ const EditEpubCover = observer((props: Props) => {
       trySelectFile(fileBuffer.buffer);
     } catch (e) {
       tooltipService.show({
-        content: '读取文件错误',
+        content: lang.epubCover.readFailed,
         type: 'error',
       });
     }
@@ -261,7 +262,7 @@ const EditEpubCover = observer((props: Props) => {
     >
       <div className="bg-white rounded-0 text-center p-8">
         <div className="text-22 font-bold">
-          编辑封面
+          {lang.epubCover.editCover}
         </div>
 
         <div className="mt-4">
@@ -270,7 +271,7 @@ const EditEpubCover = observer((props: Props) => {
               {!!state.currentCover && (
                 <div>
                   <span className="text-gray-6f">
-                    当前封面
+                    {lang.epubCover.currentCover}
                   </span>
                   <img className="max-w-[100px]" src={state.currentCover} alt="" />
                 </div>
@@ -282,10 +283,10 @@ const EditEpubCover = observer((props: Props) => {
                 onDragOver={(e) => e.preventDefault()}
               >
                 <div className="text-gray-9c text-16">
-                  将封面图片文件拖拽到此处
+                  {lang.epubCover.dragCoverHere}
                   <br />
                   <br />
-                  支持 .jpg 和 .png， 图片文件大小不可超过2M
+                  {lang.epubCover.supportFileTip}
                 </div>
               </div>
             </div>
@@ -362,13 +363,13 @@ const EditEpubCover = observer((props: Props) => {
         <div className="flex-col flex-center gap-y-4 mt-4">
           {!state.uploadState.uploading && state.uploadState.uploadDone && (
             <div className="flex flex-center text-gray-4a text-16">
-              上传成功！
+              {lang.epubCover.uploadSuccess}
             </div>
           )}
           {!state.uploadState.src && !state.src && (<>
             <div className="flex items-center self-stretch gap-x-12">
               <div className="flex-1 border-b border-gray-c4" />
-              <div className="text-gray-9b">或者</div>
+              <div className="text-gray-9b">{lang.epubCover.or}</div>
               <div className="flex-1 border-b border-gray-c4" />
             </div>
             <Button
@@ -376,7 +377,7 @@ const EditEpubCover = observer((props: Props) => {
               size="large"
               onClick={handleSelectFile}
             >
-              选择本地封面图片文件
+              {lang.epubCover.selectCoverFile}
             </Button>
           </>)}
           {!state.uploadState.src && !!state.src && (
@@ -389,7 +390,7 @@ const EditEpubCover = observer((props: Props) => {
                     defaultChecked
                   />
                 )}
-                label="固定长宽比"
+                label={lang.epubCover.fixedRatio}
               />
               <div className="flex justify-between gap-x-4">
                 <Button
@@ -398,14 +399,14 @@ const EditEpubCover = observer((props: Props) => {
                   color="inherit"
                   onClick={handleReset}
                 >
-                  取消选择
+                  {lang.epubCover.cancelSelect}
                 </Button>
                 <Button
                   className="py-[6px] px-8 text-16 rounded-full"
                   size="large"
                   onClick={handleCrop}
                 >
-                  确认裁剪
+                  {lang.epubCover.confirmCrop}
                 </Button>
               </div>
             </div>
@@ -420,7 +421,7 @@ const EditEpubCover = observer((props: Props) => {
                   color="inherit"
                   onClick={handleResetCrop}
                 >
-                  重新裁剪
+                  {lang.epubCover.reCrop}
                 </Button>
               )}
               {!state.uploadState.uploadDone && (
@@ -430,8 +431,8 @@ const EditEpubCover = observer((props: Props) => {
                   onClick={handleUpload}
                   disabled={state.uploadState.uploading}
                 >
-                  {state.uploadState.uploading && '上传中...'}
-                  {!state.uploadState.uploading && '确认上传'}
+                  {state.uploadState.uploading && lang.epubCover.uploading}
+                  {!state.uploadState.uploading && lang.epubCover.confirmUpload}
                 </Button>
               )}
               {state.uploadState.uploadDone && (
@@ -441,7 +442,7 @@ const EditEpubCover = observer((props: Props) => {
                   color="inherit"
                   onClick={() => { handleClose(); setTimeout(handleReset, 300); }}
                 >
-                  关闭窗口
+                  {lang.operations.closeWindow}
                 </Button>
               )}
             </div>

@@ -11,6 +11,7 @@ import { initQuorum, state as quorumState } from './quorum';
 import { createTray } from './tray';
 import { initUpdate } from './updater';
 import { appIcon } from './icon';
+import { mainLang } from './lang';
 
 initialize();
 
@@ -76,10 +77,10 @@ const main = () => {
         try {
           const res = await dialog.showMessageBox({
             type: 'info',
-            buttons: ['确定'],
-            title: '窗口最小化',
-            message: 'RUM Epub App将继续在后台运行, 可通过系统状态栏重新打开界面',
-            checkboxLabel: '不再提示',
+            buttons: [mainLang.lang.confirm],
+            title: mainLang.lang.minimize,
+            message: mainLang.lang.minimizeTip,
+            checkboxLabel: mainLang.lang.dontShowAgain,
           });
           if (res?.checkboxChecked) {
             store.set('not-notice-when-close', true);

@@ -6,6 +6,7 @@ import {
   readerSettingsService,
   epubService,
 } from '~/service';
+import { lang } from '~/utils';
 
 interface HighLightRangeParams {
   groupId: string
@@ -30,7 +31,7 @@ export const highLightRange = (params: HighLightRangeParams) => {
             {text}
             <br />
             <br />
-            确定要移除这段标记吗？
+            {lang.epubHighlights.confirmDelete}
           </span>
         ),
         danger: true,

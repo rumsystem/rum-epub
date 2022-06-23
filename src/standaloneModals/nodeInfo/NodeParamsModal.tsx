@@ -1,4 +1,3 @@
-import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Button } from '@mui/material';
 
@@ -29,10 +28,10 @@ export const NodeParams = observer(() => {
     <div className="bg-white rounded-0 p-8">
       <div className="w-72 relative">
         <div className="text-18 font-bold text-gray-700 text-center">
-          {lang.nodeParams}
+          {lang.node.nodeParams}
         </div>
         <div className="mt-6">
-          <div className="text-gray-500 font-bold opacity-90">{lang.port}</div>
+          <div className="text-gray-500 font-bold opacity-90">{lang.node.port}</div>
           <div className="flex mt-2">
             <div className="p-2 pl-3 border border-gray-200 text-gray-500 bg-gray-100 text-12 truncate flex-1 rounded-l-0 border-r-0">
               {quorumService.state.port}
@@ -47,7 +46,7 @@ export const NodeParams = observer(() => {
           </div>
           {!!quorumService.state.cert && (
             <div className="mt-6">
-              <div className="text-gray-500 font-bold opacity-90">{lang.tslCert}</div>
+              <div className="text-gray-500 font-bold opacity-90">{lang.node.tslCert}</div>
               <div className="relative">
                 <div className="mt-2 text-12 text-gray-500 bg-gray-100 border border-gray-200 py-4 px-4 break-words h-50 overflow-y-auto">
                   {quorumService.state.cert}

@@ -2,6 +2,7 @@ import React from 'react';
 import classNames from 'classnames';
 import { Dialog, Tooltip } from '@mui/material';
 import { avatars } from '~/utils/avatars';
+import { lang } from '~/utils';
 
 interface Props {
   open: boolean
@@ -21,7 +22,7 @@ export default (props: Props) => {
   return (
     <Dialog open={props.open} onClose={props.close} maxWidth={false}>
       <div className="bg-white rounded-0 text-center">
-        <div className="text-18 font-bold mt-8 mb-4">选择头像</div>
+        <div className="text-18 font-bold mt-8 mb-4">{lang.avatar.selectAvatar}</div>
         {/* 584 = 80 * 6 + 8 * 5 + 32 * 2 */}
         <div className="img-box overflow-y-auto pt-2 pb-3 px-8 mb-8 w-[90vw] max-w-[584px] max-h-[400px]">
           <div

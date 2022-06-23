@@ -39,10 +39,10 @@ const NetworkInfo = observer(() => {
       <div className="bg-white rounded-0 p-8 px-10">
         <div className="w-[455px]">
           <div className="text-18 font-bold text-gray-700 text-center">
-            {lang.networkStatus}
+            {lang.node.networkStatus}
           </div>
           <div className="mt-6 pb-2">
-            <div className="text-gray-500 font-bold">{lang.status}</div>
+            <div className="text-gray-500 font-bold">{lang.node.status}</div>
             <div className="mt-2 flex items-center justify-center text-12 text-gray-500 bg-gray-100 rounded-0 p-2 tracking-wider font-bold">
               {network.nat_type === 'Public' && (
                 <div className="flex items-center text-emerald-500">
@@ -61,13 +61,13 @@ const NetworkInfo = observer(() => {
             <div className="mt-8">
               <div className="flex">
                 <div className="text-gray-500 font-bold bg-gray-100 rounded-0 pt-2 pb-3 px-4">
-                  {lang.traffic}
+                  {lang.node.traffic}
                 </div>
               </div>
               <div className="-mt-3 justify-center text-12 text-gray-99 bg-gray-100 rounded-0 pt-3 px-6 pb-3 leading-7 tracking-wide">
-                <div>{lang.lastHour}: <span className="text-red-400">{state.hour}M</span></div>
-                <div>{lang.lastDay}: <span className="text-red-400">{state.day}M</span></div>
-                <div>{lang.lastMouth}: <span className="text-red-400">{state.mouth}M</span></div>
+                <div>{lang.node.lastHour}: <span className="text-red-400">{state.hour}M</span></div>
+                <div>{lang.node.lastDay}: <span className="text-red-400">{state.day}M</span></div>
+                <div>{lang.node.lastMouth}: <span className="text-red-400">{state.mouth}M</span></div>
               </div>
             </div>
 

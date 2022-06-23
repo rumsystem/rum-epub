@@ -1,5 +1,6 @@
 import React from 'react';
 import classNames from 'classnames';
+import { runInAction } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import DOMPurify from 'dompurify';
 import { Popover, PopoverProps } from '@mui/material';
@@ -8,7 +9,7 @@ import FileImageIcon from 'boxicons/svg/solid/bxs-file-image.svg?fill-icon';
 import EditIcon from 'boxicons/svg/solid/bxs-edit.svg?fill-icon';
 import { epubService } from '~/service';
 import { editEpubMetadata, editEpubCover } from '~/standaloneModals';
-import { runInAction } from 'mobx';
+import { lang } from '~/utils';
 
 interface Props extends PopoverProps {
   groupId: string
@@ -69,7 +70,7 @@ export const EpubInfoPopup = observer((props: Props) => {
   const cover = state.bookItem?.cover;
   const metadata = state.bookItem?.metadata;
   const epubDesc = React.useMemo(
-    () => DOMPurify.sanitize(metadata?.description || '暂无描述'),
+    () => DOMPurify.sanitize(metadata?.description || lang.epub.noDescription),
     [metadata?.description],
   );
 
@@ -105,7 +106,7 @@ export const EpubInfoPopup = observer((props: Props) => {
               >
                 {!cover && (
                   <span className="text-gray-bd text-14 select-none">
-                    暂无封面
+                    {lang.epub.noCover}
                   </span>
                 )}
               </div>
@@ -116,14 +117,14 @@ export const EpubInfoPopup = observer((props: Props) => {
                 onClick={(e) => { handleClose(e); editEpubCover(); }}
               >
                 <FileImageIcon className="text-16 mr-1" />
-                编辑封面
+                {lang.epub.editCover}
               </button>
               <button
                 className="flex items-center text-14"
                 onClick={(e) => { handleClose(e); editEpubMetadata(); }}
               >
                 <EditIcon className="text-16 mr-1" />
-                编辑元数据
+                {lang.epub.editMetadata}
               </button>
             </div>
           </div>
@@ -138,20 +139,19 @@ export const EpubInfoPopup = observer((props: Props) => {
 
           <div className="w-[250px] leading-relaxed">
             {[
-              { text: '副标题：', value: metadata?.subTitle },
-              { text: 'ISBN：', value: metadata?.isbn },
-              { text: '作者：', value: metadata?.author },
-              { text: '译者：', value: metadata?.translator },
-              { text: '出版日期：', value: metadata?.publishDate },
-              { text: '出版商：', value: metadata?.publisher },
-              { text: '语言：', value: metadata?.languages.join('') },
-              { text: '丛书：', value: metadata?.series },
-              { text: '丛书编号：', value: metadata?.seriesNumber },
-              { text: '分类：', value: [metadata?.categoryLevel1, metadata?.categoryLevel2, metadata?.categoryLevel3].filter(Boolean).join(' - ') },
-              // { text: '字数：', value: '25.6 万' },
-              // { text: '评分：', value: '暂时不做不显示' },
-              // { text: '标签：', value: '加缪, 哲学 暂时不做不显示' },
-              // { text: '其它关联版本：', value: '暂时不做不显示' },
+              { text: lang.epubMetadata.subTitle, value: metadata?.subTitle },
+              { text: lang.epubMetadata.isbn, value: metadata?.isbn },
+              { text: lang.epubMetadata.author, value: metadata?.author },
+              { text: lang.epubMetadata.translator, value: metadata?.translator },
+              { text: lang.epubMetadata.publishDate, value: metadata?.publishDate },
+              { text: lang.epubMetadata.publisher, value: metadata?.publisher },
+              { text: lang.epubMetadata.languages, value: metadata?.languages.join('') },
+              { text: lang.epubMetadata.series, value: metadata?.series },
+              { text: lang.epubMetadata.seriesNumber, value: metadata?.seriesNumber },
+              { text: lang.epubMetadata.categoryLevel, value: [metadata?.categoryLevel1, metadata?.categoryLevel2, metadata?.categoryLevel3].filter(Boolean).join(' - ') },
+              // { text: lang.epubMetadata.wordCount, value: '25.6 万' },
+              // { text: lang.epubMetadata.rating, value: '暂时不做不显示' },
+              // { text: lang.epubMetadata.tags, value: '加缪, 哲学 暂时不做不显示' },
             ].map((v, i) => (
               <div key={i}>
                 <span className="text-gray-af">{v.text}</span>

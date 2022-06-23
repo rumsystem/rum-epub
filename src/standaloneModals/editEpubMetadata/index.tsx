@@ -15,7 +15,7 @@ import { Dialog } from '~/components';
 import { ThemeRoot } from '~/utils/theme';
 import { dialogService, epubService, tooltipService } from '~/service';
 import { postContent } from '~/apis';
-import { runLoading } from '~/utils';
+import { lang, runLoading } from '~/utils';
 import { format } from 'date-fns';
 
 export const editEpubMetadata = async () => new Promise<void>((rs) => {
@@ -103,7 +103,7 @@ const EditEpubMetadata = observer((props: Props) => {
       });
       if (formChanged) {
         const result = await dialogService.open({
-          content: '关闭窗口后，未保存的修改会丢失，确定要关闭吗？',
+          content: lang.epubMetadata.closeConfirm,
         });
         if (result === 'cancel') { return; }
       }
@@ -138,13 +138,13 @@ const EditEpubMetadata = observer((props: Props) => {
           TE.matchW(
             () => {
               tooltipService.show({
-                content: '提交失败！',
+                content: lang.epubMetadata.submitFailed,
                 type: 'error',
               });
             },
             () => {
               tooltipService.show({
-                content: '内容元数据已保存修改，正在往链上提交数据，节点同步后生效',
+                content: lang.epubMetadata.submitted,
               });
               handleClose();
             },
@@ -210,7 +210,7 @@ const EditEpubMetadata = observer((props: Props) => {
     >
       <div className="bg-white rounded-0 text-center p-8">
         <div className="text-22 font-bold">
-          编辑元数据
+          {lang.epubMetadata.editMetadata}
         </div>
 
         <div
@@ -219,7 +219,7 @@ const EditEpubMetadata = observer((props: Props) => {
             gridTemplateColumns: '100px 1fr',
           }}
         >
-          <div className="text-left text-16 leading-loose">副标题：</div>
+          <div className="text-left text-16 leading-loose">{lang.epubMetadata.subTitle}</div>
           <div>
             <OutlinedInput
               className="w-full text-14"
@@ -229,52 +229,52 @@ const EditEpubMetadata = observer((props: Props) => {
             />
           </div>
 
-          <div className="text-left text-16 leading-loose">ISBN：</div>
+          <div className="text-left text-16 leading-loose">{lang.epubMetadata.isbn}</div>
           <div>
             <FormControl className="w-full" variant="outlined" size="small">
               <InputLabel className="text-14">
-                非必填。但为了检索书目的准确性，ISBN号填写提交后将不可修改，请确认后再填写
+                {lang.epubMetadata.isbnTip}
               </InputLabel>
               <OutlinedInput
                 className="w-full text-14"
                 value={state.form.isbn}
-                label="非必填。但为了检索书目的准确性，ISBN号填写提交后将不可修改，请确认后再填写"
+                label={lang.epubMetadata.isbnTip}
                 onChange={action((e) => { state.form.isbn = e.target.value; })}
               />
             </FormControl>
           </div>
 
-          <div className="text-left text-16 leading-loose">作者：</div>
+          <div className="text-left text-16 leading-loose">{lang.epubMetadata.author}</div>
           <div>
             <FormControl className="w-full" variant="outlined" size="small">
               <InputLabel className="text-14">
-                多个人名间请使用 & 分隔。国籍用小括号，如 (法)。外国人名的分隔符请在左侧复制 ･ 使用
+                {lang.epubMetadata.autherTip}
               </InputLabel>
               <OutlinedInput
                 className="w-full text-14"
                 value={state.form.author}
-                label="多个人名间请使用 & 分隔。国籍用小括号，如 (法)。外国人名的分隔符请在左侧复制 ･ 使用"
+                label={lang.epubMetadata.autherTip}
                 onChange={action((e) => { state.form.author = e.target.value; })}
               />
             </FormControl>
           </div>
 
-          <div className="text-left text-16 leading-loose">译者：</div>
+          <div className="text-left text-16 leading-loose">{lang.epubMetadata.translator}</div>
           <div>
             <FormControl className="w-full" variant="outlined" size="small">
               <InputLabel className="text-14">
-                多个人名间请使用 & 分隔
+                {lang.epubMetadata.traslatorTip}
               </InputLabel>
               <OutlinedInput
                 className="w-full text-14"
                 value={state.form.translator}
-                label="多个人名间请使用 & 分隔"
+                label={lang.epubMetadata.traslatorTip}
                 onChange={action((e) => { state.form.translator = e.target.value; })}
               />
             </FormControl>
           </div>
 
-          <div className="text-left text-16 leading-loose">出版日期：</div>
+          <div className="text-left text-16 leading-loose">{lang.epubMetadata.publishDate}</div>
           <div className="flex">
             <OutlinedInput
               className="w-[240px] text-14"
@@ -322,7 +322,7 @@ const EditEpubMetadata = observer((props: Props) => {
             </Popover>
           </div>
 
-          <div className="text-left text-16 leading-loose">出版商：</div>
+          <div className="text-left text-16 leading-loose">{lang.epubMetadata.publisher}</div>
           <div>
             <OutlinedInput
               className="w-full text-14"
@@ -334,7 +334,9 @@ const EditEpubMetadata = observer((props: Props) => {
 
           {state.form.languages.map((v, i) => (
             <React.Fragment key={i}>
-              <div className="text-left text-16 leading-loose">语言{i > 0 && i + 1}：</div>
+              <div className="text-left text-16 leading-loose">
+                {lang.epubMetadata.languageWithIndex(i > 0 && i + 1)}
+              </div>
               <div className="flex gap-x-4">
                 <OutlinedInput
                   className="w-full text-14 w-80"
@@ -353,17 +355,15 @@ const EditEpubMetadata = observer((props: Props) => {
                     onClick={action(() => { if (state.form.languages.length < 3) { state.form.languages.push(''); } })}
                   >
                     <AddCircleOutline className="text-18 mr-1" />
-                    添加第
-                    {i === 0 && '二'}
-                    {i === 1 && '三'}
-                    种语言
+                    {i === 0 && lang.epubMetadata.addLanguage(2)}
+                    {i === 1 && lang.epubMetadata.addLanguage(3)}
                   </button>
                 )}
               </div>
             </React.Fragment>
           ))}
 
-          <div className="text-left text-16 leading-loose">标签：</div>
+          <div className="text-left text-16 leading-loose">{lang.epubMetadata.tags}</div>
           <div className="flex gap-x-4">
             <Autocomplete
               className="w-full"
@@ -380,103 +380,80 @@ const EditEpubMetadata = observer((props: Props) => {
                   {...params}
                   variant="outlined"
                   label={(
-                    <span className="text-14">标签</span>
+                    <span className="text-14">{lang.epubMetadata.tagsNoColon}</span>
                   )}
                 />
               )}
             />
-            {/* <OutlinedInput
-              className="w-full text-14 w-80"
-              size="small"
-              value={v}
-              onChange={action((e) => { state.form.languages[i] = e.target.value; })}
-              endAdornment={i > 0 && (
-                <IconButton className="-right-2" onClick={action(() => { state.form.languages.splice(i, 1); })}>
-                  <DeleteOutline className="text-18" />
-                </IconButton>
-              )}
-            />
-            {i === state.form.languages.length - 1 && state.form.languages.length < 3 && (
-              <button
-                className="flex flex-none items-center text-nice-blue cursor-pointer"
-                onClick={action(() => { if (state.form.languages.length < 3) { state.form.languages.push(''); } })}
-              >
-                <AddCircleOutline className="text-18 mr-1" />
-                添加第
-                {i === 0 && '二'}
-                {i === 1 && '三'}
-                种语言
-              </button>
-            )} */}
           </div>
 
-          <div className="text-left text-16 leading-loose">丛书：</div>
+          <div className="text-left text-16 leading-loose">{lang.epubMetadata.series}</div>
           <div>
             <FormControl className="w-full" variant="outlined" size="small">
               <InputLabel className="text-14">
-                本书所属的丛书
+                {lang.epubMetadata.seriesTip}
               </InputLabel>
               <OutlinedInput
                 className="w-full text-14"
                 value={state.form.series}
-                label="本书所属的丛书"
+                label={lang.epubMetadata.seriesTip}
                 onChange={action((e) => { state.form.series = e.target.value; })}
               />
             </FormControl>
           </div>
 
-          <div className="text-left text-16 leading-loose">丛书编号：</div>
+          <div className="text-left text-16 leading-loose">{lang.epubMetadata.seriesNumber}</div>
           <div>
             <FormControl className="w-full" variant="outlined" size="small">
               <InputLabel className="text-14">
-                1~100的数字
+                {lang.epubMetadata.seriesNumberTip}
               </InputLabel>
               <OutlinedInput
                 className="w-full text-14"
                 value={state.form.seriesNumber}
-                label="1~100的数字"
+                label={lang.epubMetadata.seriesNumberTip}
                 onChange={action((e) => { state.form.seriesNumber = e.target.value; })}
               />
             </FormControl>
           </div>
 
-          <div className="text-left text-16 leading-loose">书籍分类：</div>
+          <div className="text-left text-16 leading-loose">{lang.epubMetadata.categoryLevel}</div>
           <div className="flex gap-x-4">
             <FormControl className="w-full" variant="outlined" size="small">
               <InputLabel className="text-14">
-                一级分类
+                {lang.epubMetadata.categoryLevel1}
               </InputLabel>
               <OutlinedInput
                 className="w-full text-14"
                 value={state.form.categoryLevel1}
-                label="一级分类"
+                label={lang.epubMetadata.categoryLevel1}
                 onChange={action((e) => { state.form.categoryLevel1 = e.target.value; })}
               />
             </FormControl>
             <FormControl className="w-full" variant="outlined" size="small">
               <InputLabel className="text-14">
-                二级分类
+                {lang.epubMetadata.categoryLevel2}
               </InputLabel>
               <OutlinedInput
                 className="w-full text-14"
                 value={state.form.categoryLevel2}
-                label="二级分类"
+                label={lang.epubMetadata.categoryLevel2}
                 onChange={action((e) => { state.form.categoryLevel2 = e.target.value; })}
               />
             </FormControl>
             <FormControl className="w-full" variant="outlined" size="small">
               <InputLabel className="text-14">
-                三级分类
+                {lang.epubMetadata.categoryLevel3}
               </InputLabel>
               <OutlinedInput
                 className="w-full text-14"
                 value={state.form.categoryLevel3}
-                label="三级分类"
+                label={lang.epubMetadata.categoryLevel3}
                 onChange={action((e) => { state.form.categoryLevel3 = e.target.value; })}
               />
             </FormControl>
           </div>
-          <div className="flex text-16 self-stretch">描述：</div>
+          <div className="flex text-16 self-stretch">{lang.epubMetadata.description}</div>
           <div className="relative">
             <OutlinedInput
               className="w-full text-14"
@@ -484,7 +461,7 @@ const EditEpubMetadata = observer((props: Props) => {
               multiline
               minRows={3}
               maxRows={6}
-              placeholder="描述"
+              placeholder={lang.epubMetadata.descriptionNoColon}
               value={state.form.description}
               onChange={action((e) => { state.form.description = e.target.value; })}
               error={state.descLength > 340}
@@ -508,7 +485,7 @@ const EditEpubMetadata = observer((props: Props) => {
             color="inherit"
             onClick={() => handleClose(true)}
           >
-            关闭窗口
+            {lang.operations.closeWindow}
           </Button>
           <Button
             className="py-[6px] px-8 text-16 rounded-full"
@@ -516,7 +493,7 @@ const EditEpubMetadata = observer((props: Props) => {
             onClick={handleSubmit}
             disabled={!state.formValid}
           >
-            提交修改
+            {lang.epubMetadata.submitChanges}
           </Button>
         </div>
       </div>

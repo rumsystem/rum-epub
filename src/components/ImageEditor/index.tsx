@@ -160,7 +160,7 @@ export const ImageEditor = observer((props: IProps) => {
     <div>
       <div>
         <div className="text-center text-18 pt-8 pb-4 font-bold">
-          {lang.moveOrDragImage}
+          {lang.avatar.moveOrDragImage}
         </div>
       </div>
       <div className="px-10 mt-2">
@@ -214,10 +214,10 @@ export const ImageEditor = observer((props: IProps) => {
               onClick={() => { state.avatarDialogOpen = false; }}
               className="mr-5"
             >
-              {lang.back}
+              {lang.operations.back}
             </Button>
             <Button onClick={handleAvatarSubmit} isDoing={state.avatarLoading}>
-              {lang.yes}
+              {lang.operations.confirm}
             </Button>
           </div>
         </div>
@@ -249,7 +249,7 @@ export const ImageEditor = observer((props: IProps) => {
           <div className="flex items-center justify-center edit-button-wrap invisible group-hover:visible">
             <div className="edit-button text-12 flex items-center justify-center">
               <MdEdit className="edit-icon mr-[2px]" />
-              {lang.replace}{props.name || ''}
+              {lang.avatar.replace}{props.name || ''}
             </div>
           </div>
         )}
@@ -263,7 +263,7 @@ export const ImageEditor = observer((props: IProps) => {
           >
             <div className="flex flex-col items-center pt-3-px">
               <MdCameraAlt />
-              <div className="text-12 mt-1">{lang.upload}{props.name || lang.image}</div>
+              <div className="text-12 mt-1">{lang.avatar.upload}{props.name || lang.avatar.image}</div>
             </div>
           </div>
         )}

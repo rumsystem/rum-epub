@@ -21,13 +21,13 @@ export default observer((props: Props) => {
 
   const Main = () => (
     <div className="pt-8 px-12 pb-10 relative">
-      <div className="px-12 text-16 text-center font-bold">{lang.selectProvider}</div>
+      <div className="px-12 text-16 text-center font-bold">{lang.avatar.selectProvider}</div>
       <div className="mt-5 flex flex-col items-center gap-y-4">
         {([
-          props.showAvatarSelect && ['openPresetImages', lang.selectAvatar] as const,
-          ['upload', lang.uploadImage],
-          !props.avatarMaker && ['openImageLib', lang.selectFromImageLib],
-          props.avatarMaker && ['makeAvatar', lang.makeAnAvatar],
+          props.showAvatarSelect && ['openPresetImages', lang.avatar.selectAvatar] as const,
+          ['upload', lang.avatar.uploadImage],
+          !props.avatarMaker && ['openImageLib', lang.avatar.selectFromImageLib],
+          props.avatarMaker && ['makeAvatar', lang.avatar.makeAnAvatar],
         ] as const)
           .filter(<T extends unknown>(v: T | undefined | boolean): v is T => !!v)
           .map((v, i) => (

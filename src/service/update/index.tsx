@@ -16,7 +16,7 @@ const actions: any = {
   'update-not-available': action((_data: UpdateInfo) => {
     if (state.manuallyChecking) {
       tooltipService.show({
-        content: '当前已安装最新版本',
+        content: lang.update.alreadyLatestVersion,
       });
     }
     state.manuallyChecking = false;
@@ -38,9 +38,7 @@ const actions: any = {
       content: (
         <div className="min-w-[224px]">
           <div className="font-bold text-16 pr-5">
-            {lang.newVersion}
-            {' '}{data.version}{' '}
-            {lang.published}：
+            {lang.update.newVersionPublished(data.version)}
           </div>
           {releaseNotes && (
             <div className="pl-2 pr-2 pt-4 text-13 leading-normal">
@@ -53,8 +51,8 @@ const actions: any = {
           )}
         </div>
       ),
-      confirm: lang.reloadForUpdate,
-      cancel: lang.doItLater,
+      confirm: lang.update.reloadForUpdate,
+      cancel: lang.update.doItLater,
     });
     if (result === 'confirm') {
       ipcRenderer.send('rum-updater', {

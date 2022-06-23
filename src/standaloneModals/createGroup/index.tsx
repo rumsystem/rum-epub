@@ -102,24 +102,24 @@ const CreateGroup = observer((props: Props) => {
     if (state.creating) { return; }
     if (!state.name) {
       tooltipService.show({
-        content: lang.require(lang.groupName),
+        content: lang.require(lang.group.groupName),
         type: 'error',
       });
       return;
     }
 
     const confirmResult = await dialogService.open({
-      title: '确定新建种子网络：书籍 Epub',
+      title: lang.createGroup.confirmCreateEpubSeednet,
       content: (
         <div className="text-center">
           <p className="mb-4">《{state.name}》</p>
           <p className="text-14">
-            种子网络建立后，将无法修改种子网络的名称，默认权限设置，以及种子网络的模板。
+            {lang.createGroup.confirmCreateTip}
           </p>
         </div>
       ),
-      cancel: '返回修改',
-      confirm: '确认创建，上传文件',
+      cancel: lang.createGroup.backAndEdit,
+      confirm: lang.createGroup.confirmCreate,
     });
     if (confirmResult === 'cancel') { return; }
 
@@ -145,7 +145,7 @@ const CreateGroup = observer((props: Props) => {
     }
 
     tooltipService.show({
-      content: lang.created,
+      content: lang.createGroup.created,
       timeout: 1000,
     });
     const groupId = createGroupResult.right.group_id;
@@ -256,10 +256,10 @@ const CreateGroup = observer((props: Props) => {
             onClick={handleClose}
           >
             <ChevronLeft className="text-producer-blue" />
-            返回
+            {lang.operations.back}
           </button>
           <div className="text-20 font-bold">
-            新建种子网络
+            {lang.createGroup.createGroup}
           </div>
         </div>
 
@@ -271,11 +271,11 @@ const CreateGroup = observer((props: Props) => {
             <div className="flex-col items-stretch bg-white px-22 py-10 min-h-[650px] text-gray-4a">
               {state.step === 0 && (<>
                 <div className="text-18 font-medium -ml-9">
-                  选择模版
+                  {lang.createGroup.selectTemplate}
                 </div>
 
                 <div className="mt-6 text-14 text-gray-4a">
-                  模板会决定你所创建的产品分发信息及内容呈现的形态。 每一个模板都针对使用场景做了专门的设计和功能优化， 对发布功能、经济系统、社交关系、管理员权限、成员管理等功能的支持会有所不同。*种子网络建立后，无法修改模版。
+                  {lang.createGroup.selectTemplateTip}
                 </div>
 
                 <div className="flex justify-center gap-x-8 mt-12">
@@ -303,12 +303,12 @@ const CreateGroup = observer((props: Props) => {
                       />
                       {name === 'placeholder' && (
                         <div className="mt-2 text-16 text-gray-9c">
-                          未开放
+                          {lang.createGroup.NA}
                         </div>
                       )}
                       {name === 'epub' && (<>
                         <div className="text-16 text-black">
-                          书籍
+                          {lang.createGroup.book}
                         </div>
                         <div className="text-14 text-gray-6f">
                           Epub
@@ -343,18 +343,18 @@ const CreateGroup = observer((props: Props) => {
 
               {state.step === 9 && (<>
                 <div className="text-18 font-medium -ml-9">
-                  发布类种子网络 - 成员权限设置
+                  {lang.createGroup.permissionTitle}
                 </div>
 
                 <div className="mt-6 text-14 text-gray-4a">
-                  设置新成员加入后的内容发布权限。*种子网络建立后，无法修改默认权限
+                  {lang.createGroup.permissionTip}
                 </div>
 
                 <div className="flex justify-center gap-x-8 mt-12">
                   {([
-                    ['FOLLOW_DNY_LIST', '新成员默认可写', PermissionWriteIcon],
-                    // ['comment', '新成员仅可评论', PermissionCommentIcon],
-                    ['FOLLOW_ALW_LIST', '新成员默认只读', PermissionReadOnlyIcon],
+                    ['FOLLOW_DNY_LIST', lang.createGroup.write, PermissionWriteIcon],
+                    // ['comment', lang.createGroup.comment, PermissionCommentIcon],
+                    ['FOLLOW_ALW_LIST', lang.createGroup.readonly, PermissionReadOnlyIcon],
                   ] as const).map(([authType, desc, Icon], i) => (
                     <div
                       className={classNames(
@@ -388,37 +388,41 @@ const CreateGroup = observer((props: Props) => {
                 <div className="text-14 text-gray-64 mt-8 px-10">
                   {state.authType === 'FOLLOW_DNY_LIST' && (
                     <div className="">
-                      新加入成员默认拥有可写权限，包括发表主帖，评论主贴，回复评论，点赞等操作。管理员可以对某一成员作禁言处理。
-                      <br />
-                      <br />
-                      新加入成员默认可写的权限设置，适用于时间线呈现的微博客类社交应用。
+                      {lang.createGroup.writeDesc.map((v, i) => (
+                        <div className={i !== 0 ? 'mt-2' : ''} key={i}>
+                          {v}
+                        </div>
+                      ))}
                     </div>
                   )}
                   {/* {state.authType === 'comment' && (
                     <div className="">
-                      新加入成员默认只允许评论，没有权限进行发表主帖的操作。管理员可以对某一成员开放权限，或者禁言。
-                      <br />
-                      <br />
-                      新加入成员默认只评的权限设置，适用于开放讨论的博客、内容订阅、知识分享等内容发布应用。
+                      {lang.createGroup.commentDesc.map((v, i) => (
+                        <div className={i !== 0 ? 'mt-2' : ''} key={i}>
+                          {v}
+                        </div>
+                      ))}
                     </div>
                   )} */}
                   {state.authType === 'FOLLOW_ALW_LIST' && (
                     <div className="">
-                      新加入成员默认只读，没有权限进行发表主帖、评论主贴、回复评论、点赞等操作
-                      <Tooltip
-                        classes={{
-                          tooltip: 'bg-white text-black shadow-1',
-                        }}
-                        title="限制成员发帖但是允许成员评论、回复、点赞的权限管理功能即将开放"
-                      >
-                        <span className="text-producer-blue">
-                          (?)
-                        </span>
-                      </Tooltip>
-                      。管理员可以对某一成员开放权限。
+                      <div>
+                        {lang.createGroup.readonlyDesc1(
+                          <Tooltip
+                            classes={{
+                              tooltip: 'bg-white text-black shadow-1',
+                            }}
+                            title={lang.createGroup.readonlyTip}
+                          >
+                            <span className="text-producer-blue">
+                              (?)
+                            </span>
+                          </Tooltip>,
+                        )}
+                      </div>
                       <br />
                       <br />
-                      新加入成员默认只读的权限设置，适用于个人博客、内容订阅、知识分享等内容发布应用。
+                      {lang.createGroup.readonlyDesc2}
                     </div>
                   )}
                 </div>
@@ -426,7 +430,7 @@ const CreateGroup = observer((props: Props) => {
 
               {state.step === 1 && (<>
                 <div className="text-18 font-medium -ml-9">
-                  Epub类种子网络 - 基本信息
+                  {lang.createGroup.groupBasicInfo}
                 </div>
 
                 <div className="flex flex-center mt-4">
@@ -460,9 +464,9 @@ const CreateGroup = observer((props: Props) => {
                 </div>
 
                 <FormControl className="mt-8 w-full" variant="outlined">
-                  <InputLabel>名称（种子网络建立后不可更改）</InputLabel>
+                  <InputLabel>{lang.createGroup.name}</InputLabel>
                   <OutlinedInput
-                    label="名称（种子网络建立后不可更改）"
+                    label={lang.createGroup.name}
                     value={state.name}
                     onChange={action((e) => { state.name = e.target.value; })}
                     spellCheck={false}
@@ -471,9 +475,9 @@ const CreateGroup = observer((props: Props) => {
                 </FormControl>
 
                 <FormControl className="mt-8 w-full" variant="outlined">
-                  <InputLabel>简介（可以不填）</InputLabel>
+                  <InputLabel>{lang.createGroup.desc}</InputLabel>
                   <OutlinedInput
-                    label="简介（可以不填）"
+                    label={lang.createGroup.desc}
                     value={state.desc}
                     onChange={action((e) => { state.desc = e.target.value; })}
                     spellCheck={false}
@@ -496,7 +500,7 @@ const CreateGroup = observer((props: Props) => {
                   onClick={handlePrevStep}
                   disabled={state.creating}
                 >
-                  上一步
+                  {lang.operations.prevStep}
                 </Button>
                 <StepBox
                   className=""
@@ -508,14 +512,14 @@ const CreateGroup = observer((props: Props) => {
                   onClick={handleNextStep}
                   disabled={state.creating}
                 >
-                  {state.step === TOTAL_STEPS - 1 && '新建种子网络'}
+                  {state.step === TOTAL_STEPS - 1 && lang.createGroup.createGroup}
                   {state.creating && (
                     <CircularProgress
                       className="ml-2 -mr-2 text-inherit"
                       size={16}
                     />
                   )}
-                  {state.step !== TOTAL_STEPS - 1 && '下一步'}
+                  {state.step !== TOTAL_STEPS - 1 && lang.operations.nextStep}
                 </Button>
               </div>
             </div>

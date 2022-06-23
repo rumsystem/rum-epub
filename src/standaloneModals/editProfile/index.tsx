@@ -9,7 +9,7 @@ import { ThemeRoot } from '~/utils/theme';
 import { defaultAvatar } from '~/utils/avatars';
 import { Avatar } from '~/components';
 import { GlobalProfile, profileService, tooltipService, escService, dialogService } from '~/service';
-import { runLoading } from '~/utils';
+import { lang, runLoading } from '~/utils';
 import { editAvatar } from '~/standaloneModals/editAvatar';
 import { mixinOAuth } from '../mixinOAuth';
 
@@ -81,7 +81,7 @@ const EditProfile = observer((props: { rs: () => unknown }) => {
   };
   const handleClearMixinId = async () => {
     const result = await dialogService.open({
-      content: '确定要取消mixin绑定吗？',
+      content: lang.mixin.confirmUnbindMixin,
     });
     if (result === 'confirm') {
       runInAction(() => {
@@ -118,7 +118,7 @@ const EditProfile = observer((props: { rs: () => unknown }) => {
       async () => {
         await profileService.setProfile(profile);
         tooltipService.show({
-          content: '修改成功！',
+          content: lang.profile.editSuccess,
         });
         setTimeout(handleClose);
       },
@@ -159,10 +159,10 @@ const EditProfile = observer((props: { rs: () => unknown }) => {
             onClick={handleClose}
           >
             <ChevronLeft className="text-producer-blue" />
-            返回
+            {lang.operations.back}
           </button>
           <div className="text-20 font-bold">
-            设置个人信息
+            {lang.profile.setupProfile}
           </div>
         </div>
 
@@ -170,7 +170,7 @@ const EditProfile = observer((props: { rs: () => unknown }) => {
           <div className="overflow-auto w-[800px]">
             <div className="flex-col flex-center gap-y-8 bg-white px-22 py-10 min-h-[650px] text-gray-4a">
               <div className="font-bold text-16">
-                编辑个人信息
+                {lang.profile.editProfile}
               </div>
               <div className="flex items-center gap-x-6 border border-gray-ec p-10 rounded">
                 <div
@@ -184,18 +184,18 @@ const EditProfile = observer((props: { rs: () => unknown }) => {
                   <div className="flex-col flex-center rounded-full absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 cursor-pointer select-none">
                     <Edit className="text-white" />
                     <span className="text-white">
-                      更换
+                      {lang.profile.change}
                     </span>
                   </div>
                 </div>
                 <div className="flex-col gap-y-3">
                   <FormControl className="w-full" variant="outlined" size="small">
                     <InputLabel className="text-14">
-                      昵称
+                      {lang.profile.nickname}
                     </InputLabel>
                     <OutlinedInput
                       className="text-14"
-                      label="昵称"
+                      label={lang.profile.nickname}
                       value={state.form.name}
                       onChange={action((e) => { state.form.name = e.target.value; })}
                     />
@@ -206,7 +206,7 @@ const EditProfile = observer((props: { rs: () => unknown }) => {
                         className="flex items-center text-12 text-gray-9c"
                         onClick={handleGetMixinId}
                       >
-                        绑定钱包
+                        {lang.profile.connectWallet}
                         <ChevronRight className="text-20" />
                       </button>
                     )}
@@ -228,14 +228,14 @@ const EditProfile = observer((props: { rs: () => unknown }) => {
                   onClick={handleClose}
                   color="inherit"
                 >
-                  取消
+                  {lang.operations.cancel}
                 </Button>
                 <Button
                   className="min-w-[120px]"
                   onClick={handleConfirm}
                   disabled={state.loading}
                 >
-                  确定
+                  {lang.operations.confirm}
                   {state.loading && (
                     <CircularProgress
                       className="text-white ml-2"

@@ -20,15 +20,15 @@ interface Props {
 export const GroupPopup = observer((props: Props) => {
   const handleLeaveGroup = async () => {
     const result = await dialogService.open({
-      content: lang.confirmToExit,
+      content: lang.group.confirmToExit,
       danger: true,
     });
     if (result === 'cancel') { return; }
-    const loading = loadingService.add('正在退出群组');
+    const loading = loadingService.add(lang.group.exitingGroup);
     nodeService.leaveGroup(props.group.group_id).then(
       () => {
         tooltipService.show({
-          content: lang.exited,
+          content: lang.group.exited,
         });
       },
       (err) => {
@@ -54,7 +54,7 @@ export const GroupPopup = observer((props: Props) => {
       <div className="shadow-3 w-[400px] border-black border text-white">
         <div className="flex items-center bg-black h-[50px] px-4">
           <div className="flex-1 text-16 truncate">
-            《{props.group.group_name}》
+            {props.group.group_name}
           </div>
         </div>
         <div className="flex bg-white text-black">
@@ -99,7 +99,7 @@ export const GroupPopup = observer((props: Props) => {
               }}
             >
               <MdInfoOutline className="text-18 text-gray-600 opacity-50  mr-3" />
-              <span>{lang.info}</span>
+              <span>{lang.group.info}</span>
             </div>
             <div
               className="flex items-center px-6 py-3 hover:bg-gray-ec cursor-pointer"
@@ -110,7 +110,7 @@ export const GroupPopup = observer((props: Props) => {
               }}
             >
               <FiDelete className="text-16 text-red-400 opacity-50 ml-px mr-3" />
-              <span className="text-red-400 ml-px">{lang.exitGroupShort}</span>
+              <span className="text-red-400 ml-px">{lang.group.exit}</span>
             </div>
           </div>
         </div>

@@ -63,7 +63,7 @@ export const GroupMenu = observer((props: Props) => {
     // if (latestStatus.producerCount === 1 && isGroupOwner) {
     //   confirmText = lang.singleProducerConfirm;
     // }
-    confirmText += lang.confirmToExit;
+    confirmText += lang.group.confirmToExit;
     const result = await dialogService.open({
       content: confirmText,
       danger: true,
@@ -73,12 +73,12 @@ export const GroupMenu = observer((props: Props) => {
       return;
     }
 
-    const loading = loadingService.add('正在退出群组');
+    const loading = loadingService.add(lang.group.exitingGroup);
 
     nodeService.leaveGroup(props.group.group_id).then(
       () => {
         tooltipService.show({
-          content: lang.exited,
+          content: lang.group.exited,
         });
       },
       (err) => {
@@ -138,7 +138,7 @@ export const GroupMenu = observer((props: Props) => {
           <div className="flex items-center w-7 flex-none">
             <MdInfoOutline className="text-18 opacity-50" />
           </div>
-          <span className="font-bold text-14">{lang.info}</span>
+          <span className="font-bold text-14">{lang.group.info}</span>
         </div>
       </MenuItem>
       {/* {activeGroupMutedPublishers.length > 0 && (
@@ -157,7 +157,7 @@ export const GroupMenu = observer((props: Props) => {
             <span className="flex items-center w-7 flex-none">
               <img className="text-16 opacity-50" src={IconSeednetManage} />
             </span>
-            <span className="font-bold text-14">{lang.manageGroup}</span>
+            <span className="font-bold text-14">{lang.group.manageGroup}</span>
           </div>
         </MenuItem>
       )}
@@ -169,7 +169,7 @@ export const GroupMenu = observer((props: Props) => {
                 <span className="flex items-center w-7 flex-none">
                   <UploadIcon className="text-18" />
                 </span>
-                <span className="font-bold text-14">上传书籍</span>
+                <span className="font-bold text-14">{lang.epubUpload.uploadBook}</span>
               </div>
             </MenuItem>
           )}
@@ -181,7 +181,7 @@ export const GroupMenu = observer((props: Props) => {
             <span className="flex items-center w-7 flex-none">
               <EditOutlined className="text-18" />
             </span>
-            <span className="font-bold text-14">编辑书籍元信息</span>
+            <span className="font-bold text-14">{lang.epub.editMetadata}</span>
           </div>
         </MenuItem>
       )}
@@ -191,7 +191,7 @@ export const GroupMenu = observer((props: Props) => {
             <span className="flex items-center w-7 flex-none">
               <EditOutlined className="text-18" />
             </span>
-            <span className="font-bold text-14">编辑书籍封面</span>
+            <span className="font-bold text-14">{lang.epub.editCover}</span>
           </div>
         </MenuItem>
       )}
@@ -203,7 +203,7 @@ export const GroupMenu = observer((props: Props) => {
           <div className="flex items-center w-7 flex-none">
             <FiDelete className="text-16 opacity-50" />
           </div>
-          <span className="font-bold text-14">{lang.exitGroup}</span>
+          <span className="font-bold text-14">{lang.group.exitGroup}</span>
         </div>
       </MenuItem>
     </Menu>

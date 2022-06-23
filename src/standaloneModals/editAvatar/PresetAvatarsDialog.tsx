@@ -3,6 +3,7 @@ import classNames from 'classnames';
 import { Dialog, Tooltip } from '@mui/material';
 import { avatars } from '~/utils/avatars';
 import { Scrollable } from '~/components';
+import { lang } from '~/utils';
 
 interface Props {
   open: boolean
@@ -26,7 +27,7 @@ export const PresetAvatarsDialog = (props: Props) => {
       maxWidth={false}
     >
       <div className="bg-white rounded-0 text-center">
-        <div className="text-18 font-bold mt-8 mb-4">选择头像</div>
+        <div className="text-18 font-bold mt-8 mb-4">{lang.avatar.selectAvatar}</div>
         <Scrollable
           className="max-h-[400px]"
         >

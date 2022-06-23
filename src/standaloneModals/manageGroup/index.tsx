@@ -87,7 +87,7 @@ const ManageGroup = observer((props: Props) => {
         }),
       ]);
       tooltipService.show({
-        content: lang.savedAndWaitForSyncing,
+        content: lang.manageGroup.savedAndWaitForSyncing,
       });
     } catch (e) {
       tooltipService.show({
@@ -149,7 +149,7 @@ const ManageGroup = observer((props: Props) => {
       <div className="bg-white rounded-0 p-6 w-[550px]">
         <div className="pt-4 px-6 pb-5">
           <div className="text-18 font-bold text-gray-700 text-center pb-5">
-            {lang.manageGroupTitle}
+            {lang.manageGroup.title}
           </div>
           {state.initiating && (
             <div className="flex flex-center h-[360px] pb-10">
@@ -188,9 +188,9 @@ const ManageGroup = observer((props: Props) => {
                 </div>
               </div>
               <FormControl className="mt-8 w-full" variant="outlined" disabled>
-                <InputLabel>{lang.groupName}</InputLabel>
+                <InputLabel>{lang.group.groupName}</InputLabel>
                 <OutlinedInput
-                  label={lang.groupName}
+                  label={lang.group.groupName}
                   value={state.name}
                   disabled
                   spellCheck={false}
@@ -198,9 +198,9 @@ const ManageGroup = observer((props: Props) => {
               </FormControl>
 
               <FormControl className="mt-8 w-full" variant="outlined">
-                <InputLabel>{lang.desc}</InputLabel>
+                <InputLabel>{lang.group.desc}</InputLabel>
                 <OutlinedInput
-                  label={lang.desc}
+                  label={lang.group.desc}
                   value={state.desc}
                   onChange={action((e) => { state.desc = e.target.value; })}
                   multiline
@@ -218,7 +218,7 @@ const ManageGroup = observer((props: Props) => {
                 onClick={handleSave}
               >
                 <span className="text-16">
-                  {lang.save}
+                  {lang.operations.save}
                 </span>
               </Button>
 
@@ -227,7 +227,7 @@ const ManageGroup = observer((props: Props) => {
                   className="mt-5 text-link-blue cursor-pointer text-14"
                   onClick={handleClose}
                 >
-                  {lang.manageGroupSkip}
+                  {lang.manageGroup.manageGroupSkip}
                 </span>
               )}
             </div>

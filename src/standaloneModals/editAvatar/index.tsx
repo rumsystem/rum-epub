@@ -9,6 +9,7 @@ import { Dialog } from '~/components';
 import { ThemeRoot } from '~/utils/theme';
 import { PresetAvatarsDialog } from './PresetAvatarsDialog';
 import { AvatarEditor } from './AvatarEditor';
+import { lang } from '~/utils';
 
 export const editAvatar = async () => new Promise<string | null>((rs) => {
   const div = document.createElement('div');
@@ -89,23 +90,23 @@ const EditAvatar = observer((props: Props) => {
     >
       <div className="bg-white rounded-0 text-center p-8">
         <div className="text-16 font-bold">
-          选择操作方式
+          {lang.avatar.selectProvider}
         </div>
         <div className="flex-col items-stertch gap-y-3 w-50 mt-6">
           <Button
             onClick={action(() => { state.presetAvatar = true; })}
           >
-            选择头像
+            {lang.avatar.selectAvatar}
           </Button>
           <Button onClick={() => { avatarInputRef.current!.click(); }}>
-            上传图片
+            {lang.avatar.uploadImage}
           </Button>
           <Button
             onClick={() => {
               shell.openExternal('https://cvbox.org/avatar');
             }}
           >
-            捏头像
+            {lang.avatar.makeAnAvatar}
           </Button>
         </div>
       </div>

@@ -89,14 +89,14 @@ const ImageLib = observer((props: any) => {
         <div className="flex justify-center">
           <SearchInput
             className="w-64"
-            placeholder={lang.keyword}
+            placeholder={lang.imageLib.keyword}
             search={search}
           />
         </div>
         <Tooltip
           placement="top"
           arrow
-          title={lang.pixabayLicenseTip}
+          title={lang.imageLib.pixabayLicenseTip}
         >
           <a
             href="https://pixabay.com/zh"
@@ -172,10 +172,10 @@ const ImageLib = observer((props: any) => {
           </div>
           {state.isFetched && state.total === 0 && (
             <div className="py-20 text-center text-gray-500 text-14">
-              {lang.emptyImageSearchResult}
+              {lang.imageLib.emptyImageSearchResult}
               <br />
-              <div className="mt-1">{lang.imageSearchTip1}</div>
-              <div className="mt-1">{lang.imageSearchTip2}</div>
+              <div className="mt-1">{lang.imageLib.imageSearchTip1}</div>
+              <div className="mt-1">{lang.imageLib.imageSearchTip2}</div>
             </div>
           )}
           {state.isFetched

@@ -101,7 +101,7 @@ export const SearchInput = observer((props: IProps) => {
               notchedOutline: 'border-2 border-gray-33',
             },
           }}
-          placeholder={props.placeholder || '搜索'}
+          placeholder={props.placeholder || lang.search}
           size="small"
           autoFocus={props.autoFocus || false}
           value={state.value}

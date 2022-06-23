@@ -74,7 +74,7 @@ export default observer((props: Props) => {
         />
         {sidebarService.state.collapsed && (
           <div className="leading-tight">
-            最<br />近<br />阅<br />读
+            {lang.sidebar.recentTip.split('').flatMap((v, i) => [v, <br key={i} />]).slice(0, -1)}
           </div>
         )}
       </div>
@@ -96,7 +96,7 @@ export default observer((props: Props) => {
             <div className="flex items-center justify-between h-[70px]">
               {!state.searchMode && (<>
                 <div className="flex border divide-x border-gray-f2 divide-gray-f2 rounded ml-4">
-                  <Tooltip title="列表模式">
+                  <Tooltip title={lang.sidebar.listMode}>
                     <button
                       className={classNames(
                         'flex flex-center w-6 h-6',
@@ -107,7 +107,7 @@ export default observer((props: Props) => {
                       <ListUlIcon className="text-16" />
                     </button>
                   </Tooltip>
-                  <Tooltip title="网格模式">
+                  <Tooltip title={lang.sidebar.gridMode}>
                     <button
                       className={classNames(
                         'flex flex-center w-6 h-6',
@@ -119,7 +119,7 @@ export default observer((props: Props) => {
                     </button>
                   </Tooltip>
                 </div>
-                <Tooltip title="显示/隐藏种子网络">
+                <Tooltip title={lang.sidebar.showHideSeednet}>
                   <button
                     className={classNames(
                       'flex flex-center w-[25px] h-[25px] ml-2 border border-gray-f2 rounded',
@@ -178,8 +178,8 @@ export default observer((props: Props) => {
                 key={v}
                 onClick={action(() => { state.sortMode = v; })}
               >
-                {v === 'recent-open' && '最近打开'}
-                {v === 'recent-add' && '最近添加'}
+                {v === 'recent-open' && lang.sidebar.recentOpen}
+                {v === 'recent-add' && lang.sidebar.recentAdd}
               </button>
             ))}
           </div>
@@ -195,7 +195,7 @@ export default observer((props: Props) => {
 
           {nodeService.state.groups.length === 0 && (
             <div className="animate-fade-in pt-20 text-gray-400 opacity-80 text-center">
-              {state.search ? lang.noSeedNetSearchResult : lang.noTypeGroups}
+              {state.search ? lang.sidebar.noSeedNetSearchResult : lang.sidebar.noTypeGroups}
             </div>
           )}
         </div>
@@ -233,7 +233,7 @@ export default observer((props: Props) => {
             src={IconAddseed}
             alt=""
           />
-          <span className="text-16">添加内容种子</span>
+          <span className="text-16">{lang.sidebar.joinGroup}</span>
         </MenuItem>
         <MenuItem
           className="py-3 px-6 hover:bg-gray-4a"
@@ -248,7 +248,7 @@ export default observer((props: Props) => {
             src={IconAddanything}
             alt=""
           />
-          <span className="text-16">创建种子</span>
+          <span className="text-16">{lang.sidebar.createGroup}</span>
         </MenuItem>
       </MenuList>
     </Popover>

@@ -114,7 +114,7 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
   const columns = React.useMemo(
     () => [
       {
-        Header: '内容标题',
+        Header: lang.myLib.title,
         width: 240,
         minWidth: 80,
         accessor: (row: LibBookItem) => {
@@ -132,13 +132,13 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
         },
       },
       {
-        Header: '作者',
+        Header: lang.myLib.author,
         width: 240,
         minWidth: 80,
-        accessor: (row: LibBookItem) => `${row.book.metadata?.author}${row.book.metadata?.translator && `[译]${row.book.metadata?.translator}`}`,
+        accessor: (row: LibBookItem) => `${row.book.metadata?.author}${row.book.metadata?.translator && `${lang.epub.translatorTag}${row.book.metadata?.translator}`}`,
       },
       {
-        Header: '标签',
+        Header: lang.myLib.tags,
         width: 160,
         accessor: (row: LibBookItem) => {
           const tags = row.book.metadata?.subjects.join(', ') ?? '';
@@ -153,22 +153,22 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
         },
       },
       {
-        Header: 'Size (MB)',
+        Header: lang.myLib.size,
         width: 60,
         accessor: (row: LibBookItem) => Number((row.book.size / 1048576).toFixed(2)),
       },
       {
-        Header: '格式',
+        Header: lang.myLib.format,
         width: 80,
         accessor: () => 'epub',
       },
       {
-        Header: '评分',
+        Header: lang.myLib.rating,
         width: 80,
         accessor: () => 'TODO',
       },
       {
-        Header: '操作',
+        Header: lang.myLib.oparation,
         width: 80,
         accessor: (row: LibBookItem) => (
           <div className="flex flex-center">
@@ -232,15 +232,15 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
 
   const handleLeaveGroup = async (groupId: string) => {
     const result = await dialogService.open({
-      content: '确实要退出这本书所在的种子网络吗？',
+      content: lang.myLib.leaveGroup,
       danger: true,
     });
     if (result === 'cancel') { return; }
-    const loading = loadingService.add('正在退出群组');
+    const loading = loadingService.add(lang.group.exitingGroup);
     nodeService.leaveGroup(groupId).then(
       () => {
         tooltipService.show({
-          content: lang.exited,
+          content: lang.group.exited,
         });
       },
       (err) => {
@@ -309,9 +309,7 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
             />
             {state.sidebarCollapsed && (
               <div className="leading-tight">
-                筛<br />
-                选<br />
-                器
+                {lang.myLib.filter.split('').flatMap(([v, i]) => [v, <br key={i} />]).slice(0, -1)}
               </div>
             )}
           </div>
@@ -325,10 +323,10 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
             }}
           >
             <div className="text-18 font-medium">
-              内容类型
+              {lang.myLib.contentType}
             </div>
             <div className="text-16 font-medium my-1">
-              {'<< 书籍分类'}
+              {'<< '}{lang.myLib.bookCategories}
             </div>
             <div className="flex-col py-3 pl-4 overflow-hidden">
               {state.allSubjects.map((sub, i) => (
@@ -350,17 +348,16 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
             </div>
 
             {/* <div className="text-14 font-medium mt-6">
-              评分
+              {lang.myLib.rating}
             </div>
             <div>
               ★★★★★
             </div> */}
 
             <div className="text-14 font-medium mt-6">
-              语言
+              {lang.myLib.language}
             </div>
             <div className="flex-col py-3 pl-4">
-              {/* {['简体中文', '英文', '繁体中文'].map((v) => ( */}
               {state.allLanguages.map((lang) => (
                 <FormControlLabel
                   className="-mt-3"
@@ -388,10 +385,10 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
               <IconLib />
               <span>
                 <span className="text-20 text-gray-9c font-medium">
-                  我的内容库：
+                  {lang.myLib.myLib}
                 </span>
                 <span className="text-20 text-black font-medium">
-                  书籍
+                  {lang.myLib.books}
                 </span>
               </span>
               <OutlinedInput
@@ -407,16 +404,16 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
                     shrink: 'text-16 transition-all',
                   }}
                 >
-                  排序
+                  {lang.myLib.sort}
                 </InputLabel>
                 <Select
                   className="min-w-[120px] text-14"
-                  label="排序"
+                  label={lang.myLib.sort}
                   value={state.sort}
                   onChange={action((e: SelectChangeEvent<unknown>) => { state.sort = e.target.value as any; })}
                 >
-                  <MenuItem value="added">按最新上架</MenuItem>
-                  <MenuItem value="opened">按最近浏览</MenuItem>
+                  <MenuItem value="added">{lang.myLib.recentAdd}</MenuItem>
+                  <MenuItem value="opened">{lang.myLib.recentOpen}</MenuItem>
                 </Select>
               </FormControl>
             </div>
@@ -431,7 +428,7 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
               >
                 <GridAltIcon className="text-16" />
                 <span className="text-15">
-                  封面模式
+                  {lang.myLib.coverMode}
                 </span>
               </button>
               <button
@@ -444,7 +441,7 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
               >
                 <ListUlIcon className="text-20" />
                 <span className="text-15">
-                  列表管理模式
+                  {lang.myLib.listMode}
                 </span>
               </button>
             </div>
@@ -457,10 +454,11 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
           {!state.loading && !state.books.length && (
             <div className="flex-col flex-center flex-1">
               <div className="flex flex-center flex-1 grow-[3] text-gray-4a text-center text-16 font-bold">
-                暂时空空如也~
-                <br />
-                <br />
-                加入种子网络后，种子网络内的书籍内容将会呈现在这里
+                {lang.myLib.emptyTip.map((v, i) => (
+                  <div className={i !== 0 ? 'mt-4' : ''} key={i}>
+                    {v}
+                  </div>
+                ))}
               </div>
               <div className="flex-1 grow-[2]" />
             </div>
@@ -505,7 +503,7 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
                           onClick={() => handleOpenDetailView(v)}
                         >
                           {v.book.metadata?.author}
-                          {v.book.metadata?.translator && ` [译]${v.book.metadata?.translator}`}
+                          {v.book.metadata?.translator && ` ${lang.epub.translatorTag}${v.book.metadata?.translator}`}
                         </div>
                         <div
                           className="text-12 text-nice-blue cursor-pointer"
@@ -607,19 +605,16 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
                     </div>
                     <div className="">
                       {[
-                        { name: '副标题', text: state.selectedBook.book.metadata?.subTitle },
-                        { name: 'ISBN', text: state.selectedBook.book.metadata?.isbn },
-                        { name: '作者', text: state.selectedBook.book.metadata?.author },
-                        { name: '译者', text: state.selectedBook.book.metadata?.translator },
-                        { name: '出版日期', text: state.selectedBook.book.metadata?.publishDate },
-                        { name: '出版商', text: state.selectedBook.book.metadata?.publisher },
-                        { name: '语言', text: state.selectedBook.book.metadata?.languages },
-                        { name: '丛书', text: state.selectedBook.book.metadata?.series },
-                        { name: '丛书编号', text: state.selectedBook.book.metadata?.seriesNumber },
-                        // { name: '字数', text: state.selectedBook.book.metadata?.seriesNumber },
-                        // 分类：
-                        // 评分：
-                        // 标签：
+                        { name: lang.epubMetadata.subTitle, text: state.selectedBook.book.metadata?.subTitle },
+                        { name: lang.epubMetadata.isbn, text: state.selectedBook.book.metadata?.isbn },
+                        { name: lang.epubMetadata.author, text: state.selectedBook.book.metadata?.author },
+                        { name: lang.epubMetadata.translator, text: state.selectedBook.book.metadata?.translator },
+                        { name: lang.epubMetadata.publishDate, text: state.selectedBook.book.metadata?.publishDate },
+                        { name: lang.epubMetadata.publisher, text: state.selectedBook.book.metadata?.publisher },
+                        { name: lang.epubMetadata.languages, text: state.selectedBook.book.metadata?.languages },
+                        { name: lang.epubMetadata.series, text: state.selectedBook.book.metadata?.series },
+                        { name: lang.epubMetadata.seriesNumber, text: state.selectedBook.book.metadata?.seriesNumber },
+                        // { name: lang.epubMetadata.wordCount, text: state.selectedBook.book.metadata?.seriesNumber },
                       ].map((v, i) => (
                         <div className="leading-relaxed mt-px" key={i}>
                           <span className="text-gray-af">{v.name}：</span>

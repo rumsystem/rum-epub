@@ -6,8 +6,9 @@ import { Button, CircularProgress } from '@mui/material';
 
 import BookImage from '~/assets/illustration_book.svg';
 import ArrowImage from '~/assets/arrow.svg';
-import { dbService, epubService, GroupBookItem, nodeService, ReadingProgressItem } from '~/service';
+import { epubService, GroupBookItem, nodeService, ReadingProgressItem } from '~/service';
 import { BookCoverImg, Scrollable } from '~/components';
+import { lang } from '~/utils';
 
 
 export const EpubGroupView = observer((props: { className?: string }) => {
@@ -89,23 +90,20 @@ export const EpubGroupView = observer((props: { className?: string }) => {
               'outline outline-2 w-[500px] outline-dashed outline-gray-c4 outline-offset-4',
             )}
           >
-            {isOwner && noBook && (<>
-              <p>种子网络还没有书籍</p>
-              <p>点击上方的上传书籍按钮上传第一本书</p>
-            </>)}
+            {isOwner && noBook && lang.epubGroupView.noBookUploadTip.map((v, i) => (
+              <p key={i}>{v}</p>
+            ))}
 
-            {!isOwner && noBook && (<>
-              <p>种子网络还没有书籍</p>
-              <p>等待种子网络上传/同步第一本书</p>
-            </>)}
+            {!isOwner && noBook && lang.epubGroupView.noBookWaitTip.map((v, i) => (
+              <p key={i}>{v}</p>
+            ))}
 
-            {uploading && (<>
-              <p>书籍正在上传中……</p>
-              <p>上传完毕后，你可以在这里选择书籍开始阅读</p>
-            </>)}
+            {uploading && lang.epubGroupView.uploadingTip.map((v, i) => (
+              <p key={i}>{v}</p>
+            ))}
 
             {uploadDone && (<>
-              <p>书籍已成功上传</p>
+              <p>{lang.epubGroupView.uploadedTip}</p>
               <p>{state.currentUploadItem?.recentUploadBook?.fileInfo.title}</p>
             </>)}
           </div>
@@ -115,7 +113,7 @@ export const EpubGroupView = observer((props: { className?: string }) => {
               className="rounded-full text-20 px-12"
               onClick={handleOpenRecentlyUploadedBook}
             >
-              开始阅读
+              {lang.epubGroupView.startReading}
             </Button>
           )}
 
@@ -157,7 +155,7 @@ export const EpubGroupView = observer((props: { className?: string }) => {
                   </div>
                   <div className="text-12 text-gray-88 cursor-pointer mt-[2px]">
                     {v.metadata?.author}
-                    {v.metadata?.translator && ` [译]${v.metadata?.translator}`}
+                    {v.metadata?.translator && ` ${lang.epub.translatorTag}${v.metadata?.translator}`}
                   </div>
                   <div
                     className="text-12 text-gray-88 cursor-pointer overflow-hidden mt-1"
@@ -179,7 +177,7 @@ export const EpubGroupView = observer((props: { className?: string }) => {
                       size="small"
                       onClick={() => epubService.openBook(state.groupId, v.trxId)}
                     >
-                      {state.readingProgress[v.trxId] ? '继续阅读' : '开始阅读'}
+                      {state.readingProgress[v.trxId] ? lang.epub.continueReading : lang.epub.startReading}
                     </Button>
                   </div>
                 </div>

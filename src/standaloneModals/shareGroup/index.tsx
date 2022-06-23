@@ -105,7 +105,7 @@ const ShareGroup = observer((props: Props) => {
       await sleep(400);
       handleClose();
       tooltipService.show({
-        content: lang.downloadedThenShare,
+        content: lang.shareGroup.downloadedThenShare,
       });
     } catch (err) {
       console.error(err);
@@ -145,7 +145,7 @@ const ShareGroup = observer((props: Props) => {
           console.error(err);
           if (err.message.includes('existed')) {
             tooltipService.show({
-              content: lang.existMember,
+              content: lang.joinGroup.existMember,
               type: 'error',
             });
             return;
@@ -192,7 +192,7 @@ const ShareGroup = observer((props: Props) => {
     >
       <div className="bg-white rounded-0 text-center py-8 px-10 max-w-[500px]">
         <div className="text-18 font-medium text-gray-4a break-all">
-          {state.isActiveGroupSeed ? lang.shareSeed : lang.seedNet}
+          {state.isActiveGroupSeed ? lang.shareGroup.shareSeed : lang.group.seedNet}
         </div>
         <div className="px-3">
           <OutlinedInput
@@ -213,10 +213,10 @@ const ShareGroup = observer((props: Props) => {
             onClick={handleCopy}
           >
             <IoMdCopy className="text-22 mr-1 inline" />
-            {lang.copySeed}
+            {lang.shareGroup.copySeed}
           </span>
           <span>
-            &nbsp;{lang.copySeedOr}
+            &nbsp;{lang.shareGroup.copySeedOr}
           </span>
         </div>
 
@@ -226,7 +226,7 @@ const ShareGroup = observer((props: Props) => {
             size="large"
             onClick={handleDownloadSeed}
           >
-            {lang.downloadSeed}
+            {lang.shareGroup.downloadSeed}
           </Button>
           {!state.isActiveGroupSeed && (
             <Button
@@ -236,7 +236,7 @@ const ShareGroup = observer((props: Props) => {
               outline
               isDoing={state.loading}
             >
-              {state.inGroup ? lang.openSeedGroup : lang.joinSeedGroup}
+              {state.inGroup ? lang.shareGroup.openSeedGroup : lang.shareGroup.joinSeedGroup}
             </Button>
           )}
         </div>

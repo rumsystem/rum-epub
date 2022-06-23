@@ -5,6 +5,7 @@ import { observer, useLocalObservable } from 'mobx-react-lite';
 import { Popover, Tooltip } from '@mui/material';
 import KeyboardIcon from 'boxicons/svg/solid/bxs-keyboard.svg?fill-icon';
 import { readerSettingsService } from '~/service';
+import { lang } from '~/utils';
 
 interface Props {
   className?: string
@@ -28,7 +29,7 @@ export const EpubShortCutPopover = observer((props: Props) => {
   const buttonRef = React.useRef<HTMLDivElement>(null);
 
   return (<>
-    <Tooltip title="快捷键">
+    <Tooltip title={lang.epubShortCut.shortCut}>
       <div
         className={classNames(
           'flex flex-center cursor-pointer',
@@ -62,44 +63,44 @@ export const EpubShortCutPopover = observer((props: Props) => {
     >
       <div className="px-4 pt-1 pb-4">
         <div className="text-center text-20 py-4">
-          快捷键
+          {lang.epubShortCut.shortCut}
         </div>
         <div className="text-gray-88 divide-y border-t">
           {[
             {
-              text: '进入全屏',
+              text: lang.epubShortCut.enterFullscreen,
               shortcut: ['F'],
             },
             {
-              text: '退出全屏',
+              text: lang.epubShortCut.exitFullscreen,
               shortcut: ['Esc'],
             },
             {
-              text: '上一页',
+              text: lang.epubShortCut.prevPage,
               shortcut: ['←'],
             },
             {
-              text: '下一页',
+              text: lang.epubShortCut.nextPage,
               shortcut: ['Space', 'Enter', '→'],
             },
             {
-              text: '上一章',
+              text: lang.epubShortCut.prevChapter,
               shortcut: ['↑'],
             },
             {
-              text: '下一章',
+              text: lang.epubShortCut.nextChapter,
               shortcut: ['↓'],
             },
             {
-              text: '显示目录',
+              text: lang.epubShortCut.toggleToc,
               shortcut: ['Shift+C'],
             },
             {
-              text: '显示标注',
+              text: lang.epubShortCut.toggleHighlighs,
               shortcut: ['Shift+N'],
             },
             {
-              text: '返回跳转前位置',
+              text: lang.epubShortCut.backToPrevPos,
               shortcut: ['Shift+B'],
             },
           ].map((v, i) => (

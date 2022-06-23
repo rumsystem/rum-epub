@@ -1,7 +1,7 @@
-import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { CircularProgress } from '@mui/material';
 import { updateService } from '~/service/update';
+import { lang } from '~/utils';
 
 export const UpdateContainer = observer(() => {
   if (updateService.state.progress) {
@@ -19,7 +19,7 @@ export const UpdateContainer = observer(() => {
           variant="determinate"
           value={percent}
         />
-        正在下载{' '}
+        {lang.update.downloading}{' '}
         {Math.ceil(percent)}%
       </div>
     );
@@ -37,7 +37,7 @@ export const UpdateContainer = observer(() => {
           className="text-white mr-1"
           size={12}
         />
-        正在检查更新
+        {lang.update.updating}
       </div>
     );
   }

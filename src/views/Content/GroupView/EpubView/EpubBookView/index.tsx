@@ -22,7 +22,7 @@ import {
   readerThemes,
   ReadingProgressItem,
 } from '~/service';
-import { addLinkOpen, modifierKeys } from '~/utils';
+import { addLinkOpen, lang, modifierKeys } from '~/utils';
 import { BookCoverImgTooltip } from '~/components';
 
 import MarkerIcon from '~/assets/icon_marker.svg?fill';
@@ -468,7 +468,7 @@ export const EpubBookView = observer((props: Props) => {
               bookTrx={state.bookTrxId}
             />
             <EpubShortCutPopover className="px-2" />
-            <Tooltip title="切换全屏">
+            <Tooltip title={lang.epub.toggleFullscreen}>
               <div
                 className="px-2 flex flex-center cursor-pointer"
                 onClick={handleToggleFullScreen}
@@ -566,14 +566,14 @@ export const EpubBookView = observer((props: Props) => {
               }}
               onClick={() => handleChangeChapter('prev')}
             >
-              上一章
+              {lang.epub.prevChapter}
             </div>
             {!!state.jumpingHistory.length && (
               <div
                 className="flex flex-none flex-center cursor-pointer group px-4 text-producer-blue select-none"
                 onClick={handleBackJumpingHistory}
               >
-                返回跳转前位置
+                {lang.epub.backToPrevPos}
               </div>
             )}
             <Tooltip title={`${state.chapterProgress[1] + 1} / ${state.chapterProgress[2]}`}>
@@ -601,7 +601,7 @@ export const EpubBookView = observer((props: Props) => {
               }}
               onClick={() => handleChangeChapter('next')}
             >
-              下一章
+              {lang.epub.nextChapter}
             </div>
           </div>
         </div>

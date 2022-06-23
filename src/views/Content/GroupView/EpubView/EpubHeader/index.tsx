@@ -81,18 +81,18 @@ export const EpubHeader = observer(() => {
           <div className="mt-[2px] text-11 transform flex items-center opacity-90">
             {state.group.group_status === GroupStatus.SYNCING && (
               <span className="text-gray-9c leading-relaxed">
-                {lang.syncing}
+                {lang.group.syncing}
               </span>
             )}
             {state.group.group_status === GroupStatus.IDLE && (
               <span className="text-gray-9c leading-relaxed">
-                {lang.synced}
+                {lang.group.synced}
               </span>
             )}
 
             {state.group.group_status === GroupStatus.SYNC_FAILED && (
               <div className="flex items-center px-3 rounded-full bg-red-400 text-opacity-90 text-white text-12 font-bold">
-                {lang.syncFailed}
+                {lang.group.syncFailed}
               </div>
             )}
 
@@ -100,7 +100,7 @@ export const EpubHeader = observer(() => {
               enterDelay={800}
               enterNextDelay={800}
               placement="bottom"
-              title={state.group.group_status === GroupStatus.SYNCING ? lang.syncingContentTip : lang.clickToSync}
+              title={state.group.group_status === GroupStatus.SYNCING ? lang.group.syncingContentTip : lang.group.clickToSync}
               arrow
             >
               <div
@@ -126,7 +126,7 @@ export const EpubHeader = observer(() => {
           {(p) => {
             if (p.hasUploadAtLeastOneBook || !p.hasWritePermission) { return null; }
             return (
-              <Tooltip title={p.hasWritePermission ? '上传书籍' : '你没有权限在这个种子网络上传内容'}>
+              <Tooltip title={p.hasWritePermission ? lang.epubUpload.uploadBook : lang.epubUpload.uploadBookNoPermission}>
                 <div className="ml-8">
                   <Button
                     className="relative overflow-hidden"
@@ -135,9 +135,7 @@ export const EpubHeader = observer(() => {
                   >
                     <div className="flex flex-center gap-x-2 relative z-10">
                       <UploadIcon />
-                      <span>
-                        上传书籍
-                      </span>
+                      <span>{lang.epubUpload.uploadBook}</span>
                     </div>
 
                     <div
@@ -155,7 +153,7 @@ export const EpubHeader = observer(() => {
         </UploadEpubButton>
 
         <Button className="ml-6">
-          设为公开，允许发现
+          {lang.epub.setAsPublic}
         </Button>
       </div>
 
@@ -165,7 +163,7 @@ export const EpubHeader = observer(() => {
             enterDelay={500}
             enterNextDelay={500}
             placement="bottom"
-            title={lang.connectedPeerCountTip(state.peersCount)}
+            title={lang.node.connectedPeerCountTip(state.peersCount)}
             arrow
           >
             <div
@@ -178,7 +176,7 @@ export const EpubHeader = observer(() => {
                 className="bg-emerald-300 rounded-full mr-2"
                 style={{ width: 8, height: 8 }}
               />
-              {' '}{lang.connectedPeerCount(state.peersCount)}
+              {' '}{lang.node.connectedPeerCount(state.peersCount)}
             </div>
           </Tooltip>
         )}
@@ -189,7 +187,7 @@ export const EpubHeader = observer(() => {
             onClick={() => shareGroup(state.group!.group_id)}
           >
             <HiOutlineShare className="text-18 mr-[6px]" />
-            {lang.share}
+            {lang.group.share}
           </div>
         </div>
 
@@ -200,7 +198,7 @@ export const EpubHeader = observer(() => {
             ref={infoPopupButton}
           >
             <DetailIcon className="text-18 mr-[6px]" />
-            内容详情
+            {lang.epub.bookDetail}
           </div>
           {!!state.currentBookTrx && (
             <EpubInfoPopup

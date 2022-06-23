@@ -23,11 +23,11 @@ export const ago = (blockTimeStamp: number, options: { trimmed?: boolean } = {})
   } else if (_hour >= 4) {
     result = format(time, 'HH:mm');
   } else if (_hour >= 1) {
-    result = Math.floor(_hour) + lang.hoursAgo;
+    result = Math.floor(_hour) + lang.ago.hoursAgo;
   } else if (_min >= 1) {
-    result = Math.floor(_min) + lang.minutesAgo;
+    result = Math.floor(_min) + lang.ago.minutesAgo;
   } else {
-    result = lang.justNow;
+    result = lang.ago.justNow;
   }
   return result;
 };

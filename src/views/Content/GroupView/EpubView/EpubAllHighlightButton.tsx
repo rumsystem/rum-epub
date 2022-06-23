@@ -9,7 +9,7 @@ import { Annotation } from 'epubjs/types/annotations';
 import TrashIcon from 'boxicons/svg/regular/bx-trash.svg?fill';
 
 import MarkerIcon from '~/assets/icon_marker.svg?fill';
-import { modifierKeys, splitByHighlightText } from '~/utils';
+import { lang, modifierKeys, splitByHighlightText } from '~/utils';
 import { readerSettingsService } from '~/service';
 
 interface Props {
@@ -105,7 +105,7 @@ export const EpubAllHighlightButton = observer((props: Props) => {
   ), []);
 
   return (<>
-    <Tooltip title="所有标注">
+    <Tooltip title={lang.epubHighlights.all}>
       <div
         className={classNames(
           'flex flex-center cursor-pointer',
@@ -141,7 +141,7 @@ export const EpubAllHighlightButton = observer((props: Props) => {
     >
       <div className="p-4 w-[600px]">
         <div className="text-center font-medium text-18">
-          标注列表
+          {lang.epubHighlights.list}
         </div>
         {!!state.arr.length && (
           <div className="flex flex-center p-4 pb-0">
@@ -149,14 +149,14 @@ export const EpubAllHighlightButton = observer((props: Props) => {
               className="flex-1"
               value={state.search}
               onChange={action((e) => { state.search = e.target.value; })}
-              placeholder="搜索"
+              placeholder={lang.epubHighlights.search}
             />
           </div>
         )}
         <div className="mt-4 overflow-y-auto max-h-[650px] divide-y border-y">
           {!state.arr.length && (
             <div className="flex flex-center p-4">
-              暂无标注
+              {lang.epubHighlights.noItem}
             </div>
           )}
           {state.list.slice((state.currentPage - 1) * PAGE_SIZE, state.currentPage * PAGE_SIZE).map((v, i) => (

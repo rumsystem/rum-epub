@@ -35,7 +35,7 @@ export const AvatarEditor = observer((props: Props) => {
       <div>
         <div>
           <div className="text-center text-18 pt-8 pb-4 font-bold">
-            {lang.moveOrDragImage}
+            {lang.avatar.moveOrDragImage}
           </div>
         </div>
         <div className="px-10 mt-2">
@@ -85,13 +85,13 @@ export const AvatarEditor = observer((props: Props) => {
                 color="inherit"
                 onClick={props.onClose}
               >
-                {lang.back}
+                {lang.operations.back}
               </Button>
               <Button
                 className="px-6"
                 onClick={handleAvatarSubmit}
               >
-                {lang.yes}
+                {lang.operations.confirm}
               </Button>
             </div>
           </div>

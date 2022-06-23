@@ -10,6 +10,7 @@ import {
   Button,
 } from '@mui/material';
 import { DialogItem, dialogService } from './index';
+import { lang } from '~/utils';
 
 export const ConfirmDialogContainer = observer(() => (
   <>
@@ -61,7 +62,7 @@ const ConfirmDialog = observer((props: { item: DialogItem }) => {
             data-test-id={props.item.cancelTestId}
             onClick={handleClose}
           >
-            {props.item.cancel ?? '取消'}
+            {props.item.cancel ?? lang.operations.cancel}
           </Button>
         )}
         <Button
@@ -72,7 +73,7 @@ const ConfirmDialog = observer((props: { item: DialogItem }) => {
           onClick={handleConfirm}
           data-test-id={props.item.confirmTestId}
         >
-          {props.item.confirm ?? '确定'}
+          {props.item.confirm ?? lang.operations.confirm}
         </Button>
       </DialogActions>
       <span className="block pb-2" />

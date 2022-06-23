@@ -57,7 +57,7 @@ const LanguageSelect = observer((props: Props) => {
       onClose={handleClose}
     >
       <div className="bg-white rounded-0 p-8 pb-4 flex flex-col items-center">
-        <div className="text-18 font-bold text-gray-700">{lang.switchLang}</div>
+        <div className="text-18 font-bold text-gray-700">{lang.titleBar.switchLang}</div>
         <FormControl
           className="w-52 mt-10"
           size="small"
@@ -76,7 +76,7 @@ const LanguageSelect = observer((props: Props) => {
           className="mt-12"
           onClick={submit}
         >
-          {lang.yes}
+          {lang.operations.confirm}
         </Button>
       </div>
     </Dialog>

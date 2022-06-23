@@ -59,7 +59,7 @@ const JoinGroup = observer((props: Props) => {
       seed = JSON.parse(state.seedString);
     } catch (e) {
       tooltipService.show({
-        content: lang.seedParsingError,
+        content: lang.joinGroup.seedParsingError,
         type: 'error',
       });
       return;
@@ -81,7 +81,7 @@ const JoinGroup = observer((props: Props) => {
             runInAction(() => { state.done = true; });
             handleClose();
             tooltipService.show({
-              content: lang.existMember,
+              content: lang.joinGroup.existMember,
               type: 'error',
             });
             return;
@@ -145,10 +145,10 @@ const JoinGroup = observer((props: Props) => {
     >
       <div className="bg-white rounded-0 text-center p-8 pb-4">
         <div className="w-72">
-          <div className="text-18 font-bold text-gray-700">{lang.joinGroup}</div>
+          <div className="text-18 font-bold text-gray-700">{lang.joinGroup.joinGroup}</div>
           <TextField
             className="w-full text-12 px-4 pt-5"
-            placeholder={lang.pasteSeedText}
+            placeholder={lang.joinGroup.pasteSeedText}
             size="small"
             multiline
             minRows={6}
@@ -166,11 +166,11 @@ const JoinGroup = observer((props: Props) => {
             <Tooltip
               disableHoverListener={!!state.seedString}
               placement="top"
-              title={lang.selectSeedToJoin}
+              title={lang.joinGroup.selectSeedToJoin}
               arrow
             >
               <div className="flex items-center cursor-pointer font-bold text-gray-500 opacity-90" onClick={handleSelectFile}>
-                {lang.selectSeedFile}
+                {lang.joinGroup.selectSeedFile}
                 <GoChevronRight className="text-12 opacity-80" />
               </div>
             </Tooltip>
@@ -184,7 +184,7 @@ const JoinGroup = observer((props: Props) => {
               disabled={!state.seedString}
               onClick={submit}
             >
-              {lang.yes}
+              {lang.operations.confirm}
             </Button>
             <div
               className="mt-2 pt-[2px] text-gray-500 hover:text-black text-12 cursor-pointer text-center opacity-70"
@@ -196,7 +196,7 @@ const JoinGroup = observer((props: Props) => {
                 }
               }}
             >
-              {lang.availablePublicGroups}
+              {lang.joinGroup.availablePublicGroups}
             </div>
           </div>
         </div>

@@ -6,7 +6,7 @@ import { NavItem } from 'epubjs';
 import { Divider, MenuItem, Popover, Tooltip } from '@mui/material';
 import ListUlIcon from 'boxicons/svg/regular/bx-list-ul.svg?fill-icon';
 import { readerSettingsService } from '~/service';
-import { modifierKeys } from '~/utils';
+import { lang, modifierKeys } from '~/utils';
 
 interface Props {
   className?: string
@@ -62,7 +62,7 @@ export const EpubChaptersButton = observer((props: Props) => {
   }, []);
 
   return (<>
-    <Tooltip title="章节选择">
+    <Tooltip title={lang.epub.chapterSelect}>
       <div
         className={classNames(
           'flex flex-center cursor-pointer',
@@ -104,7 +104,7 @@ export const EpubChaptersButton = observer((props: Props) => {
         style={{ maxHeight: `${Math.max(300, window.innerHeight - 300)}px` }}
       >
         <div className="flex flex-center text-20 text-gray-70 py-4">
-          目录
+          {lang.epub.toc}
         </div>
         {!!props.chapters.length && (
           <Divider className="!my-0 mx-4" />
@@ -134,7 +134,7 @@ const EpubChapters = (props: EpubChaptersProps) => (
   <div className={classNames(props.className)}>
     {!props.chapters.length && !props.nonRoot && (
       <MenuItem className="flex flex-center">
-        暂无章节
+        {lang.epub.noChapter}
       </MenuItem>
     )}
     {props.chapters.map((v) => {

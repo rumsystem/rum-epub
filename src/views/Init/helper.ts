@@ -106,7 +106,7 @@ export const selectRumFolder = async (type: 'new' | 'exist'): Promise<E.Either<s
       }
     }
 
-    return E.left(noKeystoreFolder ? lang.keyStoreNotExist : lang.nodeDataNotExist);
+    return E.left(noKeystoreFolder ? lang.node.keyStoreNotExist : lang.node.nodeDataNotExist);
   }
 
   return E.left(lang.somethingWrong);

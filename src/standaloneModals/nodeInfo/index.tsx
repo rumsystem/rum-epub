@@ -58,8 +58,8 @@ const MyNodeInfo = observer((props: Props) => {
 
   const handleExitNode = async () => {
     const result = await dialogService.open({
-      content: lang.confirmToExitNode,
-      confirm: lang.yes,
+      content: lang.node.confirmToExitNode,
+      confirm: lang.operations.confirm,
       danger: true,
     });
 
@@ -77,7 +77,7 @@ const MyNodeInfo = observer((props: Props) => {
 
     runInAction(() => {
       tooltipService.show({
-        content: '正在退出节点...',
+        content: lang.node.exitingNode,
         type: 'default',
         timeout: 10000,
       });
@@ -97,7 +97,7 @@ const MyNodeInfo = observer((props: Props) => {
       <div className="bg-white rounded-0 p-8">
         <div className="w-70">
           <div className="text-18 font-bold text-gray-700 text-center">
-            {lang.nodeInfo}
+            {lang.node.nodeInfo}
           </div>
           <div className="mt-6">
             <div className="text-gray-500 font-bold opacity-90">ID</div>
@@ -125,7 +125,7 @@ const MyNodeInfo = observer((props: Props) => {
 
           {nodeService.state.nodeInfoConfig?.type === NODE_TYPE.INTERNAL && (
             <div className="mt-6">
-              <div className="text-gray-500 font-bold opacity-90">{lang.storageDir}</div>
+              <div className="text-gray-500 font-bold opacity-90">{lang.node.storageDir}</div>
               <div className="mt-2 text-12 text-gray-500 bg-gray-100 border border-gray-200 rounded-0 py-2 px-4">
                 <Tooltip
                   placement="top"
@@ -141,14 +141,14 @@ const MyNodeInfo = observer((props: Props) => {
           )}
 
           <div className="mt-6">
-            <div className="text-gray-500 font-bold opacity-90">{lang.detail}</div>
+            <div className="text-gray-500 font-bold opacity-90">{lang.node.detail}</div>
             <div className="mt-2 flex items-center justify-center text-12 text-gray-500 bg-gray-100 border border-gray-200 rounded-0 py-2 px-4">
               <Tooltip
                 placement="top"
                 title={`quorum latest commit: ${nodeService.state.nodeInfo.node_version.split(' - ')[1]}`}
                 arrow
               >
-                <div>{lang.version} {process.env.IS_ELECTRON ? app.getVersion() : ''}</div>
+                <div>{lang.node.version} {process.env.IS_ELECTRON ? app.getVersion() : ''}</div>
               </Tooltip>
               <div className="px-4">|</div>
 
@@ -156,7 +156,7 @@ const MyNodeInfo = observer((props: Props) => {
                 className="flex items-center hover:font-bold cursor-pointer"
                 onClick={action(() => { state.showNodeParamsModal = true; })}
               >
-                {lang.nodeParams}
+                {lang.node.nodeParams}
               </div>
               <div className="px-4">|</div>
 
@@ -164,14 +164,14 @@ const MyNodeInfo = observer((props: Props) => {
                 className="flex items-center hover:font-bold cursor-pointer"
                 onClick={action(() => { state.showNetworkInfoModal = true; })}
               >
-                {lang.networkStatus}
+                {lang.node.networkStatus}
               </div>
             </div>
           </div>
 
           <div className="mt-8">
             <Button fullWidth color="red" outline onClick={handleExitNode}>
-              {lang.exitNode}
+              {lang.node.exitNode}
             </Button>
           </div>
         </div>

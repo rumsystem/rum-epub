@@ -1,6 +1,7 @@
 import React from 'react';
 import { Loading } from '~/components/Loading';
 import { Tooltip } from '@mui/material';
+import { lang } from '~/utils';
 
 interface IProps {
   url: string
@@ -31,7 +32,7 @@ export const Avatar = (props: IProps) => {
         {props.loading && (
           <Tooltip
             placement={size > 50 ? 'top' : 'bottom'}
-            title="正在同步个人资料"
+            title={lang.profile.syncingProfile}
             arrow
           >
             <div className="absolute top-[-4px] right-[-7px] rounded-full bg-black bg-opacity-70 flex flex-center p-[3px] z-10">

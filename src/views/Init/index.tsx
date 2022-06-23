@@ -344,10 +344,10 @@ export const Init = observer((props: Props) => {
               onClick={action(() => { resetInternalForm(); state.step = 'select-internal-new'; })}
             >
               <div className="text-18 font-medium">
-                创建节点
+                {lang.init.signupNode}
               </div>
               <div className="flex flex-center text-gray-9c text-16">
-                第一次使用
+                {lang.init.signupNodeTip}
                 <ChevronRight />
               </div>
             </div>
@@ -356,10 +356,10 @@ export const Init = observer((props: Props) => {
               onClick={action(() => { resetInternalForm(); state.step = 'select-internal-exist'; })}
             >
               <div className="text-18 font-medium">
-                登录节点
+                {lang.init.loginNode}
               </div>
               <div className="flex flex-center text-gray-9c text-16">
-                已经拥有节点
+                {lang.init.loginNodeTip}
                 <ChevronRight />
               </div>
             </div>
@@ -368,10 +368,10 @@ export const Init = observer((props: Props) => {
               onClick={action(() => { resetExternalForm(); state.step = 'external-select'; })}
             >
               <div className="text-18 font-medium">
-                外部节点
+                {lang.init.externalNode}
               </div>
               <div className="flex flex-center text-gray-9c text-16">
-                连接到公开可访问的节点
+                {lang.init.externalNodeTip}
                 <ChevronRight />
               </div>
             </div>
@@ -381,13 +381,13 @@ export const Init = observer((props: Props) => {
               className="flex items-center gap-x-4 py-2 bg-transparent border border-solid border-white/80 rounded-none text-16"
             >
               <img src={IconImport} alt="" />
-              节点导入
+              {lang.init.importNode}
             </Button>
             <Button
               className="flex items-center gap-x-4 py-2 bg-transparent border border-solid border-white/80 rounded-none text-16"
             >
               <img src={IconExport} alt="" />
-              节点导出
+              {lang.init.exportNode}
             </Button>
           </div>
         </div>
@@ -401,24 +401,18 @@ export const Init = observer((props: Props) => {
             <ArrowBack />
           </IconButton>
           <div className="text-20">
-            {state.step === 'select-internal-new' && '创建节点'}
-            {state.step === 'select-internal-exist' && '登录节点'}
+            {state.step === 'select-internal-new' && lang.init.signupNode}
+            {state.step === 'select-internal-exist' && lang.init.loginNode}
           </div>
           <div className="mt-4">
             {state.step === 'select-internal-new' && (
               <div>
-                请选择一个文件夹来储存节点数据
-                这份数据只是属于你
-                我们不会储存数据，也无法帮你找回
-                请务必妥善保管
+                {lang.init.storagePathTip.join(' ')}
               </div>
             )}
             {state.step === 'select-internal-exist' && (
               <div>
-                创建节点时您选择了一个文件夹
-                里面保存了您的节点信息
-                现在请重新选中该文件夹
-                以登录该节点
+                {lang.init.storagePathLoginTip.join(' ')}
               </div>
             )}
           </div>
@@ -442,7 +436,7 @@ export const Init = observer((props: Props) => {
                   className="rounded-none border border-solid border-l-0 border-gray-9c"
                   onClick={handleSelectFolder}
                 >
-                  编辑
+                  {lang.operations.edit}
                 </Button>
               </div>
             )}
@@ -451,14 +445,14 @@ export const Init = observer((props: Props) => {
                 className="mt-4 px-6 rounded-none"
                 onClick={handleSelectFolder}
               >
-                选择文件夹
+                {lang.init.selectFolder}
               </Button>
             )}
           </div>
           <div className="flex-col items-center mt-8">
             <div className="text-16">
-              {state.step === 'select-internal-new' && '创建密码'}
-              {state.step === 'select-internal-exist' && '输入密码'}
+              {state.step === 'select-internal-new' && lang.init.createPassword}
+              {state.step === 'select-internal-exist' && lang.init.inputPassword}
             </div>
 
             <div className="flex">
@@ -490,7 +484,7 @@ export const Init = observer((props: Props) => {
                   onChange={action((_, v) => { state.internal.savePassword = v; })}
                 />
               )}
-              label={<span className="text-14">记住密码</span>}
+              label={<span className="text-14">{lang.init.savePassword}</span>}
             />
           </div>
 
@@ -501,8 +495,8 @@ export const Init = observer((props: Props) => {
             )}
             onClick={handleStartInternalNode}
           >
-            {state.step === 'select-internal-new' && '创建节点'}
-            {state.step === 'select-internal-exist' && '登录节点'}
+            {state.step === 'select-internal-new' && lang.init.signupNode}
+            {state.step === 'select-internal-exist' && lang.init.loginNode}
           </Button>
         </div>
       )}
@@ -520,11 +514,11 @@ export const Init = observer((props: Props) => {
                 className="mt-4 px-6 rounded-none"
                 onClick={() => handleSwitchToExternalInput()}
               >
-                使用新的配置
+                {lang.init.useNewConfig}
               </Button>
               {!!nodeService.state.nodeInfoConfig?.historyExtenralNodes.length && (
                 <div className="text-16 my-4 text-white/80">
-                  或者选择最近使用过的配置
+                  {lang.init.selectExistedConfig}
                 </div>
               )}
               <div className="self-stretch">
@@ -559,22 +553,22 @@ export const Init = observer((props: Props) => {
                   {
                     value: state.external.host,
                     onChange: action((e: React.ChangeEvent<HTMLInputElement>) => { state.external.host = e.target.value; }),
-                    placeholder: '127.0.0.1 （可选）',
+                    placeholder: lang.init.hostPlaceHolder,
                   },
                   {
                     value: state.external.port,
                     onChange: action((e: React.ChangeEvent<HTMLInputElement>) => { state.external.port = e.target.value; }),
-                    placeholder: '端口',
+                    placeholder: lang.init.portPlaceHolder,
                   },
                   {
                     value: state.external.jwt,
                     onChange: action((e: React.ChangeEvent<HTMLInputElement>) => { state.external.jwt = e.target.value; }),
-                    placeholder: 'jwt （可选）',
+                    placeholder: lang.init.jwtPlaceHolder,
                   },
                   {
                     value: state.external.cert,
                     onChange: action((e: React.ChangeEvent<HTMLInputElement>) => { state.external.cert = e.target.value; }),
-                    placeholder: 'TLS 证书',
+                    placeholder: lang.init.tlsPlaceHolder,
                   },
                 ].map((v, i) => (
                   <input
@@ -594,7 +588,7 @@ export const Init = observer((props: Props) => {
                 )}
                 onClick={handleStartExternalNode}
               >
-                连接外部节点
+                {lang.init.connectExternalNode}
               </Button>
             </div>
           )}
@@ -607,18 +601,18 @@ export const Init = observer((props: Props) => {
             size={28}
           />
           <span className="text-white/80 mt-4 text-16">
-            正在启动...
+            {lang.init.starting}
             {state.startingTooLong && (
               <span>
                 <br />
-                启动太久，你也可以试试
+                {lang.init.startingTooLong}
                 <span
                   className="text-black cursor-pointer"
                   onClick={() => {
                     window.location.reload();
                   }}
                 >
-                  重新加载
+                  {lang.node.refresh}
                 </span>
                 {lang.or}
                 <span
@@ -628,7 +622,7 @@ export const Init = observer((props: Props) => {
                     window.location.reload();
                   }}
                 >
-                  {lang.exitNode}
+                  {lang.node.exitNode}
                 </span>
               </span>
             )}
@@ -639,12 +633,12 @@ export const Init = observer((props: Props) => {
       {state.step === 'failed' && (
         <div className="flex-col flex-center text-white/80 mt-4 text-16">
           <div>
-            {state.startFailed === 'internal-password' && '启动失败，密码错误...'}
-            {state.startFailed === 'internal-unknown' && '启动失败...'}
-            {state.startFailed === 'external-unknown' && '连接外部节点失败...'}
+            {state.startFailed === 'internal-password' && lang.init.wrongPassword}
+            {state.startFailed === 'internal-unknown' && lang.init.startFailed}
+            {state.startFailed === 'external-unknown' && lang.init.connectExternalNodeFailed}
           </div>
           <div className="">
-            你可以试试
+            {lang.init.youCanTry}
             <span>
               <span
                 className="text-white font-bold cursor-pointer"
@@ -652,7 +646,7 @@ export const Init = observer((props: Props) => {
                   window.location.reload();
                 }}
               >
-                &nbsp;重新加载&nbsp;
+                &nbsp;{lang.node.refresh}&nbsp;
               </span>
               {lang.or}
               <span
@@ -662,7 +656,7 @@ export const Init = observer((props: Props) => {
                   window.location.reload();
                 }}
               >
-                &nbsp;{lang.exitNode}&nbsp;
+                &nbsp;{lang.node.exitNode}&nbsp;
               </span>
             </span>
           </div>

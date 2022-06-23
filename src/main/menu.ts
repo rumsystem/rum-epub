@@ -7,74 +7,14 @@ import {
 } from 'electron';
 import { download } from 'electron-dl';
 import { format } from 'date-fns';
+import { mainLang } from './lang';
 
 export class MenuBuilder {
   public language = 'cn' as 'cn' | 'en';
   private mainWindow: BrowserWindow;
   private prepareQuit: () => unknown;
-  public cn = {
-    service: '服务',
-    hide: '隐藏',
-    hideOther: '隐藏其他',
-    showAll: '显示所有',
-    quit: '退出',
-
-    edit: '编辑',
-    undo: '撤销',
-    redo: '重做',
-    cut: '剪切',
-    copy: '复制',
-    paste: '粘贴',
-    saveImage: '将图片另存为(&v)…',
-    selectAll: '全选',
-
-    view: '视图',
-    reload: '重新加载此页',
-    devtools: '切换开发者工具',
-
-    window: '窗口',
-    min: '最小化',
-    close: '关闭',
-    front: '前置全部窗口',
-
-    debug: '调试',
-    exportLogs: '导出调试包',
-  };
-
-  public en = {
-    service: 'Service',
-    hide: 'Hide',
-    hideOther: 'Hide Other',
-    showAll: 'Show All',
-    quit: 'Quit',
-
-    edit: 'Edit',
-    undo: 'Undo',
-    redo: 'Redo',
-    cut: 'Cut',
-    copy: 'Copy',
-    paste: 'Paste',
-    saveImage: 'Sa&ve Image As…',
-    selectAll: 'Select All',
-
-    view: 'View',
-    reload: 'Reload App',
-    devtools: 'Toggle Devtools',
-
-    window: 'window',
-    min: 'Minimize',
-    close: 'Close',
-    front: 'Arrange In Front',
-
-    debug: 'Debug',
-    exportLogs: 'Export Logs',
-  };
 
   dispose = null;
-
-  get lang() {
-    return this[this.language];
-  }
 
   constructor(params: {
     win: BrowserWindow
@@ -82,8 +22,8 @@ export class MenuBuilder {
   }) {
     this.mainWindow = params.win;
     this.prepareQuit = params.prepareQuit;
-    ipcMain.on('change-language', (_, lang) => {
-      this.language = lang;
+
+    mainLang.onChange(() => {
       this.rebuildMenu();
     });
   }
@@ -129,7 +69,7 @@ export class MenuBuilder {
         },
         {
           id: 'cut',
-          label: this.lang.cut,
+          label: mainLang.lang.cut,
           accelerator: 'CommandOrControl+X',
           enabled: props.editFlags.canCut,
           visible: props.isEditable,
@@ -145,7 +85,7 @@ export class MenuBuilder {
         },
         {
           id: 'copy',
-          label: this.lang.copy,
+          label: mainLang.lang.copy,
           accelerator: 'CommandOrControl+C',
           enabled: props.editFlags.canCopy,
           visible: props.isEditable || hasText,
@@ -162,7 +102,7 @@ export class MenuBuilder {
         },
         {
           id: 'paste',
-          label: this.lang.paste,
+          label: mainLang.lang.paste,
           accelerator: 'CommandOrControl+V',
           enabled: props.editFlags.canPaste,
           visible: props.isEditable,
@@ -180,7 +120,7 @@ export class MenuBuilder {
         },
         {
           id: 'saveImageAs',
-          label: this.lang.saveImage,
+          label: mainLang.lang.saveImage,
           visible: props.mediaType === 'image',
           click: () => {
             download(
@@ -203,22 +143,22 @@ export class MenuBuilder {
     const subMenuAbout = {
       label: 'Rum Epub',
       submenu: [
-        { label: this.lang.service, submenu: [] },
+        { label: mainLang.lang.service, submenu: [] },
         { type: 'separator' },
         {
-          label: this.lang.hide,
+          label: mainLang.lang.hide,
           accelerator: 'Command+H',
           selector: 'hide:',
         },
         {
-          label: this.lang.hideOther,
+          label: mainLang.lang.hideOther,
           accelerator: 'Command+Shift+H',
           selector: 'hideOtherApplications:',
         },
-        { label: this.lang.showAll, selector: 'unhideAllApplications:' },
+        { label: mainLang.lang.showAll, selector: 'unhideAllApplications:' },
         { type: 'separator' },
         {
-          label: this.lang.quit,
+          label: mainLang.lang.quit,
           accelerator: 'Command+Q',
           click: () => {
             this.prepareQuit();
@@ -228,33 +168,33 @@ export class MenuBuilder {
       ],
     };
     const subMenuEdit = {
-      label: this.lang.edit,
+      label: mainLang.lang.edit,
       submenu: [
-        { label: this.lang.undo, accelerator: 'Command+Z', selector: 'undo:' },
-        { label: this.lang.redo, accelerator: 'Shift+Command+Z', selector: 'redo:' },
+        { label: mainLang.lang.undo, accelerator: 'Command+Z', selector: 'undo:' },
+        { label: mainLang.lang.redo, accelerator: 'Shift+Command+Z', selector: 'redo:' },
         { type: 'separator' },
-        { label: this.lang.cut, accelerator: 'Command+X', selector: 'cut:' },
-        { label: this.lang.copy, accelerator: 'Command+C', selector: 'copy:' },
-        { label: this.lang.paste, accelerator: 'Command+V', selector: 'paste:' },
+        { label: mainLang.lang.cut, accelerator: 'Command+X', selector: 'cut:' },
+        { label: mainLang.lang.copy, accelerator: 'Command+C', selector: 'copy:' },
+        { label: mainLang.lang.paste, accelerator: 'Command+V', selector: 'paste:' },
         {
-          label: this.lang.selectAll,
+          label: mainLang.lang.selectAll,
           accelerator: 'Command+A',
           selector: 'selectAll:',
         },
       ],
     };
     const subMenuView = {
-      label: this.lang.view,
+      label: mainLang.lang.view,
       submenu: [
         {
-          label: this.lang.reload,
+          label: mainLang.lang.reload,
           accelerator: 'Command+R',
           click: () => {
             this.mainWindow.webContents.reload();
           },
         },
         {
-          label: this.lang.devtools,
+          label: mainLang.lang.devtools,
           accelerator: 'Alt+Command+I',
           click: () => {
             this.mainWindow.webContents.toggleDevTools();
@@ -263,24 +203,24 @@ export class MenuBuilder {
       ],
     };
     const subMenuWindow = {
-      label: this.lang.window,
+      label: mainLang.lang.window,
       submenu: [
         {
-          label: this.lang.min,
+          label: mainLang.lang.min,
           accelerator: 'Command+M',
           selector: 'performMiniaturize:',
         },
-        { label: this.lang.close, accelerator: 'Command+W', selector: 'performClose:' },
+        { label: mainLang.lang.close, accelerator: 'Command+W', selector: 'performClose:' },
         { type: 'separator' },
-        { label: this.lang.front, selector: 'arrangeInFront:' },
+        { label: mainLang.lang.front, selector: 'arrangeInFront:' },
       ],
     };
 
     const subMenuDebug = {
-      label: this.lang.debug,
+      label: mainLang.lang.debug,
       submenu: [
         {
-          label: this.lang.exportLogs,
+          label: mainLang.lang.exportLogs,
           click: () => {
             this.mainWindow.webContents.send('export-logs');
           },

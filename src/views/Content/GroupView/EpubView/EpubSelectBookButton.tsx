@@ -11,6 +11,7 @@ import BookOpenIcon from 'boxicons/svg/regular/bx-book-open.svg?fill';
 import BookIcon from '~/assets/icon_book.svg?fill-icon';
 import { BookCoverImgTooltip } from '~/components';
 import { GroupBookItem, epubService, readerSettingsService } from '~/service';
+import { lang } from '~/utils';
 
 interface Props {
   className?: string
@@ -85,7 +86,7 @@ export const EpubSelectBookButton = observer((props: Props) => {
         )}
         onClick={handleOpen}
       >
-        <span className="mr-2">切换书籍</span>
+        <span className="mr-2">{lang.epub.changeBook}</span>
         <ArrowDropDown />
       </div>
     </div>
@@ -109,7 +110,7 @@ export const EpubSelectBookButton = observer((props: Props) => {
         <div className="overflow-y-auto max-h-[400px]">
           {!state.books.length && (
             <div className="flex flex-center py-2">
-              暂无书籍
+              {lang.epub.noBook}
             </div>
           )}
           {state.books.map((v, i) => (
@@ -127,10 +128,10 @@ export const EpubSelectBookButton = observer((props: Props) => {
                     {v.fileInfo.title}
                   </div>
                   <div className="text-gray-af">
-                    上传于：{format(v.time, 'yyyy-MM-dd hh:mm:ss')}
+                    {lang.epub.uploadedAt(format(v.time, 'yyyy-MM-dd hh:mm:ss'))}
                   </div>
                 </div>
-                <Tooltip title="当前阅读">
+                <Tooltip title={lang.epub.currentReading}>
                   <div
                     className={classNames(
                       'px-2',

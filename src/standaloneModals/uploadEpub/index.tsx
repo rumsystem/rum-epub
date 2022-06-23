@@ -15,6 +15,7 @@ import FileBlankIcon from 'boxicons/svg/regular/bx-file-blank.svg?fill-icon';
 import { Dialog } from '~/components';
 import { ThemeRoot } from '~/utils/theme';
 import { epubService, nodeService, tooltipService, dialogService } from '~/service';
+import { lang } from '~/utils';
 
 export const uploadEpub = async () => new Promise<void>((rs) => {
   const div = document.createElement('div');
@@ -114,7 +115,7 @@ const UploadEpub = observer((props: Props) => {
       setFile(fileName, fileBuffer);
     } catch (e) {
       tooltipService.show({
-        content: '读取文件错误',
+        content: lang.epubUpload.readFailed,
         type: 'error',
       });
     }
@@ -128,7 +129,7 @@ const UploadEpub = observer((props: Props) => {
     const result = await epubService.upload.selectEpub(state.groupId, fileName, buffer);
     if (E.isLeft(result)) {
       tooltipService.show({
-        content: '解析文件失败！',
+        content: lang.epubUpload.parseFailed,
         type: 'error',
       });
       return;
@@ -141,15 +142,11 @@ const UploadEpub = observer((props: Props) => {
           const result = await dialogService.open({
             content: (
               <div>
-                <p>
-                  当前种子网络已经上传过
-                </p>
-                <p className="my-1">
-                  {book.fileInfo.title}
-                </p>
-                <p>
-                  这本书了，还需要重新上传一遍吗？
-                </p>
+                {lang.epubUpload.alreadyUploaded(
+                  <div className="my-1">
+                    {book.fileInfo.title}
+                  </div>,
+                )}
               </div>
             ),
           });
@@ -162,7 +159,7 @@ const UploadEpub = observer((props: Props) => {
     } catch (e) {
       console.error(e);
       tooltipService.show({
-        content: '文件读取错误',
+        content: lang.epubUpload.readFailed,
         type: 'error',
       });
     }
@@ -207,11 +204,11 @@ const UploadEpub = observer((props: Props) => {
     >
       <div className="p-8">
         <DialogTitle className="text-center font-medium text-24">
-          上传Epub文件
+          {lang.epubUpload.uploadEpub}
         </DialogTitle>
 
         <div className="text-center mb-4">
-          上传到种子网络 &quot;{state.group?.group_name}&quot;
+          {lang.epubUpload.uploadToSeedNet(state.group?.group_name ?? '')}
         </div>
 
         {!state.uploadState.epub && (
@@ -225,13 +222,13 @@ const UploadEpub = observer((props: Props) => {
               onDragOver={(e) => e.preventDefault()}
             >
               <span className="text-18 text-gray-9b">
-                将Epub文件拖拽到此处
+                {lang.epubUpload.dragEpubHere}
               </span>
             </div>
 
             <div className="flex items-center gap-x-12 mt-8">
               <div className="h-px bg-gray-c4 flex-1" />
-              <div className="text-18 text-gray-9b">或者</div>
+              <div className="text-18 text-gray-9b">{lang.epubUpload.or}</div>
               <div className="h-px bg-gray-c4 flex-1" />
             </div>
 
@@ -240,7 +237,7 @@ const UploadEpub = observer((props: Props) => {
                 className="text-20 px-12 rounded-full"
                 onClick={handleSelectFile}
               >
-                选择本地Epub文件
+                {lang.epubUpload.selectEpubFile}
               </Button>
             </div>
           </div>
@@ -257,7 +254,7 @@ const UploadEpub = observer((props: Props) => {
               onDragOver={(e) => e.preventDefault()}
             >
               <div className="text-18 text-gray-9b relative z-10">
-                已选择：
+                {lang.epubUpload.selected}
               </div>
               <div className="text-18 text-gray-4a font-bold relative z-10">
                 {state.uploadState.epub.fileInfo.name}
@@ -304,7 +301,7 @@ const UploadEpub = observer((props: Props) => {
 
             {!state.uploadState.uploading && state.uploadState.uploadDone && (
               <div className="flex flex-center mt-8 text-gray-4a text-16">
-                上传成功！
+                {lang.epubUpload.uploadSuccess}
               </div>
             )}
 
@@ -315,13 +312,13 @@ const UploadEpub = observer((props: Props) => {
                   color="inherit"
                   onClick={handleReset}
                 >
-                  返回
+                  {lang.operations.back}
                 </Button>
                 <Button
                   className="text-16 px-12 rounded-full"
                   onClick={handleConfirmUpload}
                 >
-                  确认上传
+                  {lang.epubUpload.confirmUpload}
                 </Button>
               </>)}
               {state.uploadState.uploading && (
@@ -330,7 +327,7 @@ const UploadEpub = observer((props: Props) => {
                   color="inherit"
                   onClick={handleClose}
                 >
-                  关闭窗口
+                  {lang.operations.closeWindow}
                 </Button>
               )}
               {!state.uploadState.uploading && state.uploadState.uploadDone && (<>
@@ -339,7 +336,7 @@ const UploadEpub = observer((props: Props) => {
                   color="inherit"
                   onClick={handleReset}
                 >
-                  返回
+                  {lang.operations.back}
                 </Button>
 
                 <Button
@@ -347,7 +344,7 @@ const UploadEpub = observer((props: Props) => {
                   color="primary"
                   onClick={() => { handleClose(); window.setTimeout(handleReset, 300); }}
                 >
-                  关闭窗口
+                  {lang.operations.closeWindow}
                 </Button>
               </>)}
             </div>

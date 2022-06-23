@@ -27,10 +27,11 @@ const createLangLoader = <T>(langData: LangData<T>) => {
 };
 
 const switchLang = action((lang: AllLanguages) => {
+  const oldLang = state.lang;
   state.lang = lang;
   localStorage.setItem(STORAGE_KEY, lang);
 
-  if (process.env.IS_ELECTRON) {
+  if (process.env.IS_ELECTRON && oldLang !== lang) {
     ipcRenderer.send('change-language', lang);
   }
 });

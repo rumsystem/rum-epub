@@ -34,19 +34,19 @@ export const TitleBar = observer((props: Props) => {
       text: 'Rum Epub',
       children: [
         {
-          text: '关于 Rum Epub',
+          text: lang.titleBar.about,
           action: () => {
             // TODO: 关于页面
           },
         },
         {
-          text: lang.checkForUpdate,
+          text: lang.titleBar.checkForUpdate,
           action: () => {
             updateService.checkUpdate();
           },
         },
         {
-          text: lang.manual,
+          text: lang.titleBar.manual,
           action: () => {
             if (process.env.IS_ELECTRON) {
               shell.openExternal('https://docs.prsdev.club/#/rum-app/');
@@ -56,7 +56,7 @@ export const TitleBar = observer((props: Props) => {
           },
         },
         {
-          text: lang.report,
+          text: lang.titleBar.report,
           action: () => {
             if (process.env.IS_ELECTRON) {
               shell.openExternal('https://github.com/noe132/rum-epub/issues');
@@ -66,7 +66,7 @@ export const TitleBar = observer((props: Props) => {
           },
         },
         {
-          text: '退出',
+          text: lang.titleBar.exit,
           action: () => {
             ipcRenderer.send('prepare-quit');
             app.quit();
@@ -75,25 +75,25 @@ export const TitleBar = observer((props: Props) => {
       ],
     },
     {
-      text: lang.dev,
+      text: lang.titleBar.dev,
       children: [
         {
-          text: lang.devtools,
+          text: lang.titleBar.devtools,
           action: () => {
             getCurrentWindow().webContents.toggleDevTools();
           },
         },
         {
-          text: lang.exportLogs,
+          text: lang.titleBar.exportLogs,
           action: () => {
             exportLog();
           },
         },
         {
-          text: lang.clearCache,
+          text: lang.titleBar.clearCache,
           action: async () => {
             const result = await dialogService.open({
-              content: lang.confirmToClearCacheData,
+              content: lang.titleBar.confirmToClearCacheData,
             });
             if (result === 'confirm') {
               dbService.db.delete();
@@ -102,7 +102,7 @@ export const TitleBar = observer((props: Props) => {
           },
         },
         {
-          text: lang.relaunch,
+          text: lang.titleBar.relaunch,
           action: () => {
             ipcRenderer.send('prepare-quit');
             app.relaunch();
@@ -125,7 +125,7 @@ export const TitleBar = observer((props: Props) => {
     !!nodeService.state.pollingStarted && {
       text: (
         <div className="text-bright-orange">
-          管理我的内容库
+          {lang.titleBar.myLib}
         </div>
       ),
       action: () => myLibrary(),
@@ -145,25 +145,25 @@ export const TitleBar = observer((props: Props) => {
       ),
       children: [
         {
-          text: '设置个人信息',
+          text: lang.titleBar.editProfile,
           action: () => editProfile(),
         },
         {
-          text: '关联钱包',
+          text: lang.titleBar.editWallet,
           action: () => editProfile(),
         },
         !!nodeService.state.nodeInfo.node_publickey && {
-          text: lang.nodeAndNetwork,
+          text: lang.titleBar.nodeAndNetwork,
           action: () => {
             nodeInfoModal();
           },
         },
         {
-          text: '导出密钥',
+          text: lang.titleBar.exportKey,
           action: () => {},
         },
         {
-          text: '导入密钥',
+          text: lang.titleBar.importKey,
           action: () => {},
         },
       ].filter(<T extends unknown>(v: T | false): v is T => !!v),
@@ -172,7 +172,7 @@ export const TitleBar = observer((props: Props) => {
       text: (
         <Tooltip
           placement="bottom"
-          title={lang.switchLang}
+          title={lang.titleBar.switchLang}
         >
           <img src={IconLangLocal} alt="" />
         </Tooltip>
@@ -238,7 +238,7 @@ export const TitleBar = observer((props: Props) => {
             }
           }}
         >
-          {lang.refresh}
+          {lang.node.refresh}
         </button>
         {/* {nodeStore.connected && nodeStore.mode === 'EXTERNAL' && (
           <div className="mr-6 cursor-pointer flex items-center text-white opacity-70 text-12 w-[auto] mt-[2px]">
