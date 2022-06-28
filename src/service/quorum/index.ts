@@ -17,6 +17,7 @@ const state = observable({
   port: 0,
   jwt: '',
   cert: '',
+  storagePath: '',
 });
 
 const ping = async (retries = 60) => {
@@ -92,6 +93,7 @@ const internal = {
       state.up = status.data.up;
       state.port = status.data.port;
       state.host = '127.0.0.1';
+      state.storagePath = status.data.storagePath;
     });
   },
 };

@@ -91,7 +91,6 @@ class MainLang {
   }
 
   public onChange(fn: () => unknown) {
-    console.log('change');
     this.listeners.push(fn);
   }
 }

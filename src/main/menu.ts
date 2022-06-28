@@ -2,7 +2,6 @@ import {
   BrowserWindow,
   app,
   Menu,
-  ipcMain,
   clipboard,
 } from 'electron';
 import { download } from 'electron-dl';

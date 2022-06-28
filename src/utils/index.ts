@@ -176,3 +176,10 @@ export const sleep = (duration: number) => new Promise((resolve: any) => {
     resolve();
   }, duration);
 });
+
+export const formatPath = (path: string, options: { truncateLength: number }) => {
+  const _path = window.navigator.userAgent.includes('Windows NT') ? path.replaceAll('/', '\\') : path;
+  return _path.length > options.truncateLength
+    ? `...${_path.slice(-options.truncateLength)}`
+    : _path;
+};

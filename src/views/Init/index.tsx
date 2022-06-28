@@ -22,6 +22,7 @@ import {
 } from '~/service';
 import { lang } from '~/utils';
 import { selectRumFolder } from './helper';
+import { exportKeyData, importKeyData } from '~/standaloneModals';
 
 interface Props {
   onInitSuccess: () => unknown
@@ -379,12 +380,14 @@ export const Init = observer((props: Props) => {
           <div className="flex-col gap-y-20 flex-center border-l border-gray-70 py-12 pl-16">
             <Button
               className="flex items-center gap-x-4 py-2 bg-transparent border border-solid border-white/80 rounded-none text-16"
+              onClick={importKeyData}
             >
               <img src={IconImport} alt="" />
               {lang.init.importNode}
             </Button>
             <Button
               className="flex items-center gap-x-4 py-2 bg-transparent border border-solid border-white/80 rounded-none text-16"
+              onClick={exportKeyData}
             >
               <img src={IconExport} alt="" />
               {lang.init.exportNode}

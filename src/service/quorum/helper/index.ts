@@ -32,6 +32,12 @@ export interface ImportKeyParam {
   password: string
 }
 
+export interface ExportKeyParam {
+  backupPath: string
+  storagePath: string
+  password: string
+}
+
 export const up = (param: UpParam) =>
   sendRequest<ProcessStatus>({
     action: 'up',
@@ -59,8 +65,26 @@ export const setCert = async (cert: string) => {
   await sleep(4000);
 };
 
+export const exportKey = (param: ExportKeyParam) =>
+  sendRequest<string>({
+    action: 'exportKey',
+    param,
+  });
+
+export const exportKeyWasm = (param: ExportKeyParam) =>
+  sendRequest<string>({
+    action: 'exportKeyWasm',
+    param,
+  });
+
 export const importKey = (param: ImportKeyParam) =>
   sendRequest<string>({
     action: 'importKey',
+    param,
+  });
+
+export const importKeyWasm = (param: ImportKeyParam) =>
+  sendRequest<string>({
+    action: 'importKeyWasm',
     param,
   });

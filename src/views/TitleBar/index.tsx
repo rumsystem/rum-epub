@@ -16,13 +16,18 @@ import {
   updateService,
   profileService,
 } from '~/service';
-import { nodeInfoModal, editProfile } from '~/standaloneModals';
+import {
+  nodeInfoModal,
+  editProfile,
+  importKeyData,
+  exportKeyData,
+  myLibrary,
+} from '~/standaloneModals';
 import IconLangLocal from '~/assets/lang_local.svg';
 import { TitleBarItem, TitleBarMenuItem } from './TitleBarItem';
 import { exportLog } from './helper';
 
 import './index.sass';
-import { myLibrary } from '~/standaloneModals/myLibrary';
 
 interface Props {
   className?: string
@@ -160,11 +165,11 @@ export const TitleBar = observer((props: Props) => {
         },
         {
           text: lang.titleBar.exportKey,
-          action: () => {},
+          action: exportKeyData,
         },
         {
           text: lang.titleBar.importKey,
-          action: () => {},
+          action: importKeyData,
         },
       ].filter(<T extends unknown>(v: T | false): v is T => !!v),
     },

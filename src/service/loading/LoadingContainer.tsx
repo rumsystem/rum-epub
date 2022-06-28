@@ -24,7 +24,7 @@ export const LoadingContainer = observer(() => {
   }
 
   return (
-    <div className="fixed inset-0 z-50 select-none">
+    <div className="fixed inset-0 z-[1500] select-none">
       <div
         className={classNames(
           'flex-col flex-center overflow-hidden w-[200px] p-8 bg-black/85',

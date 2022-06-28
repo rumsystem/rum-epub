@@ -1,4 +1,4 @@
-import { BrowserWindow, ipcMain, Menu, Tray } from 'electron';
+import { BrowserWindow, Menu, Tray } from 'electron';
 import { appIcon } from './icon';
 import { mainLang } from './lang';
 
