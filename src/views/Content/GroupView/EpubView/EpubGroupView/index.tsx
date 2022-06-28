@@ -145,13 +145,6 @@ export const EpubGroupView = observer((props: { className?: string }) => {
                 <div className="flex-col ml-4 flex-1 w-0">
                   <div className="text-16 font-bold cursor-pointer truncate overflow-hidden">
                     {v.fileInfo.title}
-                    {v.fileInfo.title}
-                    {v.fileInfo.title}
-                    {v.fileInfo.title}
-                    {v.fileInfo.title}
-                    {v.fileInfo.title}
-                    {v.fileInfo.title}
-                    {v.fileInfo.title}
                   </div>
                   <div className="text-12 text-gray-88 cursor-pointer mt-[2px]">
                     {v.metadata?.author}
