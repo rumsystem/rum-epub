@@ -2,16 +2,16 @@ import type { Content } from './cn';
 
 export const content: Content = {
   sidebar: {
-    listMode: '',
-    gridMode: '',
-    joinGroup: '',
+    listMode: 'List Mode',
+    gridMode: 'Grid Mode',
+    joinGroup: 'Join SeedNet',
     createGroup: 'Create SeedNet',
-    showHideSeednet: '',
+    showHideSeednet: 'Show/Hide Seednet',
     noSeedNetSearchResult: 'No SeedNets matching found',
     noTypeGroups: 'There is no SeedNet of this type',
-    recentTip: '',
-    recentOpen: '',
-    recentAdd: '',
+    recentTip: 'Recently Reading',
+    recentOpen: 'Recently Opened',
+    recentAdd: 'Recently Added',
   },
   welcome: {
     welcomeToUseRum: 'Welcome to Rumbrary',
