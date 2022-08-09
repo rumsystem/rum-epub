@@ -140,7 +140,7 @@ export class MenuBuilder {
 
   buildDarwinTemplate() {
     const subMenuAbout = {
-      label: 'Rum Epub',
+      label: 'Rumbrary',
       submenu: [
         { label: mainLang.lang.service, submenu: [] },
         { type: 'separator' },

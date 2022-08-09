@@ -33,7 +33,7 @@ class MainLang {
 
     confirm: '确定',
     minimize: '窗口最小化',
-    minimizeTip: 'RUM Epub App将继续在后台运行, 可通过系统状态栏重新打开界面',
+    minimizeTip: 'Rumbrary 将继续在后台运行, 可通过系统状态栏重新打开界面',
     dontShowAgain: '不再提示',
 
     showWindow: '显示主界面',
@@ -69,7 +69,7 @@ class MainLang {
     exportLogs: 'Export Logs',
     confirm: 'confirm',
     minimize: 'Minimize',
-    minimizeTip: 'RUM Epub App is running in background, re-open it by clicking icon in system tray',
+    minimizeTip: 'Rumbrary is running in background, re-open it by clicking icon in system tray',
     dontShowAgain: 'don\'t show it again',
 
     showWindow: 'Open Main Window',

@@ -10,7 +10,7 @@ export const initDb = (hash: string) => {
   if (state.db) {
     return;
   }
-  const db = new Database(`${hash}-rum-epub`);
+  const db = new Database(`${hash}-rumbrary`);
   state.db = db;
 };
 

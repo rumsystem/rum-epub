@@ -1,6 +1,6 @@
-productName: "Rum Epub"
-appId: "net.rumsystem.epub-app"
-artifactName: "RUM-epub-${version}-${platform}.${ext}"
+productName: "Rumbrary"
+appId: "net.rumsystem.Rumbrary"
+artifactName: "Rumbrary-${version}-${platform}.${ext}"
 
 files:
   - "dist/"
@@ -10,7 +10,7 @@ files:
 afterSign: "electron-builder-notarize"
 
 mac:
-  artifactName: "RUM-epub-${version}.${ext}"
+  artifactName: "Rumbrary-${version}.${ext}"
   target:
     - "zip"
     - "dmg"
@@ -33,14 +33,14 @@ dmg:
       path: "/Applications"
 
 win:
-  artifactName: "RUM-epub-${version}.${ext}"
+  artifactName: "Rumbrary-${version}.${ext}"
   verifyUpdateCodeSignature: false
   target: "nsis"
   extraResources:
     - "./quorum_bin/quorum_win.exe"
 
 linux:
-  artifactName: "RUM-epub-${version}.linux.${ext}"
+  artifactName: "Rumbrary-${version}.linux.${ext}"
   target:
     - "zip"
   category: "Development"

@@ -16,7 +16,7 @@ export const createTray = (params: CreateTrayParams) => {
   const tray = new Tray(appIcon);
   tray.on('click', showApp);
   tray.on('double-click', showApp);
-  tray.setToolTip('Rum Epub');
+  tray.setToolTip('Rumbrary');
 
   const updateLanguage = () => {
     const contextMenu = Menu.buildFromTemplate([

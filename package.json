@@ -1,21 +1,21 @@
 {
   "version": "0.0.25",
-  "name": "rum-epub-app",
-  "productName": "Rum Epub",
-  "description": "Rum Epub Desktop App",
+  "name": "rumbrary-app",
+  "productName": "Rumbrary",
+  "description": "Rumbrary Desktop App",
   "main": "main.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/noe132/rum-epub.git"
+    "url": "git+https://github.com/rumsystem/rum-epub.git"
   },
   "author": {
     "name": "rumsystem.net",
     "email": "dev@press.one"
   },
   "license": "MIT",
-  "homepage": "https://github.com/noe132/rum-epub#readme",
+  "homepage": "https://github.com/rumsystem/rum-epub#readme",
   "bugs": {
-    "url": "https://github.com/noe132/rum-epub/issues"
+    "url": "https://github.com/rumsystem/rum-epub/issues"
   },
   "scripts": {
     "start": "node ./build/scripts/CheckPortInUse.js && concurrently \"yarn start:main\" \"cross-env yarn start:renderer\"",

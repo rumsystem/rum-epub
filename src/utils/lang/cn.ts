@@ -14,7 +14,7 @@ export const content = {
     recentAdd: '最近添加',
   },
   welcome: {
-    welcomeToUseRum: '欢迎使用 Rum Epub',
+    welcomeToUseRum: '欢迎使用 Rumbrary',
     youCanTry: '你可以试试',
     joinGroup: '添加已有种子',
     createGroup: '新建种子网络',
@@ -227,7 +227,7 @@ export const content = {
     availablePublicGroups: '有哪些公开的种子网络可以加入？',
   },
   titleBar: {
-    about: '关于 Rum Epub',
+    about: '关于 Rumbrary',
     checkForUpdate: '检查更新',
     manual: '帮助手册',
     report: '反馈问题',

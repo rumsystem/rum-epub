@@ -1,8 +1,8 @@
 {
   "version": "0.0.25",
-  "name": "rum-epub-app",
-  "productName": "Rum Epub",
-  "description": "Rum Epub Desktop App",
+  "name": "rumbrary-app",
+  "productName": "Rumbrary",
+  "description": "Rumbrary Desktop App",
   "main": "main.js",
   "author": "rumsystem.net",
   "license": "MIT",

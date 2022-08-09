@@ -36,7 +36,7 @@ interface Props {
 export const TitleBar = observer((props: Props) => {
   const menuLeft: Array<TitleBarMenuItem> = [
     {
-      text: 'Rum Epub',
+      text: 'Rumbrary',
       children: [
         {
           text: lang.titleBar.about,

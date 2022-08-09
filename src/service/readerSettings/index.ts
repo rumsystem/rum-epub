@@ -15,7 +15,7 @@ const state = observable({
   },
 });
 
-const THEME_STORAGE_KEY = 'RUM_EPUB_THEME_SETTING';
+const THEME_STORAGE_KEY = 'RUMBRARY_THEME_SETTING';
 
 const init = action(() => {
   try {

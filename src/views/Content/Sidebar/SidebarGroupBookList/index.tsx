@@ -27,6 +27,7 @@ export const SidebarGroupBookList = observer((props: Props) => {
       group: null as null | IGroup,
     },
     get orderedGroups() {
+      // TODO: sort books also
       const orderArr = state.groupSortMode === 'recent-add'
         ? nodeService.state.groupJoinOrder
         : state.clickOrder;

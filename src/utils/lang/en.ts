@@ -15,7 +15,7 @@ export const content: Content = {
   },
   welcome: {
     welcomeToUseRum: 'Welcome to Rumbrary',
-    youCanTry: 'Now you can',
+    youCanTry: 'You can try',
     joinGroup: 'Add existing seed',
     createGroup: 'Create SeedNet',
   },
@@ -227,7 +227,7 @@ export const content: Content = {
     availablePublicGroups: 'Available public SeedNets for joining? ',
   },
   titleBar: {
-    about: 'About',
+    about: '关于 Rumbrary',
     checkForUpdate: 'Update',
     manual: 'Manual',
     report: 'Report Issues',
