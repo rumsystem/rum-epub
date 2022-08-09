@@ -24,8 +24,8 @@ import {
   myLibrary,
 } from '~/standaloneModals';
 import IconLangLocal from '~/assets/lang_local.svg';
-import { TitleBarItem, TitleBarMenuItem } from './TitleBarItem';
 import { exportLog } from './helper';
+import { TitleBarMenu } from './TitleBarMenu';
 
 import './index.sass';
 
@@ -34,24 +34,24 @@ interface Props {
 }
 
 export const TitleBar = observer((props: Props) => {
-  const menuLeft: Array<TitleBarMenuItem> = [
+  const menuLeft = [
     {
-      text: 'Rumbrary',
+      content: 'Rumbrary',
       children: [
         {
-          text: lang.titleBar.about,
+          content: `${lang.titleBar.about} ...`,
           action: () => {
             // TODO: 关于页面
           },
         },
         {
-          text: lang.titleBar.checkForUpdate,
+          content: lang.titleBar.checkForUpdate,
           action: () => {
             updateService.checkUpdate();
           },
         },
         {
-          text: lang.titleBar.manual,
+          content: `${lang.titleBar.manual} ...`,
           action: () => {
             if (process.env.IS_ELECTRON) {
               shell.openExternal('https://docs.prsdev.club/#/rum-app/');
@@ -61,7 +61,7 @@ export const TitleBar = observer((props: Props) => {
           },
         },
         {
-          text: lang.titleBar.report,
+          content: `${lang.titleBar.report} ...`,
           action: () => {
             if (process.env.IS_ELECTRON) {
               shell.openExternal('https://github.com/noe132/rum-epub/issues');
@@ -71,7 +71,7 @@ export const TitleBar = observer((props: Props) => {
           },
         },
         {
-          text: lang.titleBar.exit,
+          content: lang.titleBar.exit,
           action: () => {
             ipcRenderer.send('prepare-quit');
             app.quit();
@@ -80,22 +80,22 @@ export const TitleBar = observer((props: Props) => {
       ],
     },
     {
-      text: lang.titleBar.dev,
+      content: lang.titleBar.dev,
       children: [
         {
-          text: lang.titleBar.devtools,
+          content: lang.titleBar.devtools,
           action: () => {
             getCurrentWindow().webContents.toggleDevTools();
           },
         },
         {
-          text: lang.titleBar.exportLogs,
+          content: `${lang.titleBar.exportLogs} ...`,
           action: () => {
             exportLog();
           },
         },
         {
-          text: lang.titleBar.clearCache,
+          content: `${lang.titleBar.clearCache} ...`,
           action: async () => {
             const result = await dialogService.open({
               content: lang.titleBar.confirmToClearCacheData,
@@ -107,7 +107,7 @@ export const TitleBar = observer((props: Props) => {
           },
         },
         {
-          text: lang.titleBar.relaunch,
+          content: `${lang.titleBar.relaunch} ...`,
           action: () => {
             ipcRenderer.send('prepare-quit');
             app.relaunch();
@@ -117,7 +117,7 @@ export const TitleBar = observer((props: Props) => {
       ],
     },
   ].filter(<T extends unknown>(v: false | T): v is T => !!v);
-  const menuRight: Array<TitleBarMenuItem> = [
+  const menuRight = [
     // {
     //   // TODO: 发现
     //   text: (
@@ -128,7 +128,7 @@ export const TitleBar = observer((props: Props) => {
     //   action: () => myLibrary(),
     // },
     !!nodeService.state.pollingStarted && {
-      text: (
+      content: (
         <div className="text-bright-orange">
           {lang.titleBar.myLib}
         </div>
@@ -136,7 +136,7 @@ export const TitleBar = observer((props: Props) => {
       action: () => myLibrary(),
     },
     !!nodeService.state.pollingStarted && {
-      text: (
+      content: (
         <div className="flex flex-center gap-x-2">
           <div
             className="w-8 h-8 rounded-full bg-contain"
@@ -150,31 +150,31 @@ export const TitleBar = observer((props: Props) => {
       ),
       children: [
         {
-          text: lang.titleBar.editProfile,
+          content: lang.titleBar.editProfile,
           action: () => editProfile(),
         },
         {
-          text: lang.titleBar.editWallet,
+          content: lang.titleBar.editWallet,
           action: () => editProfile(),
         },
         !!nodeService.state.nodeInfo.node_publickey && {
-          text: lang.titleBar.nodeAndNetwork,
+          content: lang.titleBar.nodeAndNetwork,
           action: () => {
             nodeInfoModal();
           },
         },
         {
-          text: lang.titleBar.exportKey,
+          content: `${lang.titleBar.exportKey} ...`,
           action: exportKeyData,
         },
         {
-          text: lang.titleBar.importKey,
+          content: `${lang.titleBar.importKey} ...`,
           action: importKeyData,
         },
       ].filter(<T extends unknown>(v: T | false): v is T => !!v),
     },
     {
-      text: (
+      content: (
         <Tooltip
           placement="bottom"
           title={lang.titleBar.switchLang}
@@ -185,7 +185,7 @@ export const TitleBar = observer((props: Props) => {
       icon: IconLangLocal,
       children: [
         {
-          text: (<>
+          content: (<>
             <Check
               className={classNames(
                 '-ml-2',
@@ -200,7 +200,7 @@ export const TitleBar = observer((props: Props) => {
           },
         },
         {
-          text: (<>
+          content: (<>
             <Check
               className={classNames(
                 '-ml-2',
@@ -228,9 +228,7 @@ export const TitleBar = observer((props: Props) => {
 
     <div className="menu-bar fixed left-0 right-0 bg-black text-white flex justify-between items-stretch px-2">
       <div className="flex items-stertch">
-        {menuLeft.map((menu, i) => (
-          <TitleBarItem menu={menu} key={'menu-left-' + i} />
-        ))}
+        <TitleBarMenu items={menuLeft} />
       </div>
       <div className="flex items-stertch">
         <button
@@ -251,9 +249,7 @@ export const TitleBar = observer((props: Props) => {
             {lang.externalMode}
           </div>
         )} */}
-        {menuRight.map((menu, i) => (
-          <TitleBarItem menu={menu} key={'menu-rigth-' + i} />
-        ))}
+        <TitleBarMenu items={menuRight} />
       </div>
     </div>
   </>);

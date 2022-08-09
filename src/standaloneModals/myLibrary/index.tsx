@@ -118,7 +118,12 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
         width: 240,
         minWidth: 80,
         accessor: (row: LibBookItem) => {
-          const title = `${row.book.fileInfo.title}${row.book.metadata?.subTitle && ` - ${row.book.metadata?.subTitle}`}`;
+          const title = [
+            row.book.fileInfo.title,
+            row.book.metadata?.subTitle
+              ? ` - ${row.book.metadata?.subTitle}`
+              : '',
+          ].join('');
           return (
             <Tooltip title={title} placement="bottom" disableInteractive>
               <div
@@ -135,7 +140,12 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
         Header: lang.myLib.author,
         width: 240,
         minWidth: 80,
-        accessor: (row: LibBookItem) => `${row.book.metadata?.author}${row.book.metadata?.translator && `${lang.epub.translatorTag}${row.book.metadata?.translator}`}`,
+        accessor: (row: LibBookItem) => [
+          row.book.metadata?.author,
+          row.book.metadata?.translator
+            ? `${lang.epub.translatorTag}${row.book.metadata?.translator}`
+            : '',
+        ].join(''),
       },
       {
         Header: lang.myLib.tags,
@@ -165,7 +175,7 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
       {
         Header: lang.myLib.rating,
         width: 80,
-        accessor: () => 'TODO',
+        accessor: () => '暂无',
       },
       {
         Header: lang.myLib.oparation,
@@ -617,7 +627,7 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
                         // { name: lang.epubMetadata.wordCount, text: state.selectedBook.book.metadata?.seriesNumber },
                       ].map((v, i) => (
                         <div className="leading-relaxed mt-px" key={i}>
-                          <span className="text-gray-af">{v.name}：</span>
+                          <span className="text-gray-af">{v.name}</span>
                           {v.text}
                         </div>
                       ))}

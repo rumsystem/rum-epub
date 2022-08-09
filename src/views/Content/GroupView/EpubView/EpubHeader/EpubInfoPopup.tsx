@@ -4,9 +4,7 @@ import { runInAction } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import DOMPurify from 'dompurify';
 import { Popover, PopoverProps } from '@mui/material';
-import { Close } from '@mui/icons-material';
-import FileImageIcon from 'boxicons/svg/solid/bxs-file-image.svg?fill-icon';
-import EditIcon from 'boxicons/svg/solid/bxs-edit.svg?fill-icon';
+import { Close, EditOutlined } from '@mui/icons-material';
 import { epubService } from '~/service';
 import { editEpubMetadata, editEpubCover } from '~/standaloneModals';
 import { lang } from '~/utils';
@@ -116,14 +114,14 @@ export const EpubInfoPopup = observer((props: Props) => {
                 className="flex items-center text-14"
                 onClick={(e) => { handleClose(e); editEpubCover(); }}
               >
-                <FileImageIcon className="text-16 mr-1" />
+                <EditOutlined className="text-16 mr-1" />
                 {lang.epub.editCover}
               </button>
               <button
                 className="flex items-center text-14"
                 onClick={(e) => { handleClose(e); editEpubMetadata(); }}
               >
-                <EditIcon className="text-16 mr-1" />
+                <EditOutlined className="text-16 mr-1" />
                 {lang.epub.editMetadata}
               </button>
             </div>

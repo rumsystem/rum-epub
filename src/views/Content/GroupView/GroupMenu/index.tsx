@@ -136,7 +136,7 @@ export const GroupMenu = observer((props: Props) => {
       <MenuItem onClick={openGroupInfoModal}>
         <div className="flex items-center text-gray-600 leading-none pl-1 py-2">
           <div className="flex items-center w-7 flex-none">
-            <MdInfoOutline className="text-18 opacity-50" />
+            <MdInfoOutline className="text-18" />
           </div>
           <span className="font-bold text-14">{lang.group.info}</span>
         </div>
@@ -155,7 +155,7 @@ export const GroupMenu = observer((props: Props) => {
         <MenuItem onClick={handleManageGroup}>
           <div className="flex items-center text-gray-600 leading-none pl-1 py-2">
             <span className="flex items-center w-7 flex-none">
-              <img className="text-16 opacity-50" src={IconSeednetManage} />
+              <img className="text-16" src={IconSeednetManage} />
             </span>
             <span className="font-bold text-14">{lang.group.manageGroup}</span>
           </div>
@@ -201,7 +201,7 @@ export const GroupMenu = observer((props: Props) => {
       >
         <div className="flex items-center text-red-400 leading-none pl-1 py-2">
           <div className="flex items-center w-7 flex-none">
-            <FiDelete className="text-16 opacity-50" />
+            <FiDelete className="text-16" />
           </div>
           <span className="font-bold text-14">{lang.group.exitGroup}</span>
         </div>

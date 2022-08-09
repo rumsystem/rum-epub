@@ -329,7 +329,7 @@ const CreateGroup = observer((props: Props) => {
                   ))}
                 </div>
 
-                <div className="text-14 mt-7 px-5">
+                <div className="text-14 mt-7 px-5 hidden">
                   {state.type === GROUP_TEMPLATE_TYPE.EPUB && (
                     <div className="animate-fade-in text-center">
                       {/* TODO: epub 种子网络描述 */}
