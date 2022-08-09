@@ -3,7 +3,7 @@ import classNames from 'classnames';
 import { observer } from 'mobx-react-lite';
 import { ipcRenderer } from 'electron';
 import { getCurrentWindow, shell, app } from '@electron/remote';
-import { Tooltip } from '@mui/material';
+import { Button, Tooltip } from '@mui/material';
 import { Check, ChevronRight } from '@mui/icons-material';
 
 import { lang } from '~/utils';
@@ -22,6 +22,7 @@ import {
   importKeyData,
   exportKeyData,
   myLibrary,
+  myLibraryState,
 } from '~/standaloneModals';
 import IconLangLocal from '~/assets/lang_local.svg';
 import { exportLog } from './helper';
@@ -108,10 +109,15 @@ export const TitleBar = observer((props: Props) => {
         },
         {
           content: `${lang.titleBar.relaunch} ...`,
-          action: () => {
-            ipcRenderer.send('prepare-quit');
-            app.relaunch();
-            app.quit();
+          action: async () => {
+            const result = await dialogService.open({
+              content: lang.titleBar.confirmToRelaunch,
+            });
+            if (result === 'confirm') {
+              ipcRenderer.send('prepare-quit');
+              app.relaunch();
+              app.quit();
+            }
           },
         },
       ],
@@ -127,14 +133,6 @@ export const TitleBar = observer((props: Props) => {
     //   ),
     //   action: () => myLibrary(),
     // },
-    !!nodeService.state.pollingStarted && {
-      content: (
-        <div className="text-bright-orange">
-          {lang.titleBar.myLib}
-        </div>
-      ),
-      action: () => myLibrary(),
-    },
     !!nodeService.state.pollingStarted && {
       content: (
         <div className="flex flex-center gap-x-2">
@@ -249,6 +247,20 @@ export const TitleBar = observer((props: Props) => {
             {lang.externalMode}
           </div>
         )} */}
+        {!!nodeService.state.pollingStarted && (
+          <button
+            className={classNames(
+              'text-13 px-3 outline-none',
+              !myLibraryState.opened && 'hover:bg-white/20',
+              myLibraryState.opened && 'bg-white/30',
+            )}
+            onClick={myLibrary}
+          >
+            <div className="text-bright-orange">
+              {lang.titleBar.myLib}
+            </div>
+          </button>
+        )}
         <TitleBarMenu items={menuRight} />
       </div>
     </div>

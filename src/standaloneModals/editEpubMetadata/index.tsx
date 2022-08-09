@@ -18,8 +18,8 @@ import { postContent } from '~/apis';
 import { lang, runLoading } from '~/utils';
 import { format } from 'date-fns';
 
-export const editEpubMetadata = async () => new Promise<void>((rs) => {
-  if (!epubService.state.current.bookTrx) {
+export const editEpubMetadata = async (...[groupId, bookTrx]: [groupId?: string, bookTrx?: string]) => new Promise<void>((rs) => {
+  if (!epubService.state.current.bookTrx || !bookTrx) {
     return;
   }
   const div = document.createElement('div');
@@ -33,6 +33,8 @@ export const editEpubMetadata = async () => new Promise<void>((rs) => {
     (
       <ThemeRoot>
         <EditEpubMetadata
+          groupId={groupId}
+          bookTrx={bookTrx}
           rs={() => {
             rs();
             setTimeout(unmount, 3000);
@@ -44,6 +46,8 @@ export const editEpubMetadata = async () => new Promise<void>((rs) => {
 });
 
 interface Props {
+  groupId?: string
+  bookTrx?: string
   rs: () => unknown
 }
 
@@ -192,12 +196,18 @@ const EditEpubMetadata = observer((props: Props) => {
   };
 
   React.useEffect(() => {
-    if (!epubService.state.current.bookTrx) {
+    if (!epubService.state.current.bookTrx || !props.bookTrx) {
       handleClose();
       return;
     }
     runInAction(() => {
-      state.groupId = epubService.state.current.groupId;
+      if (props.bookTrx && props.groupId) {
+        state.groupId = props.groupId;
+        state.bookTrx = props.bookTrx;
+      } else {
+        state.groupId = epubService.state.current.groupId;
+        state.bookTrx = epubService.state.current.bookTrx;
+      }
     });
     loadBookMetadata();
   }, []);
@@ -255,6 +265,16 @@ const EditEpubMetadata = observer((props: Props) => {
                 value={state.form.author}
                 label={lang.epubMetadata.autherTip}
                 onChange={action((e) => { state.form.author = e.target.value; })}
+                endAdornment={(
+                  <Button
+                    className="min-w-0 whitespace-nowrap px-3 -mr-2"
+                    variant="text"
+                    size="small"
+                    onClick={action(() => { state.form.author += '･'; })}
+                  >
+                    {lang.epubMetadata.authorInsertSeperator}
+                  </Button>
+                )}
               />
             </FormControl>
           </div>
@@ -335,7 +355,7 @@ const EditEpubMetadata = observer((props: Props) => {
           {state.form.languages.map((v, i) => (
             <React.Fragment key={i}>
               <div className="text-left text-16 leading-loose">
-                {lang.epubMetadata.languageWithIndex(i > 0 && i + 1)}
+                {lang.epubMetadata.languageWithIndex(i > 0 ? i + 1 : '')}
               </div>
               <div className="flex gap-x-4">
                 <OutlinedInput

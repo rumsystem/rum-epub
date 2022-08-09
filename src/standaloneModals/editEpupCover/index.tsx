@@ -18,8 +18,8 @@ import { epubService, tooltipService } from '~/service';
 import scrollIntoView from 'scroll-into-view-if-needed';
 import { lang } from '~/utils';
 
-export const editEpubCover = async () => new Promise<void>((rs) => {
-  if (!epubService.state.current.bookTrx) {
+export const editEpubCover = async (...[groupId, bookTrx]: [groupId?: string, bookTrx?: string]) => new Promise<void>((rs) => {
+  if (!epubService.state.current.bookTrx || !bookTrx) {
     return;
   }
   const div = document.createElement('div');
@@ -33,6 +33,8 @@ export const editEpubCover = async () => new Promise<void>((rs) => {
     (
       <ThemeRoot>
         <EditEpubCover
+          groupId={groupId}
+          bookTrx={bookTrx}
           rs={() => {
             rs();
             setTimeout(unmount, 3000);
@@ -44,6 +46,8 @@ export const editEpubCover = async () => new Promise<void>((rs) => {
 });
 
 interface Props {
+  groupId?: string
+  bookTrx?: string
   rs: () => unknown
 }
 
@@ -226,13 +230,18 @@ const EditEpubCover = observer((props: Props) => {
   };
 
   React.useEffect(() => {
-    if (!epubService.state.current.bookTrx) {
+    if (!epubService.state.current.bookTrx || !props.bookTrx) {
       handleClose();
       return;
     }
     runInAction(() => {
-      state.groupId = epubService.state.current.groupId;
-      state.bookTrx = epubService.state.current.bookTrx;
+      if (props.bookTrx && props.groupId) {
+        state.groupId = props.groupId;
+        state.bookTrx = props.bookTrx;
+      } else {
+        state.groupId = epubService.state.current.groupId;
+        state.bookTrx = epubService.state.current.bookTrx;
+      }
     });
     loadCover();
   }, []);

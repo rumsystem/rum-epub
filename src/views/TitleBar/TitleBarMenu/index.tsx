@@ -1,7 +1,7 @@
-import React, { RefObject } from 'react';
+import React from 'react';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import classNames from 'classnames';
-import { action, observable } from 'mobx';
+import { action } from 'mobx';
 import { ClickAwayListener, Popover } from '@mui/material';
 
 interface TitleBarMenuItem {
@@ -41,7 +41,7 @@ export const TitleBarMenu = observer((props: Props) => {
               onClick={action((e) => {
                 v.action?.(e);
                 if (v.children?.length) {
-                  state.activeMenu = i;
+                  state.activeMenu = state.activeMenu === i ? null : i;
                 }
               })}
               onMouseEnter={() => handleMouseEnter(i)}
@@ -68,7 +68,7 @@ export const TitleBarMenu = observer((props: Props) => {
                     <button
                       className="flex items-center hover:bg-white/30 h-[34px] px-4 whitespace-nowrap text-left"
                       key={j}
-                      onClick={u.action}
+                      onClick={action((e) => { u.action?.(e); state.activeMenu = null; })}
                     >
                       {u.content}
                     </button>

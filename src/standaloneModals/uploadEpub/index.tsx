@@ -336,9 +336,8 @@ const UploadEpub = observer((props: Props) => {
                   color="inherit"
                   onClick={handleReset}
                 >
-                  {lang.operations.back}
+                  {lang.epubUpload.uploadMore}
                 </Button>
-
                 <Button
                   className="text-16 px-12 rounded-full"
                   color="primary"

@@ -1,6 +1,6 @@
 import React from 'react';
 import classNames from 'classnames';
-import { action, runInAction } from 'mobx';
+import { action, observable, runInAction } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import DOMPurify from 'dompurify';
 import { createRoot } from 'react-dom/client';
@@ -18,7 +18,7 @@ import {
   SelectChangeEvent,
   Tooltip,
 } from '@mui/material';
-import { ChevronLeft, Close, Search } from '@mui/icons-material';
+import { ChevronLeft, Close, EditOutlined, Search } from '@mui/icons-material';
 import GridAltIcon from 'boxicons/svg/regular/bx-grid-alt.svg?fill-icon';
 import ListUlIcon from 'boxicons/svg/regular/bx-list-ul.svg?fill-icon';
 import TrashIcon from 'boxicons/svg/regular/bx-trash.svg?fill-icon';
@@ -37,10 +37,18 @@ import {
 } from '~/service';
 import { Scrollable } from '~/components';
 import { lang } from '~/utils';
+import { editEpubCover } from '../editEpupCover';
+import { editEpubMetadata } from '../editEpubMetadata';
 
-let closeCurrent = null as null | (() => unknown);
+export const myLibraryState = observable({
+  closeCurrent: null as null | (() => unknown),
+  get opened() {
+    return !!this.closeCurrent;
+  },
+});
+
 export const myLibrary = async () => new Promise<void>((rs) => {
-  if (closeCurrent) { closeCurrent(); return; }
+  if (myLibraryState.closeCurrent) { myLibraryState.closeCurrent(); return; }
   const div = document.createElement('div');
   const root = createRoot(div);
   document.body.append(div);
@@ -231,7 +239,7 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
   const handleClose = action(() => {
     props.rs();
     state.open = false;
-    closeCurrent = null;
+    myLibraryState.closeCurrent = null;
     state.dispose();
   });
 
@@ -282,7 +290,7 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
   };
 
   React.useEffect(() => {
-    closeCurrent = handleClose;
+    myLibraryState.closeCurrent = handleClose;
     loadBooks();
     runInAction(() => { state.open = true; });
     state.dispose = escService.add(handleClose);
@@ -607,6 +615,22 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
                       }}
                       onClick={() => state.selectedBook && handleOpenBook(state.selectedBook)}
                     />
+                    <div className="flex justify-between text-bright-orange mt-5">
+                      <button
+                        className="flex items-center text-14"
+                        onClick={() => editEpubCover(state.selectedBook!.groupId, state.selectedBook!.book.trxId)}
+                      >
+                        <EditOutlined className="text-16 mr-1" />
+                        {lang.epub.editCover}
+                      </button>
+                      <button
+                        className="flex items-center text-14"
+                        onClick={() => editEpubMetadata(state.selectedBook!.groupId, state.selectedBook!.book.trxId)}
+                      >
+                        <EditOutlined className="text-16 mr-1" />
+                        {lang.epub.editMetadata}
+                      </button>
+                    </div>
                     <div
                       className="text-center text-18 font-bold my-4"
                       onClick={() => state.selectedBook && handleOpenBook(state.selectedBook)}
