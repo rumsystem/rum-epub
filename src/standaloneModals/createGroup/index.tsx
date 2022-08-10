@@ -263,12 +263,12 @@ const CreateGroup = observer((props: Props) => {
           </div>
         </div>
 
-        <div className="flex-col flex-center flex-1 h-0 p-12">
+        <div className="flex-col flex-center flex-1 h-0 p-10">
           <div
-            className="overflow-auto w-[800px]"
+            className="flex-col justify-center overflow-auto w-[800px] flex-1"
             ref={scrollBox}
           >
-            <div className="flex-col items-stretch bg-white px-22 py-10 min-h-[650px] text-gray-4a">
+            <div className="flex-col items-stretch bg-white px-22 py-10 max-h-[650px] flex-1 text-gray-4a">
               {state.step === 0 && (<>
                 <div className="text-18 font-medium -ml-9">
                   {lang.createGroup.selectTemplate}
