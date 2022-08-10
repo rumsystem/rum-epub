@@ -233,7 +233,11 @@ const MyLibrary = observer((props: { rs: () => unknown }) => {
   });
 
   const handleOpenDetailView = action((book: LibBookItem) => {
-    state.selectedBook = book;
+    if (state.selectedBook === book) {
+      state.selectedBook = null;
+    } else {
+      state.selectedBook = book;
+    }
   });
 
   const handleClose = action(() => {
