@@ -11,9 +11,9 @@ const events = [
   'error',
   'download-progress',
   'update-downloaded',
-];
+] as const;
 events.forEach((eventName) => {
-  autoUpdater.on(eventName, (data) => {
+  autoUpdater.on(eventName, (data: any) => {
     BrowserWindow.getAllWindows().forEach((win) => {
       win.webContents.send('rum-updater', {
         type: eventName,
