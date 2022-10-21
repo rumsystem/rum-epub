@@ -84,22 +84,21 @@ const actions = {
     const bootstraps = quorumConfig.bootstraps || param.bootstraps.join(',');
 
     const args = [
-      '-peername',
+      'fullnode',
+      '--peername',
       'peer',
-      '-listen',
+      '--listen',
       `/ip4/0.0.0.0/tcp/${peerPort},/ip4/0.0.0.0/tcp/${peerWsPort}/ws`,
-      '-apilisten',
-      `:${apiPort}`,
-      '-peer',
+      '--apiport',
+      `${apiPort}`,
+      '--peer',
       bootstraps,
-      '-configdir',
+      '--configdir',
       `${storagePath}/peerConfig`,
-      '-datadir',
+      '--datadir',
       `${storagePath}/peerData`,
-      '-keystoredir',
+      '--keystoredir',
       `${storagePath}/keystore`,
-      '-debug',
-      'true',
     ];
 
     // ensure config dir
