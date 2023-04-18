@@ -20,7 +20,8 @@ mac:
   entitlementsInherit: "assets/entitlements.mac.plist"
   gatekeeperAssess: false
   extraResources:
-    - "./quorum_bin/quorum_darwin"
+    - from: "node_modules/quorum-bin/quorum_darwin"
+      to: "quorum-bin/quorum_darwin"
 
 dmg:
   sign: false
@@ -37,7 +38,8 @@ win:
   verifyUpdateCodeSignature: false
   target: "nsis"
   extraResources:
-    - "./quorum_bin/quorum_win.exe"
+    - from: "node_modules/quorum-bin/quorum_win.exe"
+      to: "quorum-bin/quorum_win.exe"
 
 linux:
   artifactName: "Rumbrary-${version}.linux.${ext}"
@@ -45,7 +47,8 @@ linux:
     - "zip"
   category: "Development"
   extraResources:
-    - "./quorum_bin/quorum_linux"
+    - from: "node_modules/quorum-bin/quorum_linux"
+      to: "quorum-bin/quorum_linux"
 
 
 directories:
