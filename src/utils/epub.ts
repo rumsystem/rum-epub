@@ -3,29 +3,59 @@ import { createHash } from 'crypto';
 import { posix } from 'path';
 import { Entry, fromBuffer, ZipFile } from 'yauzl';
 import * as E from 'fp-ts/lib/Either';
+import { array, string, type, TypeOf } from 'io-ts';
 
-import { fetchTrx } from '~/apis';
-import { sleep } from '~/utils';
-import { FileInfo, EpubMetadata } from '~/service/db';
-import { trxAckService } from '~/service/trxAck';
+export interface FileInfo {
+  mediaType: string
+  fileName: string
+  title: string
+  sha256: string
+  segments: Array<{
+    id: string
+    sha256: string
+  }>
+}
+
+export const epubMetadata = type({
+  description: string,
+  subTitle: string,
+  isbn: string,
+  author: string,
+  translator: string,
+  publishDate: string,
+  publisher: string,
+  languages: array(string),
+  subjects: array(string),
+  series: string,
+  seriesNumber: string,
+  categoryLevel1: string,
+  categoryLevel2: string,
+  categoryLevel3: string,
+});
+
+export type EpubMetadata = TypeOf<typeof epubMetadata>;
+
+export interface FileSegment {
+  id: string
+  sha256: string
+  buf: Buffer
+}
 
 export interface ParsedEpubBook {
   fileInfo: FileInfo
   cover: null | Buffer
-  segments: Array<{ id: string, sha256: string, buf: Buffer }>
+  segments: Array<FileSegment>
   metadata: EpubMetadata
 }
 
 export const splitFile = (fileBuffer: Buffer) => {
   const segments: ParsedEpubBook['segments'] = [];
   for (let i = 0; ;i += 1) {
-    const buf = fileBuffer.slice(150 * 1024 * i, 150 * 1024 * (i + 1));
+    const buf = fileBuffer.subarray(150 * 1024 * i, 150 * 1024 * (i + 1));
     if (!buf.length) {
       break;
     }
-    const segHash = createHash('sha256');
-    segHash.update(buf);
-    const segsha256 = segHash.digest('hex');
+    const segsha256 = hashBufferSha256(buf);
     segments.push({
       id: `seg-${i + 1}`,
       sha256: segsha256,
@@ -105,15 +135,12 @@ export const parseEpub = async (fileName: string, buffer: Buffer | Uint8Array): 
     }
   } catch (e) {}
 
-  const hash = createHash('sha256');
-  hash.update(fileBuffer);
-  const sha256 = hash.digest('hex');
-
+  const sha256 = hashBufferSha256(fileBuffer);
   const segments = splitFile(fileBuffer);
 
   const fileInfo: FileInfo = {
     mediaType: mimetype,
-    name: fileName,
+    fileName,
     title,
     sha256,
     segments: segments.map((v) => ({
@@ -129,38 +156,6 @@ export const parseEpub = async (fileName: string, buffer: Buffer | Uint8Array): 
     segments,
   });
 };
-
-export interface GroupBookItem {
-  fileInfo: FileInfo
-  trxId: string
-  metadata: null | EpubMetadata
-  cover: null | string
-  size: number
-  metadataAndCoverType: 'notloaded' | 'loading' | 'loaded'
-  metadataAndCoverPromise: null | Promise<unknown>
-  time: number
-  openTime: number
-}
-
-const checkTrx = async (groupId: string, trxId: string) => {
-  for (;;) {
-    try {
-      const trx = await fetchTrx(groupId, trxId);
-      if (!Object.keys(trx).length) {
-        await sleep(2000 + Math.floor(Math.random() * 2000));
-        continue;
-      }
-      break;
-    } catch (e) {
-      await sleep(2000 + Math.floor(Math.random() * 2000));
-    }
-  }
-};
-
-export const checkTrxAndAck = (groupId: string, trxId: string) => Promise.all([
-  trxAckService.awaitAck(groupId, trxId),
-  checkTrx(groupId, trxId),
-]);
 
 export interface ZipResult { zip: ZipFile, entries: Array<Entry> }
 

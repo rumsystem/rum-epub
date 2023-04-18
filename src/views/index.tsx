@@ -10,6 +10,7 @@ import { initService, serviceViewContainers } from '~/service';
 import { TitleBar } from './TitleBar';
 import { Init } from './Init';
 import Content from './Content';
+import { ModalView } from '~/standaloneModals/view';
 
 export const App = observer(() => {
   const state = useLocalObservable(() => ({
@@ -49,6 +50,7 @@ export const App = observer(() => {
       {serviceViewContainers.map((C, i) => (
         <C key={i} />
       ))}
+      <ModalView />
     </ThemeRoot>
   );
 });

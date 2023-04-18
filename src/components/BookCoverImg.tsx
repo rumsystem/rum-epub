@@ -1,51 +1,81 @@
 
 import React from 'react';
-import classNames from 'classnames';
 import { observer, useLocalObservable } from 'mobx-react-lite';
-import { epubService } from '~/service';
-import { runInAction } from 'mobx';
+import { reaction, runInAction } from 'mobx';
+import { bookService } from '~/service';
 
 interface BookCoverImgProps extends Omit<React.DetailedHTMLProps<React.ImgHTMLAttributes<HTMLImageElement>, HTMLImageElement>, 'children'> {
   className?: string
   groupId: string
-  bookTrx: string
-  children?: (src: string) => React.ReactElement
+  bookId: string
+  children?: (src: string) => React.ReactElement | null
 }
+
+const cacheMap = new Map<Uint8Array, { url: string, count: number }>();
+
+(window as any).cacheMap = cacheMap;
 
 export const BookCoverImg = observer((props: BookCoverImgProps) => {
   const state = useLocalObservable(() => ({
-    groupId: props.groupId,
-    bookTrx: props.bookTrx,
-    get img() {
-      if (!this.groupId) { return null; }
-      const groupItem = epubService.getGroupItem(this.groupId);
-      const book = groupItem.books.find((v) => v.trxId === this.bookTrx);
-      const img = book?.cover || null;
-      return img;
-    },
+    url: '',
+    dispose: (() => {}) as () => unknown,
   }));
 
-  React.useEffect(() => {
-    if (!state.img && props.groupId && props.bookTrx) {
-      epubService.parseMetadataAndCover(props.groupId, props.bookTrx);
+  const createDispose = (file: Uint8Array) => () => {
+    const item = cacheMap.get(file);
+    if (item) {
+      item.count -= 1;
+      if (!item.count) {
+        URL.revokeObjectURL(item.url);
+        cacheMap.delete(file);
+      }
     }
     runInAction(() => {
-      state.groupId = props.groupId;
-      state.bookTrx = props.bookTrx;
+      state.dispose = () => {};
     });
-  }, [props.groupId, props.bookTrx]);
+  };
 
-  const { groupId, bookTrx, children, ...rest } = props;
+  const createUrl = () => {
+    state.dispose();
+    const file = bookService.state.groupMap.get(props.groupId ?? '')
+      ?.find((v) => v.book.id === props.bookId)
+      ?.cover?.file;
+
+    if (!file) { return; }
+
+    const item = cacheMap.get(file);
+    if (item) {
+      runInAction(() => { state.url = item.url; });
+      item.count += 1;
+      state.dispose = createDispose(file);
+      return;
+    }
+
+    const url = URL.createObjectURL(new Blob([file]));
+    runInAction(() => { state.url = url; });
+    const newItem = { url, count: 1 };
+    cacheMap.set(file, newItem);
+    state.dispose = createDispose(file);
+  };
+
+  React.useEffect(() => reaction(
+    () => bookService.state.groupMap.get(props.groupId ?? '')?.find((v) => v.book.id === props.bookId)?.cover,
+    createUrl,
+    { fireImmediately: true },
+  ), [props.groupId, props.bookId]);
+
+  React.useEffect(() => () => {
+    state.dispose();
+  }, []);
+
+  const { children, ...rest } = props;
+
   if (children) {
-    return children(state.img ?? '');
-  }
-  if (!state.img) {
-    return null;
+    return children(state.url);
   }
   return (
     <img
-      className={classNames(props.className)}
-      src={state.img ?? ''}
+      src={state.url}
       {...rest}
     />
   );

@@ -1,85 +1,59 @@
 import { join } from 'path';
-// import { spawn } from 'child_process';
-import { builtinModules } from 'module';
 import { defineConfig } from 'vite';
-import commonjsExternalsPlugin from 'vite-plugin-commonjs-externals';
 import react from '@vitejs/plugin-react';
 import { visualizer } from 'rollup-plugin-visualizer';
+import renderer from 'vite-plugin-electron-renderer';
+import checker from 'vite-plugin-checker';
 import { svgInline } from './build/svg-inline';
 import { svgrPlugin } from './build/vite-svgr-plugin';
 
 // https://vitejs.dev/config/
-export default async () => {
-  const prod = process.env.NODE_ENV === 'production';
-  const a = !!process.env.analyze;
-
-  // if (!prod) {
-  //   const cp = spawn('node', [
-  //     'node_modules/eslint-watch/bin/esw',
-  //     '--color',
-  //     '--ext',
-  //     '.js,.jsx,.ts,.tsx',
-  //     '-w',
-  //     'src',
-  //   ]);
-  //   cp.stdout.pipe(process.stdout);
-  //   cp.stderr.pipe(process.stderr);
-  //   cp.on('error', (err) => {
-  //     console.error(err);
-  //   });
-  // }
-
-  const ignores = [
-    'electron',
-    'electron-store',
-    '@electron/remote',
-    'fs-extra',
-    'crypto',
-    ...builtinModules.flatMap((p) => [p, `node:${p}`]),
-  ];
-
-  return defineConfig({
-    server: {
-      host: '0.0.0.0',
-      port: Number(process.env.PORT || 31521),
+export default defineConfig({
+  server: {
+    host: '0.0.0.0',
+    port: Number(process.env.PORT || 31521),
+  },
+  publicDir: join(__dirname, 'public'),
+  resolve: {
+    alias: {
+      '~': join(__dirname, 'src'),
     },
-    publicDir: join(__dirname, 'public'),
-    resolve: {
-      alias: {
-        '~': join(__dirname, 'src'),
+  },
+  define: {
+    'process.env.BUILD_ENV': JSON.stringify(process.env.BUILD_ENV),
+  },
+  // base: prod ? './' : '/',
+  build: {
+    outDir: 'src/dist',
+  },
+  plugins: [
+    checker({
+      typescript: true,
+      eslint: {
+        lintCommand: 'eslint --ext ".js,.jsx,.ts,.tsx" ./src',
+        dev: {
+          // cwd provided by vite cannot be handled by eslint with forward slash on windows
+          // https://github.com/eslint/eslint/issues/17042
+          overrideConfig: {
+            cwd: __dirname,
+          },
+        },
       },
-    },
-    define: {
-      'process.env.BUILD_ENV': JSON.stringify(process.env.BUILD_ENV),
-      'process.env.SSR': JSON.stringify(''),
-      'process.env.IS_ELECTRON': JSON.stringify('true'),
-    },
-    base: prod ? './' : '/',
-
-    build: {
-      minify: false,
-      outDir: 'src/dist',
-      rollupOptions: {
-        // external: ignores,
+      overlay: false,
+    }),
+    renderer({
+      resolve: {
+        'electron-store': { type: 'cjs' },
+        'electron-log': { type: 'cjs' },
+        'tar-stream': { type: 'cjs' },
       },
-      commonjsOptions: {
-        ignore: ignores,
-      },
-    },
-    optimizeDeps: {
-      exclude: ignores,
-    },
-    plugins: [
-      react(),
-      a && visualizer({
-        filename: join(__dirname, 'dist/stats.html'),
-        open: true,
-      }),
-      svgInline(),
-      svgrPlugin(),
-      commonjsExternalsPlugin({
-        externals: ignores,
-      }),
-    ],
-  });
-};
+    }),
+    react(),
+    svgInline(),
+    svgrPlugin(),
+    !!process.env.analyze && visualizer({
+      filename: join(__dirname, 'dist/stats.html'),
+      open: true,
+    }),
+  ],
+});

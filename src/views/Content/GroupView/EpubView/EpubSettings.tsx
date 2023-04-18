@@ -17,7 +17,7 @@ import { Help } from '@mui/icons-material';
 import { Annotation } from 'epubjs/types/annotations';
 import SliderAltIcon from 'boxicons/svg/regular/bx-slider-alt.svg?fill-icon';
 
-import { readerSettingsService, ReaderThemes, epubService } from '~/service';
+import { readerSettingsService, ReaderThemes, bookService } from '~/service';
 import { highLightRange } from './helper';
 import { lang } from '~/utils';
 
@@ -115,7 +115,7 @@ export const EpubSettings = observer((props: Props) => {
     });
     highlights.forEach((v) => {
       highLightRange({
-        groupId: epubService.state.current.groupId,
+        groupId: bookService.state.current.groupId,
         bookTrx: props.bookTrx,
         cfiRange: v.cfiRange,
         book,

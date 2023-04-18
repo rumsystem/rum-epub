@@ -5,8 +5,11 @@ import { runInAction } from 'mobx';
 export * from './PollingTask';
 export * from './ago';
 export * from './enum';
+export * from './epub';
 export * from './fallback';
+export * from './getBase';
 export * from './lang';
+export * from './parseTime';
 export * from './setClipboard';
 
 export const setIntervalAsTimeout = (fn: (...a: Array<any>) => any, interval?: number) => {

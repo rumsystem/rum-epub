@@ -7,9 +7,9 @@ rendererLog.transports.ipc = null;
 // eslint-disable-next-line no-console
 const defaultLog = console.log.bind(console);
 
-Object.assign(console, rendererLog.functions);
+if (process.env.NODE_ENV !== 'development') {
+  Object.assign(console, rendererLog.functions);
 
-if (process.env.NODE_ENV === 'development') {
   rendererLog.transports.console = null as any;
   // eslint-disable-next-line no-console
   console.log = (...args: Array<any>) => {

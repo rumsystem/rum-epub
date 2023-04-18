@@ -1,6 +1,6 @@
 import classNames from 'classnames';
 import { observer } from 'mobx-react-lite';
-import { epubService } from '~/service';
+import { bookService } from '~/service';
 import { EpubBookView } from './EpubBookView';
 import { EpubGroupView } from './EpubGroupView';
 import { EpubHeader } from './EpubHeader';
@@ -10,7 +10,7 @@ interface Props {
 }
 
 export const EpubView = observer((props: Props) => {
-  if (!epubService.state.current.groupId) {
+  if (!bookService.state.current.groupId) {
     return null;
   }
   return (
@@ -18,19 +18,19 @@ export const EpubView = observer((props: Props) => {
       className={classNames(
         props.className,
       )}
-      key={epubService.state.current.groupId}
+      key={bookService.state.current.groupId}
     >
       <EpubHeader />
 
-      {!epubService.state.current.bookTrx && (
+      {!bookService.state.current.bookId && (
         <EpubGroupView
           className="flex-1 h-0"
         />
       )}
-      {!!epubService.state.current.bookTrx && (
+      {!!bookService.state.current.bookId && (
         <EpubBookView
           className="flex-1 h-0"
-          key={`${epubService.state.current.groupId}-${epubService.state.current.bookTrx}`}
+          key={`${bookService.state.current.groupId}-${bookService.state.current.bookId}`}
         />
       )}
     </div>

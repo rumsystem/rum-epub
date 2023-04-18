@@ -1,11 +1,11 @@
 import path from 'path';
 import React from 'react';
-import { action, reaction, runInAction } from 'mobx';
+import { action, runInAction } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import classNames from 'classnames';
 import { render, unmountComponentAtNode } from 'react-dom';
 import { format } from 'date-fns';
-import fs from 'fs-extra';
+import fs from 'fs/promises';
 import { dialog, getCurrentWindow } from '@electron/remote';
 import { Tooltip } from '@mui/material';
 
@@ -61,7 +61,6 @@ enum STEP {
 
 const ExportKeyData = observer((props: Props) => {
   const state = useLocalObservable(() => ({
-    mode: process.env.IS_ELECTRON ? 'native' : 'wasm',
     step: STEP.SELECT_SOURCE,
     open: true,
     loading: false,
@@ -75,19 +74,6 @@ const ExportKeyData = observer((props: Props) => {
   const submit = async () => {
     if (state.loading) { return; }
 
-    // if (state.step === STEP.SELECT_MODE && !process.env.IS_ELECTRON) {
-    //   runInAction(() => { state.step = STEP.SELECT_TARGET; });
-    //   return;
-    // }
-
-    if (state.step === STEP.SELECT_TARGET && !process.env.IS_ELECTRON) {
-      runInAction(() => {
-        state.step = STEP.INPUT_PASSWORD;
-        state.password = 'password';
-      });
-      return;
-    }
-
     if (state.step < STEP.INPUT_PASSWORD) {
       runInAction(() => { state.step += 1; });
       return;
@@ -100,58 +86,39 @@ const ExportKeyData = observer((props: Props) => {
       });
 
       try {
-        if (!process.env.IS_ELECTRON) {
-          // const data = await qwasm.BackupWasmRaw(state.password);
-          // if (state.backupPathHandle) {
-          //   const writableStream = await state.backupPathHandle.createWritable();
-          //   writableStream.write(data);
-          //   writableStream.close();
-          // }
-          // tooltipService.show({
-          //   content: lang.backup.exportKeyDataDone,
-          // });
-          // handleClose();
-        } else {
-          const { error } = state.mode === 'native'
-            ? await Quorum.exportKey({
-              backupPath: state.backupPath,
-              storagePath: state.storagePath,
-              password: state.password,
-            })
-            : await Quorum.exportKeyWasm({
-              backupPath: state.backupPath,
-              storagePath: state.storagePath,
-              password: state.password,
-            });
-          if (!error) {
-            runInAction(() => {
-              state.done = true;
-            });
-            tooltipService.show({
-              content: lang.backup.exportKeyDataDone,
-            });
-            handleClose();
-            return;
-          }
-          if (error.includes('could not decrypt key with given password')) {
-            tooltipService.show({
-              content: lang.backup.incorrectPassword,
-              type: 'error',
-            });
-            return;
-          }
-          if (error.includes('permission denied')) {
-            tooltipService.show({
-              content: lang.backup.writePermissionDenied,
-              type: 'error',
-            });
-            return;
-          }
+        const { error } = await Quorum.exportKey({
+          backupPath: state.backupPath,
+          storagePath: state.storagePath,
+          password: state.password,
+        });
+        if (!error) {
+          runInAction(() => {
+            state.done = true;
+          });
           tooltipService.show({
-            content: lang.somethingWrong,
+            content: lang.backup.exportKeyDataDone,
+          });
+          handleClose();
+          return;
+        }
+        if (error.includes('could not decrypt key with given password')) {
+          tooltipService.show({
+            content: lang.backup.incorrectPassword,
             type: 'error',
           });
+          return;
         }
+        if (error.includes('permission denied')) {
+          tooltipService.show({
+            content: lang.backup.writePermissionDenied,
+            type: 'error',
+          });
+          return;
+        }
+        tooltipService.show({
+          content: lang.somethingWrong,
+          type: 'error',
+        });
       } catch (err: any) {
         console.error(err);
         tooltipService.show({
@@ -222,9 +189,6 @@ const ExportKeyData = observer((props: Props) => {
               danger: true,
             });
             if (result === 'confirm') {
-              if (!process.env.IS_ELECTRON) {
-                return;
-              }
               loadingService.add(lang.node.exitingNode);
               await Promise.allSettled([
                 nodeService.resetNodeConfig(),
@@ -251,21 +215,6 @@ const ExportKeyData = observer((props: Props) => {
   };
 
   const handleSelectDir = async () => {
-    if (!process.env.IS_ELECTRON) {
-      const handle = await (window as any).showSaveFilePicker({
-        suggestedName: 'backup.json',
-        types: [{
-          description: 'json file',
-          accept: { 'text/json': ['.json'] },
-        }],
-      }).catch(() => null);
-      if (!handle) { return; }
-      runInAction(() => {
-        state.backupPathHandle = handle;
-      });
-      return;
-    }
-
     const isNotExistFolder = async (p: string) => {
       const exist = await (async () => {
         try {
@@ -336,14 +285,6 @@ const ExportKeyData = observer((props: Props) => {
     props.rs();
   });
 
-  React.useEffect(reaction(
-    () => state.mode,
-    action(() => {
-      state.backupPath = '';
-      state.storagePath = '';
-    }),
-  ), []);
-
   return (
     <Dialog
       disableEscapeKeyDown
@@ -373,7 +314,6 @@ const ExportKeyData = observer((props: Props) => {
                 >
                   <FormControlLabel
                     className="select-none"
-                    disabled={!process.env.IS_ELECTRON}
                     value="native"
                     control={<Radio />}
                     label={lang.backup.exportForRumApp}

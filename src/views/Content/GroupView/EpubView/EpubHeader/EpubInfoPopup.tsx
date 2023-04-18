@@ -1,17 +1,19 @@
 import React from 'react';
 import classNames from 'classnames';
-import { runInAction } from 'mobx';
+import { action, runInAction } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import DOMPurify from 'dompurify';
 import { Popover, PopoverProps } from '@mui/material';
 import { Close, EditOutlined } from '@mui/icons-material';
-import { epubService } from '~/service';
+import { bookService } from '~/service';
 import { editEpubMetadata, editEpubCover } from '~/standaloneModals';
 import { lang } from '~/utils';
+import { BookCoverImg, Scrollable } from '~/components';
+import RemoveMarkdown from 'remove-markdown';
 
 interface Props extends PopoverProps {
   groupId: string
-  bookTrx: string
+  bookId: string
 }
 
 export const EpubInfoPopup = observer((props: Props) => {
@@ -20,10 +22,9 @@ export const EpubInfoPopup = observer((props: Props) => {
       width: 270,
       height: 360,
     },
-    get bookItem() {
-      const groupItem = epubService.getGroupItem(props.groupId);
-      const book = groupItem.books.find((v) => v.trxId === props.bookTrx);
-      return book;
+    get book() {
+      const item = bookService.state.groupMap.get(props.groupId)?.find((v) => v.book.id === props.bookId);
+      return item;
     },
   }));
 
@@ -31,44 +32,26 @@ export const EpubInfoPopup = observer((props: Props) => {
     props.onClose?.(e, 'backdropClick');
   };
 
-  React.useEffect(() => {
-    // epubService.parseSubData();
-  }, []);
-
-  React.useEffect(() => {
-    const cover = state.bookItem?.cover;
-    if (!cover) {
-      runInAction(() => {
-        state.bgSize = {
-          width: 270,
-          height: 360,
-        };
-      });
-      return;
-    }
-    const img = new Image();
-    img.src = cover;
-    img.addEventListener('load', () => {
-      const ratio = Math.abs(270 / img.naturalWidth) < Math.abs(360 / img.naturalHeight)
-        ? 270 / img.naturalWidth
-        : 360 / img.naturalHeight;
-      runInAction(() => {
-        state.bgSize = {
-          width: img.naturalWidth * ratio,
-          height: img.naturalHeight * ratio,
-        };
-      });
+  const handleCoverLoad = action((e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.target as HTMLImageElement;
+    const width = 270 - 4;
+    const height = 360 - 4;
+    const ratio = Math.abs(width / img.naturalWidth) < Math.abs(height / img.naturalHeight)
+      ? width / img.naturalWidth
+      : height / img.naturalHeight;
+    runInAction(() => {
+      state.bgSize = {
+        width: img.naturalWidth * ratio,
+        height: img.naturalHeight * ratio,
+      };
     });
-    // epubService.parseSubData();
-  }, [state.bookItem?.cover]);
+  });
 
-
-  const { ...rest } = props;
-  const title = state.bookItem?.fileInfo.title;
-  const cover = state.bookItem?.cover;
-  const metadata = state.bookItem?.metadata;
+  const { groupId, bookId, ...rest } = props;
+  const title = state.book?.book.title;
+  const metadata = state.book?.metadata?.metadata;
   const epubDesc = React.useMemo(
-    () => DOMPurify.sanitize(metadata?.description || lang.epub.noDescription),
+    () => DOMPurify.sanitize(RemoveMarkdown(metadata?.description || lang.epub.noDescription)),
     [metadata?.description],
   );
 
@@ -94,32 +77,58 @@ export const EpubInfoPopup = observer((props: Props) => {
         <div className="flex bg-gray-33 p-6 gap-x-10">
           <div className="flex-none">
             <div>
-              <div
-                className="border-2 border-gray-ec bg-cover bg-no-repeat bg-center flex flex-center"
-                style={{
-                  width: `${(state.bgSize.width + 4).toFixed(2)}px`,
-                  height: `${(state.bgSize.height + 4).toFixed(2)}px`,
-                  backgroundImage: cover ? `url("${cover}")` : '',
-                }}
+              <BookCoverImg
+                groupId={props.groupId}
+                bookId={props.bookId}
               >
-                {!cover && (
-                  <span className="text-gray-bd text-14 select-none">
-                    {lang.epub.noCover}
-                  </span>
+                {(src) => (
+                  <div
+                    className="border-2 border-gray-ec bg-cover bg-no-repeat bg-center flex flex-center h-[360px] max-w-[270px] bg-contain"
+                  >
+                    {!!src && (
+                      <img
+                        className=""
+                        src={src}
+                        alt=""
+                        style={{
+                          width: `${state.bgSize.width}px`,
+                          height: `${state.bgSize.height}px`,
+                        }}
+                        onLoad={handleCoverLoad}
+                      />
+                    )}
+                    {!src && (
+                      <span className="text-gray-bd text-14 select-none">
+                        {lang.epub.noCover}
+                      </span>
+                    )}
+                  </div>
                 )}
-              </div>
+              </BookCoverImg>
             </div>
             <div className="flex justify-between text-bright-orange mt-5">
               <button
                 className="flex items-center text-14"
-                onClick={(e) => { handleClose(e); editEpubCover(); }}
+                onClick={(e) => {
+                  handleClose(e);
+                  editEpubCover({
+                    groupId: bookService.state.current.groupId,
+                    bookId: bookService.state.current.bookId,
+                  });
+                }}
               >
                 <EditOutlined className="text-16 mr-1" />
                 {lang.epub.editCover}
               </button>
               <button
                 className="flex items-center text-14"
-                onClick={(e) => { handleClose(e); editEpubMetadata(); }}
+                onClick={(e) => {
+                  handleClose(e);
+                  editEpubMetadata({
+                    groupId: bookService.state.current.groupId,
+                    bookId: bookService.state.current.bookId,
+                  });
+                }}
               >
                 <EditOutlined className="text-16 mr-1" />
                 {lang.epub.editMetadata}
@@ -127,15 +136,17 @@ export const EpubInfoPopup = observer((props: Props) => {
             </div>
           </div>
 
-          <div className="w-[250px] overflow-hidden flex-col self-stretch relative">
-            <div
-              className="absolute inset-0 overflow-hidden leading-snug epub-desc-box"
-              dangerouslySetInnerHTML={{ __html: epubDesc }}
-            />
-            <style>{'.epub-desc-box * { font-size: 13px !important; }'}</style>
+          <div className="relative w-[250px] flex-1 self-stretch flex-col overflow-hidden flex-col -mr-4">
+            <div className="absolute inset-0">
+              <Scrollable className="w-full h-full" light>
+                <div className="overflow-hidden pr-4">
+                  {epubDesc}
+                </div>
+              </Scrollable>
+            </div>
           </div>
 
-          <div className="w-[250px] leading-relaxed">
+          <div className="w-[250px] flex-1 leading-relaxed">
             {[
               { text: lang.epubMetadata.subTitle, value: metadata?.subTitle },
               { text: lang.epubMetadata.isbn, value: metadata?.isbn },

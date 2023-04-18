@@ -1,6 +1,5 @@
-const fs = require('fs-extra');
+const fs = require('fs/promises');
 const path = require('path');
-const util = require('util');
 const packageJson = require('../package.json');
 
 const removedFiles = [
@@ -17,7 +16,7 @@ const removedFiles = [
 (async () => {
   for (const file of removedFiles) {
     try {
-      await fs.remove(path.join(__dirname, `../release/${file}`));
+      await fs.unlink(path.join(__dirname, `../release/${file}`));
     } catch (err) {}
   }
 })();

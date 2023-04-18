@@ -27,6 +27,7 @@ export const content = {
     exit: '退出',
     name: '名称',
     owner: '创建人',
+    auth: '权限',
     groupInfo: '种子网络详情',
     idle: '空闲',
     syncing: '同步中',

@@ -1,11 +1,14 @@
 import { ipcRenderer } from 'electron';
+import type { actions } from '~/main/quorum';
 
 let id = 0;
+
+type ValidActions = keyof typeof actions;
 
 const callbackQueueMap = new Map<number, (v: unknown) => unknown>();
 
 export interface QuorumIPCRequest {
-  action: string
+  action: ValidActions
   param?: any
   id: number
 }
@@ -37,7 +40,7 @@ export const sendRequest = <T extends unknown>(
 let hasInited = false;
 
 export const initQuorum = () => {
-  if (!process.env.IS_ELECTRON || hasInited) {
+  if (hasInited) {
     return;
   }
   hasInited = true;

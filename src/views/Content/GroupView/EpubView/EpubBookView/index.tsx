@@ -1,26 +1,23 @@
 import { posix } from 'path';
 import React from 'react';
 import classNames from 'classnames';
-import { action, observable, runInAction } from 'mobx';
+import { action, observable, reaction, runInAction } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import Epub, { Book, Contents, Location, NavItem } from 'epubjs';
-import { isNone } from 'fp-ts/lib/Option';
 import Section from 'epubjs/types/section';
 import { Annotation } from 'epubjs/types/annotations';
-import { PackagingMetadataObject } from 'epubjs/types/packaging';
 import { CircularProgress, ClickAwayListener, Tooltip } from '@mui/material';
 import { ChevronLeft, ChevronRight } from '@mui/icons-material';
 import FullscreenIcon from 'boxicons/svg/regular/bx-fullscreen.svg?fill-icon';
 import ExitFullscreenIcon from 'boxicons/svg/regular/bx-exit-fullscreen.svg?fill-icon';
 
 import {
-  GroupBookItem,
-  epubService,
+  bookService,
   linkTheme,
   progressBarTheme,
   readerSettingsService,
   readerThemes,
-  ReadingProgressItem,
+  dbService,
 } from '~/service';
 import { addLinkOpen, lang, modifierKeys } from '~/utils';
 import { BookCoverImgTooltip } from '~/components';
@@ -40,12 +37,9 @@ interface Props {
 
 export const EpubBookView = observer((props: Props) => {
   const state = useLocalObservable(() => observable({
-    bookItem: null as null | GroupBookItem,
     book: null as null | Book,
 
     // book states
-    bookTrxId: '',
-    bookMetadata: null as null | PackagingMetadataObject,
     chapters: [] as Array<NavItem>,
     jumpingHistory: [] as Array<string>,
     currentHref: '',
@@ -60,6 +54,13 @@ export const EpubBookView = observer((props: Props) => {
     highlightButton: null as null | { range: string, top: number, left: number },
     mousePosition: { x: 0, y: 0 },
     renderBox: React.createRef<HTMLDivElement>(),
+    get bookId() {
+      return bookService.state.current.bookId;
+    },
+    get bookData() {
+      const { bookId, groupId } = bookService.state.current;
+      return bookService.state.groupMap.get(groupId)?.find((v) => v.book.id === bookId);
+    },
     get chapterProgress() {
       if (!this.currentHref || !state.spineLoaded) {
         return [0, 0, 0];
@@ -148,8 +149,8 @@ export const EpubBookView = observer((props: Props) => {
     }
 
     highLightRange({
-      groupId: epubService.state.current.groupId,
-      bookTrx: state.bookTrxId,
+      groupId: bookService.state.current.groupId,
+      bookTrx: state.bookId,
       cfiRange: state.highlightButton.range,
       book: state.book,
     });
@@ -160,44 +161,25 @@ export const EpubBookView = observer((props: Props) => {
     }
   };
 
-  const unloadBook = action(() => {
-    state.book?.destroy();
-    state.bookTrxId = '';
-    state.bookMetadata = null;
-    state.chapters = [];
-    state.jumpingHistory = [];
-    state.currentHref = '';
-    state.spread = false;
-    state.atEnd = false;
-    state.atStart = false;
-    state.spineLoaded = false;
-
-    state.book = null;
-    state.bookItem = null;
-  });
-
-  const loadBook = async (groupId: string, bookItem: GroupBookItem, readingProgress?: ReadingProgressItem | null) => {
-    unloadBook();
+  const loadBook = async () => {
+    const { groupId, bookId } = bookService.state.current;
+    const bookBuffer = await dbService.getBookBuffer(groupId, bookId);
+    if (!bookBuffer) { return; }
     const renderBox = state.renderBox.current;
     if (!renderBox) { return; }
-    const buffer = await epubService.getBookBuffer(groupId, bookItem.trxId);
-    if (isNone(buffer)) {
-      console.error(new Error(`try load book ${bookItem.trxId} in group ${groupId} which doesn't exist`));
-      return;
-    }
-    const book = Epub(buffer.value.buffer);
+    const book = Epub(bookBuffer.file.buffer);
     runInAction(() => {
-      state.bookItem = bookItem;
       state.book = book;
-      state.bookTrxId = bookItem.trxId;
       state.loading = false;
     });
 
-    epubService.updateBookLastOpenTime(groupId, bookItem.trxId);
+    const now = Date.now();
+    dbService.updateBookOpenTime(groupId, bookId, now);
+    bookService.updateBookOpenTime(groupId, bookId, now);
 
-    book.loaded.metadata.then(action((v) => {
-      state.bookMetadata = { ...v };
-    }));
+    // book.loaded.metadata.then(action((v) => {
+    //   state.bookMetadata = { ...v };
+    // }));
     book.loaded.spine.then(action(() => {
       state.spineLoaded = true;
     }));
@@ -211,21 +193,17 @@ export const EpubBookView = observer((props: Props) => {
       minSpreadWidth: 950,
     });
 
-    Promise.resolve(readingProgress || epubService.readingProgress.getLast(
-      groupId,
-      bookItem.trxId,
-    )).then((p) => {
-      rendition.display(p?.readingProgress ?? undefined);
-    });
+    const readingProgress = await bookService.readingProgress.get(groupId, bookId);
+    rendition.display(readingProgress?.readingProgress ?? undefined);
 
-    epubService.highlight.get(
+    bookService.highlight.get(
       groupId,
-      bookItem.trxId,
+      bookId,
     ).then((highlights) => {
       highlights.forEach((v) => {
         highLightRange({
           book,
-          bookTrx: state.bookTrxId,
+          bookTrx: state.bookId,
           cfiRange: v.cfiRange,
           groupId,
         });
@@ -256,9 +234,9 @@ export const EpubBookView = observer((props: Props) => {
     }));
 
     rendition.on('relocated', action((location: Location) => {
-      epubService.readingProgress.save(
+      bookService.readingProgress.save(
         groupId,
-        bookItem.trxId,
+        bookId,
         location.start.cfi,
       );
       state.atEnd = location.atEnd;
@@ -360,21 +338,6 @@ export const EpubBookView = observer((props: Props) => {
       state.mousePosition.y = e.clientY;
     };
 
-    const loadBookInit = async () => {
-      const { bookTrx, groupId } = epubService.state.current;
-      await new Promise<void>((rs) => epubService.loadAndParseBooks(groupId, rs));
-      const book = epubService.getGroupItem(groupId)?.books.find((v) => v.trxId === bookTrx);
-      const readingProgress = await epubService.readingProgress.getLast(groupId, bookTrx);
-      if (book) {
-        loadBook(groupId, book, readingProgress);
-      } else {
-        epubService.openBook(null);
-        runInAction(() => {
-          state.loading = false;
-        });
-      }
-    };
-
     window.addEventListener('keydown', handleKeydown);
     window.addEventListener('mousemove', handleMouseMove);
 
@@ -394,9 +357,12 @@ export const EpubBookView = observer((props: Props) => {
           console.error(e);
         }
       },
+      reaction(
+        () => [bookService.state.current.groupId, bookService.state.current.bookId],
+        loadBook,
+        { fireImmediately: true },
+      ),
     ];
-
-    loadBookInit();
 
     return () => {
       disposes.forEach((v) => v());
@@ -427,8 +393,8 @@ export const EpubBookView = observer((props: Props) => {
         >
           <EpubSelectBookButton />
           <BookCoverImgTooltip
-            groupId={epubService.state.current.groupId}
-            bookTrx={epubService.state.current.bookTrx}
+            groupId={bookService.state.current.groupId}
+            bookId={bookService.state.current.bookId}
             placement="bottom"
           >
             <div className="text-18 truncate">
@@ -438,13 +404,13 @@ export const EpubBookView = observer((props: Props) => {
                   readerSettingsService.state.dark && 'text-gray-f7',
                 )}
               >
-                {state.bookMetadata?.title}
+                {state.bookData?.book.title}
               </span>
-              {!!state.bookMetadata?.creator && (
+              {!!state.bookData?.metadata?.metadata.author && (
                 <span className="text-gray-9c">
                   &nbsp;-&nbsp;
                   <span className="text-14">
-                    {state.bookMetadata?.creator}
+                    {state.bookData?.metadata?.metadata.author}
                   </span>
                 </span>
               )}
@@ -465,7 +431,7 @@ export const EpubBookView = observer((props: Props) => {
             <EpubSettings
               className="px-2"
               book={state.book}
-              bookTrx={state.bookTrxId}
+              bookTrx={state.bookId}
             />
             <EpubShortCutPopover className="px-2" />
             <Tooltip title={lang.epub.toggleFullscreen}>

@@ -13,4 +13,4 @@ export * from './mixinOAuth';
 export * from './myLibrary';
 export * from './nodeInfo';
 export * from './shareGroup';
-export * from './uploadEpub';
+export * from './uploadBook';

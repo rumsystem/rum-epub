@@ -12,10 +12,10 @@ import { Dialog } from '~/components';
 import { client_id, getVerifierAndChanllege, getOAuthUrl } from '~/utils/mixinOAuth';
 import { ThemeRoot } from '~/utils/theme';
 import { lang } from '~/utils';
-import { epubService, tooltipService } from '~/service';
+import { bookService, tooltipService } from '~/service';
 
 export const mixinOAuth = async () => new Promise<string | undefined>((rs) => {
-  if (!epubService.state.current.groupId) {
+  if (!bookService.state.current.groupId) {
     return;
   }
   const div = document.createElement('div');

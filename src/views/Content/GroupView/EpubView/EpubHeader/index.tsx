@@ -3,24 +3,23 @@ import classNames from 'classnames';
 import { action } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import { HiOutlineShare } from 'react-icons/hi';
-import { GoSync } from 'react-icons/go';
+// import { GoSync } from 'react-icons/go';
 import LockIcon from 'boxicons/svg/regular/bx-lock.svg?fill-icon';
 import DetailIcon from 'boxicons/svg/regular/bx-detail.svg?fill-icon';
 import UploadIcon from 'boxicons/svg/regular/bx-upload.svg?fill';
 import { Button, Tooltip } from '@mui/material';
 
 import { GroupMenu } from '~/views/Content/GroupView/GroupMenu';
-import { GroupIcon } from '~/components';
+import { GroupIcon, UploadBookButton } from '~/components';
 
 import { shareGroup } from '~/standaloneModals/shareGroup';
 import { groupInfo } from '~/standaloneModals/groupInfo';
-import { uploadEpub, UploadEpubButton } from '~/standaloneModals/uploadEpub';
 
-import { GroupStatus } from '~/apis';
 import { lang } from '~/utils';
-import { epubService, nodeService } from '~/service';
+import { bookService, nodeService } from '~/service';
 
 import { EpubInfoPopup } from './EpubInfoPopup';
+import { uploadBook } from '~/standaloneModals';
 
 export const EpubHeader = observer(() => {
   const state = useLocalObservable(() => ({
@@ -29,10 +28,10 @@ export const EpubHeader = observer(() => {
       return nodeService.state.groupMap[this.currentGroupId] ?? null;
     },
     get currentGroupId() {
-      return epubService.state.current.groupId;
+      return bookService.state.current.groupId;
     },
-    get currentBookTrx() {
-      return epubService.state.current.bookTrx;
+    get currentBookId() {
+      return bookService.state.current.bookId;
     },
     get peersCount() {
       const groups = nodeService.state.network.groups ?? [];
@@ -49,7 +48,7 @@ export const EpubHeader = observer(() => {
 
   const handleOpenGroupInfo = () => {
     if (state.group) {
-      groupInfo(state.group);
+      groupInfo({ groupId: state.group.group_id });
     }
   };
 
@@ -69,7 +68,7 @@ export const EpubHeader = observer(() => {
           width={52}
           height={52}
           fontSize={20}
-          groupId={epubService.state.current.groupId}
+          groupId={bookService.state.current.groupId}
         />
         <div className="font-bold text-18 tracking-wider truncate max-w-[220px]">
           <span
@@ -79,7 +78,8 @@ export const EpubHeader = observer(() => {
             {state.group.group_name}
           </span>
           <div className="mt-[2px] text-11 transform flex items-center opacity-90">
-            {state.group.group_status === GroupStatus.SYNCING && (
+            {/* TODO: group status */}
+            {/* {state.group.group_status === GroupStatus.SYNCING && (
               <span className="text-gray-9c leading-relaxed">
                 {lang.group.syncing}
               </span>
@@ -94,9 +94,10 @@ export const EpubHeader = observer(() => {
               <div className="flex items-center px-3 rounded-full bg-red-400 text-opacity-90 text-white text-12 font-bold">
                 {lang.group.syncFailed}
               </div>
-            )}
+            )} */}
 
-            <Tooltip
+            {/* TODO: group sync */}
+            {/* <Tooltip
               enterDelay={800}
               enterNextDelay={800}
               placement="bottom"
@@ -114,7 +115,7 @@ export const EpubHeader = observer(() => {
                   )}
                 />
               </div>
-            </Tooltip>
+            </Tooltip> */}
           </div>
         </div>
 
@@ -122,7 +123,7 @@ export const EpubHeader = observer(() => {
           <LockIcon className="text-20 text-bright-orange ml-6" />
         )}
 
-        <UploadEpubButton>
+        <UploadBookButton>
           {(p) => {
             if (p.hasUploadAtLeastOneBook || !p.hasWritePermission) { return null; }
             return (
@@ -130,7 +131,7 @@ export const EpubHeader = observer(() => {
                 <div className="ml-8">
                   <Button
                     className="relative overflow-hidden"
-                    onClick={uploadEpub}
+                    onClick={() => uploadBook({ groupId: state.currentGroupId })}
                     disabled={!p.hasWritePermission}
                   >
                     <div className="flex flex-center gap-x-2 relative z-10">
@@ -150,7 +151,7 @@ export const EpubHeader = observer(() => {
               </Tooltip>
             );
           }}
-        </UploadEpubButton>
+        </UploadBookButton>
 
         <Button className="ml-6">
           {lang.epub.setAsPublic}
@@ -200,13 +201,13 @@ export const EpubHeader = observer(() => {
             <DetailIcon className="text-18 mr-[6px]" />
             {lang.epub.bookDetail}
           </div>
-          {!!state.currentBookTrx && (
+          {!!state.currentBookId && (
             <EpubInfoPopup
               open={state.epubInfoPopup}
               onClose={action(() => { state.epubInfoPopup = false; })}
               anchorEl={infoPopupButton.current}
               groupId={state.currentGroupId}
-              bookTrx={state.currentBookTrx}
+              bookId={state.currentBookId}
               transformOrigin={{
                 horizontal: 'center',
                 vertical: 'top',

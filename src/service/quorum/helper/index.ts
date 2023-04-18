@@ -1,90 +1,37 @@
-import { sleep } from '~/utils';
+import type { actions } from '~/main/quorum';
 import { sendRequest } from './request';
 
-export interface ProcessStatus {
-  up: boolean
-  bootstrapId: string
-  storagePath: string
-  port: number
-  cert: string
-  quorumUpdating: boolean
-}
+type Status = Awaited<ReturnType<typeof actions['status']>>;
 
 export const getStatus = () =>
-  sendRequest<ProcessStatus>({
+  sendRequest<Status>({
     action: 'status',
   });
 
-export const getLogPath = () =>
-  sendRequest<Array<string>>({
-    action: 'log_path',
-  });
-
-export interface UpParam {
-  bootstraps: string[]
-  storagePath: string
-  password: string
-}
-
-export interface ImportKeyParam {
-  backupPath: string
-  storagePath: string
-  password: string
-}
-
-export interface ExportKeyParam {
-  backupPath: string
-  storagePath: string
-  password: string
-}
-
-export const up = (param: UpParam) =>
-  sendRequest<ProcessStatus>({
+export const up = (param: Parameters<typeof actions['up']>[0]) =>
+  sendRequest<Status>({
     action: 'up',
     param,
   });
 
-export const down = async (options?: {
-  quick: boolean
-}) => {
-  sendRequest<ProcessStatus>({
+export const down = async () =>
+  sendRequest<Status>({
     action: 'down',
   });
-  if (!options || !options.quick) {
-    await sleep(4000);
-  }
-};
 
-export const setCert = async (cert: string) => {
-  sendRequest({
-    action: 'set_cert',
-    param: {
-      cert,
-    },
+export const getLogPath = async () =>
+  sendRequest<Awaited<ReturnType<typeof actions['logPath']>>>({
+    action: 'logPath',
   });
-  await sleep(4000);
-};
 
-export const exportKey = (param: ExportKeyParam) =>
+export const exportKey = (param: Parameters<typeof actions['exportKey']>[0]) =>
   sendRequest<string>({
     action: 'exportKey',
     param,
   });
 
-export const exportKeyWasm = (param: ExportKeyParam) =>
-  sendRequest<string>({
-    action: 'exportKeyWasm',
-    param,
-  });
-
-export const importKey = (param: ImportKeyParam) =>
+export const importKey = (param: Parameters<typeof actions['importKey']>[0]) =>
   sendRequest<string>({
     action: 'importKey',
-    param,
-  });
-
-export const importKeyWasm = (param: ImportKeyParam) =>
-  sendRequest<string>({
-    action: 'importKeyWasm',
     param,
   });

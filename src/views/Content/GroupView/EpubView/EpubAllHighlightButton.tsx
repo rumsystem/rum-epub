@@ -168,14 +168,7 @@ export const EpubAllHighlightButton = observer((props: Props) => {
                 className="flex-1 px-3 py-2 hover:text-producer-blue"
                 onClick={() => handleJumpTo(v.a)}
               >
-                <div
-                  className="overflow-hidden"
-                  style={{
-                    display: '-webkit-box',
-                    WebkitLineClamp: '4',
-                    WebkitBoxOrient: 'vertical',
-                  }}
-                >
+                <div className="overflow-hidden truncate-4">
                   {!state.search && v.text}
                   {!!state.search && splitByHighlightText(v.text, state.search).map((v, i) => (
                     <span

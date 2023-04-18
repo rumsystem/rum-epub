@@ -4,10 +4,9 @@ import { action } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import escapeStringRegexp from 'escape-string-regexp';
 import { BookCoverImg, GroupIcon } from '~/components';
-import { epubService, GroupBookItem, nodeService } from '~/service';
+import { BookSummary, GroupMapBookItem, bookService } from '~/service';
 import { Popover } from '@mui/material';
 import { GroupPopup } from './GroupPopup';
-import { IGroup } from '~/apis';
 
 interface Props {
   groupSortMode: 'recent-open' | 'recent-add'
@@ -18,54 +17,44 @@ interface Props {
 
 export const SidebarGroupBookList = observer((props: Props) => {
   const state = useLocalObservable(() => ({
-    groupSortMode: props.groupSortMode,
-    search: '',
-    clickOrder: [] as Array<string>,
     groupPopup: {
       open: false,
       anchor: null as null | HTMLDivElement,
-      group: null as null | IGroup,
+      groupId: '',
     },
-    get orderedGroups() {
-      // TODO: sort books also
-      const orderArr = state.groupSortMode === 'recent-add'
-        ? nodeService.state.groupJoinOrder
-        : state.clickOrder;
-      const reg = this.search ? new RegExp(escapeStringRegexp(this.search)) : null;
-      return [
-        ...orderArr
-          .map((v) => nodeService.state.groupMap[v])
-          .filter(<T extends unknown>(v: T | undefined): v is T => !!v),
-        ...nodeService.state.groups.filter((v) => !orderArr.includes(v.group_id)),
-      ].filter((v) => !reg || reg.test(v.group_name));
-    },
-    get allBooks() {
-      return [...epubService.state.groupMap.entries()].flatMap(
-        ([groupId, group]) => group.books.map(
-          (book) => ({ book, groupId }),
-        ),
-      );
-    },
+    cachedOpenTimes: new Map<string, number>(),
   }));
 
   const handleClickGroup = action((groupId: string) => {
-    epubService.openBook(groupId);
+    bookService.openBook(groupId, '');
   });
 
-  const handleClickBook = action((groupId: string, bookTrx: string) => {
-    epubService.openBook(groupId, bookTrx);
-  });
+  const handleClickBook = (groupId: string, bookId: string) => {
+    bookService.openBook(groupId, bookId);
+  };
 
-  React.useEffect(() => {
-    state.clickOrder = [...epubService.state.groupOrder];
-  }, [props.groupSortMode]);
+  const filterSearch = React.useCallback((item: GroupMapBookItem) => {
+    const search = props.search.trim();
+    if (!search) { return item; }
+    const conditions = search.split(' ').map((v) => new RegExp(escapeStringRegexp(v), 'i'));
+    const titleMatch = conditions.every((u) => u.test(item.book.title));
+    const authorMatch = conditions.every((u) => u.test(item.metadata?.metadata.author ?? ''));
+    return titleMatch || authorMatch;
+  }, [props.search]);
 
-  React.useEffect(action(() => {
-    state.search = props.search;
-  }), [props.search]);
+  const getBookOpenTime = (book: BookSummary) => state.cachedOpenTimes.get(`${book.groupId}-${book.id}`) ?? book.openTime;
 
+  const applyFilterAndSort = (items: Array<GroupMapBookItem>) => {
+    const arr = items.filter(filterSearch).sort((a, b) => {
+      if (props.groupSortMode === 'recent-add') {
+        return b.book.timestamp - a.book.timestamp;
+      }
+      return getBookOpenTime(b.book) - getBookOpenTime(a.book);
+    });
+    return arr;
+  };
 
-  const renderGridBooks = (items: Array<{ book: GroupBookItem, groupId: string }>, className?: string) => (
+  const renderGridBooks = (items: Array<GroupMapBookItem>, className?: string) => (
     <div
       className={classNames(
         'grid grid-cols-3 justify-items-center px-1 py-4 gap-y-3',
@@ -73,18 +62,18 @@ export const SidebarGroupBookList = observer((props: Props) => {
       )}
     >
       {items.map((item) => {
-        const bookActive = epubService.state.current.bookTrx === item.book.trxId;
+        const bookActive = bookService.state.current.bookId === item.book.id;
         return (
           <div
             className={classNames(
               'flex-col items-center w-[76px]',
             )}
-            key={item.book.trxId}
-            onClick={() => handleClickBook(item.groupId, item.book.trxId)}
+            key={`${item.book.groupId}-${item.book.id}`}
+            onClick={() => handleClickBook(item.book.groupId, item.book.id)}
           >
             <BookCoverImg
-              bookTrx={item.book.trxId}
-              groupId={item.groupId}
+              bookId={item.book.id}
+              groupId={item.book.groupId}
             >
               {(src) => (
                 <div
@@ -109,11 +98,11 @@ export const SidebarGroupBookList = observer((props: Props) => {
               }}
             >
               <span className="font-medium text-12 text-black">
-                {item.book.fileInfo.title}
+                {item.book.title}
               </span>
               <br />
               <span className="text-10 text-gray-9c">
-                {item.book.metadata?.author}
+                {item.metadata?.metadata.author}
               </span>
             </div>
           </div>
@@ -122,168 +111,139 @@ export const SidebarGroupBookList = observer((props: Props) => {
     </div>
   );
 
-  return (<>
-    <div>
-      {!props.booksOnly && (
-        <div className="">
-          {state.orderedGroups.map((group, i) => {
-            const isOwner = group.owner_pubkey === group.user_pubkey;
-            const active = epubService.state.current.groupId === group.group_id && !epubService.state.current.bookTrx;
-            const books = epubService.getGroupItem(group.group_id).books;
-            return (
-              <div
-                key={group.group_id}
+  const renderListBooks = (items: Array<GroupMapBookItem>, className?: string, indent = true) => (
+    <div className={className}>
+      {items.map((item) => {
+        const bookActive = bookService.state.current.bookId === item.book.id;
+        return (
+          <div
+            className={classNames(
+              'flex h-[50px] pr-4',
+              bookActive && 'bg-gray-ec',
+            )}
+            key={`${item.book.groupId}-${item.book.id}`}
+            onClick={() => handleClickBook(item.book.groupId, item.book.id)}
+          >
+            <div className={
+              classNames(
+                'flex items-center flex-1 w-0',
+                indent && 'ml-6',
+                !indent && 'ml-3',
+              )
+            }
+            >
+              <BookCoverImg
+                bookId={item.book.id}
+                groupId={item.book.groupId}
               >
-                <div
-                  className={classNames(
-                    'flex justify-between items-center leading-none h-[50px] px-3',
-                    'text-14 relative cursor-pointer border-b border-gray-ec',
-                    i === 0 && 'border-t',
-                    active && 'bg-black text-white',
-                    !active && 'bg-white text-black',
-                  )}
-                  onClick={() => handleClickGroup(group.group_id)}
-                  onContextMenu={action((e) => {
-                    e.preventDefault();
-                    state.groupPopup = {
-                      open: true,
-                      anchor: e.currentTarget,
-                      group,
-                    };
-                  })}
-                >
+                {(src) => (
                   <div
-                    className={classNames(
-                      'w-[3px] h-full flex flex-col items-stretch absolute left-0',
-                      !active && 'py-px',
-                    )}
-                  >
-                    {isOwner && <div className="flex-1 bg-[#ff931e]" />}
-                  </div>
-
-                  <div className="flex grow items-center self-stretch">
-                    <GroupIcon
-                      className="rounded-6 mr-2 w-6 flex-none"
-                      width={24}
-                      height={24}
-                      fontSize={14}
-                      group={group}
-                      colorClassName={active ? 'text-gray-33' : 'text-white'}
-                    />
-                    <div className="flex-1 w-0 py-1 font-medium truncate text-14 truncate">
-                      {group.group_name}
-                    </div>
-                    <div className="text-gray-9c flex-none text-12 ml-2">
-                      {books.length}
-                    </div>
-                  </div>
-                </div>
-
-                {!!books.length && (<>
-                  {props.viewMode === 'list' && (
-                    <div className="border-b border-gray-f2">
-                      {books.map((book, i) => {
-                        const bookActive = epubService.state.current.bookTrx === book.trxId;
-                        return (
-                          <div
-                            className={classNames(
-                              'flex',
-                              bookActive && 'bg-gray-ec',
-                            )}
-                            key={book.trxId}
-                            onClick={() => handleClickBook(group.group_id, book.trxId)}
-                          >
-                            <div
-                              className={classNames(
-                                'flex flex-center w-10 h-[50px]',
-                                i === 0 && 'pt-3',
-                                i === books.length - 1 && 'pb-3',
-                              )}
-                            >
-                              <div
-                                className={classNames(
-                                  'h-full w-px bg-gray-ce',
-                                  !bookActive && 'bg-gray-ce',
-                                  bookActive && 'bg-gray-bf',
-                                )}
-                              />
-                            </div>
-                            <div className="flex items-center flex-1 w-0">
-                              <BookCoverImg
-                                bookTrx={book.trxId}
-                                groupId={group.group_id}
-                              >
-                                {(src) => (
-                                  <div
-                                    className="rounded-6 mr-2 w-6 h-6 flex-none overflow-hidden shadow-1 bg-cover bg-center bg-gray-f7"
-                                    style={{ backgroundImage: `url("${src}")` }}
-                                  />
-                                )}
-                              </BookCoverImg>
-                              <div className="truncate text-gray-9c pr-4">
-                                <span className="font-medium text-14 text-black">
-                                  {book.fileInfo.title}
-                                </span>
-                                {' '}
-                                <span className="text-12 text-gray-9c">
-                                  {book.metadata?.author}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                  {props.viewMode === 'grid' && renderGridBooks(
-                    books.map((book) => ({ book, groupId: group.group_id })),
-                    'border-b border-gray-f2',
-                  )}
-                </>)}
+                    className="rounded-6 mr-2 w-6 h-6 flex-none overflow-hidden shadow-1 bg-cover bg-center bg-gray-f7"
+                    style={{ backgroundImage: `url("${src}")` }}
+                  />
+                )}
+              </BookCoverImg>
+              <div className="truncate text-gray-9c">
+                <span className="font-medium text-14 text-black">
+                  {item.book.title}
+                </span>
+                {' '}
+                <span className="text-12 text-gray-9c">
+                  {item.metadata?.metadata.author}
+                </span>
               </div>
-            );
-          })}
-        </div>
-      )}
-      {props.booksOnly && props.viewMode === 'list' && (
-        <div>
-          {state.allBooks.map((item) => {
-            const bookActive = epubService.state.current.bookTrx === item.book.trxId;
-            return (
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  React.useEffect(action(() => {
+    if (props.groupSortMode === 'recent-open') {
+      state.cachedOpenTimes = new Map();
+    }
+  }), [props.groupSortMode]);
+
+  React.useEffect(action(() => {
+    const books = bookService.state.groups.flatMap((v) => v.books);
+    books.map((v) => [`${v.book.groupId}-${v.book.id}`, v.book.openTime] as const).forEach(([k, v]) => {
+      if (!state.cachedOpenTimes.has(k)) {
+        state.cachedOpenTimes.set(k, v);
+      }
+    });
+  }));
+
+  const orderedGroups = [...bookService.state.groups].sort((a, b) => {
+    if (props.groupSortMode === 'recent-add') {
+      return Math.max(...b.books.map((v) => v.book.timestamp)) - Math.max(...a.books.map((v) => v.book.timestamp));
+    }
+    return Math.max(...b.books.map((v) => getBookOpenTime(v.book))) - Math.max(...a.books.map((v) => getBookOpenTime(v.book)));
+  });
+
+  return (<>
+    <div className="divide-y border-y">
+      {!props.booksOnly && orderedGroups.map((item) => {
+        const isOwner = item.group.owner_pubkey === item.group.user_pubkey;
+        const active = bookService.state.current.groupId === item.group.group_id
+          && !bookService.state.current.bookId;
+        const books = applyFilterAndSort(item.books);
+
+        return (
+          <div key={item.group.group_id}>
+            <div
+              className={classNames(
+                'flex justify-between items-center leading-none h-[50px] px-3',
+                'text-14 relative cursor-pointer border-gray-ec',
+                active && 'bg-black text-white',
+                !active && 'bg-white text-black',
+              )}
+              onClick={() => handleClickGroup(item.group.group_id)}
+              onContextMenu={action((e) => {
+                e.preventDefault();
+                state.groupPopup = {
+                  open: true,
+                  anchor: e.currentTarget,
+                  groupId: item.group.group_id,
+                };
+              })}
+            >
               <div
                 className={classNames(
-                  'flex items-center h-[50px] px-4',
-                  bookActive && 'bg-gray-ec',
+                  'w-[3px] h-full flex flex-col items-stretch absolute left-0',
+                  !active && 'py-px',
                 )}
-                key={item.book.trxId}
-                onClick={() => handleClickBook(item.groupId, item.book.trxId)}
               >
-                <BookCoverImg
-                  bookTrx={item.book.trxId}
-                  groupId={item.groupId}
-                >
-                  {(src) => (
-                    <div
-                      className="rounded-6 mr-2 w-6 h-6 flex-none overflow-hidden shadow-1 bg-cover bg-center bg-gray-f7"
-                      style={{ backgroundImage: `url("${src}")` }}
-                    />
-                  )}
-                </BookCoverImg>
-                <div className="truncate text-gray-9c">
-                  <span className="font-medium text-14 text-black">
-                    {item.book.fileInfo.title}
-                  </span>
-                  {' '}
-                  <span className="text-12 text-gray-9c">
-                    {item.book.metadata?.author}
-                  </span>
+                {isOwner && <div className="flex-1 bg-[#ff931e]" />}
+              </div>
+
+              <div className="flex grow items-center self-stretch">
+                <GroupIcon
+                  className="rounded-6 mr-2 w-6 flex-none"
+                  width={24}
+                  height={24}
+                  fontSize={14}
+                  group={item.group}
+                // colorClassName={active ? 'text-gray-33' : 'text-white'}
+                />
+                <div className="flex-1 w-0 py-1 font-medium truncate text-14 truncate">
+                  {item.group.group_name}
+                </div>
+                <div className="text-gray-9c flex-none text-12 ml-2">
+                  {books.length}
                 </div>
               </div>
-            );
-          })}
-        </div>
-      )}
-      {props.booksOnly && props.viewMode === 'grid' && renderGridBooks(state.allBooks)}
+            </div>
+
+            {!!books.length && (<>
+              {props.viewMode === 'list' && renderListBooks(books)}
+              {props.viewMode === 'grid' && renderGridBooks(books)}
+            </>)}
+          </div>
+        );
+      })}
+      {props.booksOnly && props.viewMode === 'list' && renderListBooks(applyFilterAndSort(bookService.state.groups.flatMap((v) => v.books)), '', false)}
+      {props.booksOnly && props.viewMode === 'grid' && renderGridBooks(applyFilterAndSort(bookService.state.groups.flatMap((v) => v.books)))}
     </div>
 
     <Popover
@@ -303,13 +263,14 @@ export const SidebarGroupBookList = observer((props: Props) => {
         vertical: 'center',
       }}
     >
-      {!!state.groupPopup.group && (
+      {!!state.groupPopup.groupId && (
         <GroupPopup
-          group={state.groupPopup.group}
+          groupId={state.groupPopup.groupId}
           onClickAway={action(() => { state.groupPopup.open = false; })}
           onClose={action(() => { state.groupPopup.open = false; })}
         />
       )}
     </Popover>
+    <div />
   </>);
 });

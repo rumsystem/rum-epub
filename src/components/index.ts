@@ -10,3 +10,4 @@ export * from './MiddleTruncate';
 export * from './PasswordInput';
 export * from './Scrollable';
 export * from './SearchInput';
+export * from './UploadBookButton';

@@ -1,7 +1,8 @@
 import { observable, runInAction } from 'mobx';
-import { GlobalProfile, dbService } from '~/service/db';
+import { GlobalProfile } from '~/service/db';
 import { defaultAvatar } from '~/utils/avatars';
 import { nodeService } from '../node';
+import { sleep } from '~/utils';
 
 const state = observable({
   currentProfile: {
@@ -19,26 +20,24 @@ const state = observable({
 });
 
 const setProfile = async (profile: GlobalProfile['profile']) => {
-  await dbService.db.globalProfile.add({
-    profile,
-  });
+  await sleep(1);
+  // await dbService.db.globalProfile.add({
+  //   profile,
+  // });
 
   runInAction(() => {
     state.currentProfile = profile;
   });
 };
 
-const init = () => {
-  dbService.db.globalProfile.toCollection().last().then((profile) => {
-    runInAction(() => {
-      if (profile?.profile) {
-        state.currentProfile = profile.profile;
-      }
-    });
-  });
-
-  return () => 1;
-};
+// dbService.db.globalProfile.toCollection().last().then((profile) => {
+//   runInAction(() => {
+//     if (profile?.profile) {
+//       state.currentProfile = profile.profile;
+//     }
+//   });
+// });
+const init = () => () => 1;
 
 export const profileService = {
   init,

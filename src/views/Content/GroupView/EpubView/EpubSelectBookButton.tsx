@@ -9,8 +9,8 @@ import { ArrowDropDown } from '@mui/icons-material';
 import BookOpenIcon from 'boxicons/svg/regular/bx-book-open.svg?fill';
 
 import BookIcon from '~/assets/icon_book.svg?fill-icon';
-import { BookCoverImgTooltip } from '~/components';
-import { GroupBookItem, epubService, readerSettingsService } from '~/service';
+import { BookCoverImg, BookCoverImgTooltip } from '~/components';
+import { BookSummary, bookService, readerSettingsService } from '~/service';
 import { lang } from '~/utils';
 
 interface Props {
@@ -20,48 +20,30 @@ interface Props {
 export const EpubSelectBookButton = observer((props: Props) => {
   const state = useLocalObservable(() => ({
     open: false,
-
     get groupId() {
-      return epubService.state.current.groupId;
+      return bookService.state.current.groupId;
     },
-    get currentBookTrx() {
-      return epubService.state.current.bookTrx;
-    },
-    get groupItem() {
-      return epubService.getGroupItem(this.groupId);
+    get currentBookId() {
+      return bookService.state.current.bookId;
     },
     get books() {
-      return this.groupItem.books;
+      return bookService.state.groupMap.get(this.groupId) ?? [];
     },
   }));
   const buttonRef = React.useRef<HTMLDivElement>(null);
 
-  const handleSelectFile = (v: GroupBookItem) => {
-    if (v.trxId !== state.currentBookTrx) {
-      epubService.openBook(state.groupId, v.trxId);
-    }
+  const handleOpenBook = (book: BookSummary) => {
+    bookService.openBook(book.groupId, book.id);
     handleClose();
   };
 
   const handleOpen = action(() => {
     state.open = true;
-    loadBooks();
   });
 
   const handleClose = action(() => {
     state.open = false;
   });
-
-  const loadBooks = async () => {
-    // const books = await getAllEpubs(activeGroup.group_id);
-    // runInAction(() => {
-    //   state.books = books;
-    // });
-  };
-
-  React.useEffect(() => {
-    loadBooks();
-  }, []);
 
   return (<>
     <div
@@ -95,18 +77,12 @@ export const EpubSelectBookButton = observer((props: Props) => {
       classes={{ paper: 'mt-2' }}
       open={state.open}
       anchorEl={buttonRef.current}
-      anchorOrigin={{
-        horizontal: 'center',
-        vertical: 'bottom',
-      }}
-      transformOrigin={{
-        horizontal: 'center',
-        vertical: 'top',
-      }}
+      anchorOrigin={{ horizontal: 'center', vertical: 'bottom' }}
+      transformOrigin={{ horizontal: 'center', vertical: 'top' }}
       onClose={handleClose}
       keepMounted
     >
-      <div className="p-2 w-[350px]">
+      <div className="p-2 w-[380px]">
         <div className="overflow-y-auto max-h-[400px]">
           {!state.books.length && (
             <div className="flex flex-center py-2">
@@ -116,26 +92,39 @@ export const EpubSelectBookButton = observer((props: Props) => {
           {state.books.map((v, i) => (
             <BookCoverImgTooltip
               groupId={state.groupId}
-              bookTrx={v?.trxId ?? ''}
+              bookId={v?.book.id ?? ''}
               key={i}
             >
               <div
                 className="flex items-center gap-x-2 hover:bg-gray-f2 cursor-pointer p-2 relative"
-                onClick={() => handleSelectFile(v)}
+                onClick={() => handleOpenBook(v.book)}
               >
+                <BookCoverImg
+                  className="max-h-12 max-w-12"
+                  groupId={state.groupId}
+                  bookId={v?.book.id ?? ''}
+                  key={i}
+                >
+                  {(src) => (
+                    <div
+                      className="flex flex-center h-12 w-12 bg-contain bg-center bg-no-repeat"
+                      style={{ backgroundImage: `url("${src}")` }}
+                    />
+                  )}
+                </BookCoverImg>
                 <div className="flex-col flex-1">
-                  <div>
-                    {v.fileInfo.title}
+                  <div className="truncate-2">
+                    {v.book.title}
                   </div>
                   <div className="text-gray-af">
-                    {lang.epub.uploadedAt(format(v.time, 'yyyy-MM-dd hh:mm:ss'))}
+                    {lang.epub.uploadedAt(format(v.book.timestamp, 'yyyy-MM-dd hh:mm:ss'))}
                   </div>
                 </div>
                 <Tooltip title={lang.epub.currentReading}>
                   <div
                     className={classNames(
                       'px-2',
-                      v.trxId !== state.currentBookTrx && 'opacity-0',
+                      v.book.id !== state.currentBookId && 'opacity-0',
                     )}
                   >
                     <BookOpenIcon className="text-blue-400" />

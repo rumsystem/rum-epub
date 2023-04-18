@@ -2,60 +2,51 @@ import React from 'react';
 import classNames from 'classnames';
 import { action } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
+import RemoveMarkdown from 'remove-markdown';
 import { Button, CircularProgress } from '@mui/material';
 
 import BookImage from '~/assets/illustration_book.svg';
 import ArrowImage from '~/assets/arrow.svg';
-import { epubService, GroupBookItem, nodeService, ReadingProgressItem } from '~/service';
+import { bookService, nodeService, ReadingProgress } from '~/service';
 import { BookCoverImg, Scrollable } from '~/components';
 import { lang } from '~/utils';
 
-
 export const EpubGroupView = observer((props: { className?: string }) => {
   const state = useLocalObservable(() => ({
-    books: [] as Array<GroupBookItem>,
-    readingProgress: {} as Record<string, ReadingProgressItem>,
-    loading: true,
+    readingProgress: {} as Record<string, ReadingProgress>,
+    loading: false,
     get groupId() {
-      return epubService.state.current.groupId;
+      return bookService.state.current.groupId;
     },
     get group() {
       return nodeService.state.groupMap[this.groupId];
     },
-    get groupItem() {
-      return epubService.getGroupItem(state.groupId);
+    get books() {
+      return bookService.state.groupMap.get(this.groupId) ?? [];
     },
-    get currentUploadItem() {
-      return this.groupItem.upload.epub;
+    get uploadJob() {
+      return bookService.state.upload.jobs.findLast((v) => v.groupId === this.groupId);
     },
   }));
 
-  const handleOpenRecentlyUploadedBook = () => {
-    const book = state.currentUploadItem?.recentUploadBook;
-    epubService.upload.resetEpub(state.groupId);
-    if (book) {
-      epubService.openBook(epubService.state.current.groupId, book.trxId);
+  const handleOpenNewBook = () => {
+    const bookId = state.uploadJob?.bookId;
+    if (bookId) {
+      bookService.openBook(state.groupId, bookId);
     }
   };
 
   React.useEffect(() => {
-    epubService.readingProgress.getAll(state.groupId).then((v) => {
-      state.readingProgress = Object.fromEntries(v.map((v) => [v.bookTrx, v]));
-    });
-    new Promise<void>((rs) => epubService.loadAndParseBooks(state.groupId, rs))
-      .then(action(() => {
-        const books = epubService.getGroupItem(state.groupId).books;
-        state.books = books;
-      }))
-      .finally(action(() => {
-        state.loading = false;
-      }));
+    bookService.loadBooks(state.groupId);
+    bookService.readingProgress.getByGroupId(state.groupId).then(action((v) => {
+      state.readingProgress = Object.fromEntries(v.map((v) => [v.bookId, v]));
+    }));
   }, []);
 
   const isOwner = state.group?.user_pubkey === state.group?.owner_pubkey;
-  const noBook = !state.currentUploadItem?.uploading && !state.currentUploadItem?.recentUploadBook;
-  const uploading = !!state.currentUploadItem?.uploading;
-  const uploadDone = !state.currentUploadItem?.uploading && !!state.currentUploadItem?.recentUploadBook;
+  const noBook = !state.uploadJob?.uploading && !state.uploadJob?.done;
+  const uploading = !!state.uploadJob?.uploading;
+  const uploadDone = !state.uploadJob?.uploading && !!state.uploadJob?.done;
 
   return (
     <div
@@ -104,14 +95,14 @@ export const EpubGroupView = observer((props: { className?: string }) => {
 
             {uploadDone && (<>
               <p>{lang.epubGroupView.uploadedTip}</p>
-              <p>{state.currentUploadItem?.recentUploadBook?.fileInfo.title}</p>
+              <p>{state.uploadJob?.fileInfo.title}</p>
             </>)}
           </div>
 
           {uploadDone && (
             <Button
               className="rounded-full text-20 px-12"
-              onClick={handleOpenRecentlyUploadedBook}
+              onClick={handleOpenNewBook}
             >
               {lang.epubGroupView.startReading}
             </Button>
@@ -129,9 +120,9 @@ export const EpubGroupView = observer((props: { className?: string }) => {
             className="grid p-8 gap-x-10 gap-y-10 justify-center"
             style={{ gridTemplateColumns: 'repeat(auto-fill, 370px)' }}
           >
-            {state.books.map((v) => (
-              <div className="flex" key={v.trxId}>
-                <BookCoverImg bookTrx={v.trxId} groupId={state.groupId}>
+            {state.books.map(({ book, metadata }) => (
+              <div className="flex" key={book.id}>
+                <BookCoverImg groupId={book.groupId} bookId={book.id}>
                   {(src) => (
                     <div
                       className={classNames(
@@ -144,33 +135,26 @@ export const EpubGroupView = observer((props: { className?: string }) => {
                 </BookCoverImg>
                 <div className="flex-col ml-4 flex-1 w-0">
                   <div className="text-16 font-bold cursor-pointer truncate overflow-hidden">
-                    {v.fileInfo.title}
+                    {book.title}
                   </div>
                   <div className="text-12 text-gray-88 cursor-pointer mt-[2px]">
-                    {v.metadata?.author}
-                    {v.metadata?.translator && ` ${lang.epub.translatorTag}${v.metadata?.translator}`}
+                    {metadata?.metadata.author}
+                    {metadata?.metadata.translator && ` ${lang.epub.translatorTag}${metadata?.metadata.translator}`}
                   </div>
-                  <div
-                    className="text-12 text-gray-88 cursor-pointer overflow-hidden mt-1"
-                    style={{
-                      display: '-webkit-box',
-                      WebkitLineClamp: '3',
-                      WebkitBoxOrient: 'vertical',
-                    }}
-                  >
-                    {v.metadata?.description}
+                  <div className="text-12 text-gray-88 cursor-pointer overflow-hidden mt-1 truncate-3">
+                    {RemoveMarkdown(metadata?.metadata.description ?? '')}
                   </div>
                   <div className="grow" />
                   <div className="text-12 text-gray-33 cursor-pointer mt-2">
-                    epub {Number((v.size / 1048576).toFixed(2))}MB
+                    epub {Number((book.size / 1048576).toFixed(2))}MB
                   </div>
                   <div className="mt-2">
                     <Button
                       className="rounded-none px-6 opacity-90"
                       size="small"
-                      onClick={() => epubService.openBook(state.groupId, v.trxId)}
+                      onClick={() => bookService.openBook(state.groupId, book.id)}
                     >
-                      {state.readingProgress[v.trxId] ? lang.epub.continueReading : lang.epub.startReading}
+                      {state.readingProgress[book.id] ? lang.epub.continueReading : lang.epub.startReading}
                     </Button>
                   </div>
                 </div>

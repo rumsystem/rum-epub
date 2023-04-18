@@ -1,18 +1,16 @@
-import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { FiDelete } from 'react-icons/fi';
 import { MdInfoOutline } from 'react-icons/md';
 import { ClickAwayListener, ClickAwayListenerProps } from '@mui/material';
 
-import { IGroup } from '~/apis';
 import { groupInfo } from '~/standaloneModals/groupInfo';
 
 import { lang, sleep } from '~/utils';
-import { dialogService, loadingService, nodeService, tooltipService } from '~/service';
+import { bookService, dialogService, loadingService, nodeService, tooltipService } from '~/service';
 import { GROUP_CONFIG_KEY } from '~/utils/constant';
 
 interface Props {
-  group: IGroup
+  groupId: string
   onClose: () => void
   onClickAway: ClickAwayListenerProps['onClickAway']
 }
@@ -25,7 +23,7 @@ export const GroupPopup = observer((props: Props) => {
     });
     if (result === 'cancel') { return; }
     const loading = loadingService.add(lang.group.exitingGroup);
-    nodeService.leaveGroup(props.group.group_id).then(
+    nodeService.leaveGroup(props.groupId).then(
       () => {
         tooltipService.show({
           content: lang.group.exited,
@@ -43,8 +41,9 @@ export const GroupPopup = observer((props: Props) => {
     });
   };
 
-  // const isOwner = props.group.user_pubkey === props.group.owner_pubkey;
-  const groupDesc = (nodeService.state.configMap.get(props.group.group_id)?.[GROUP_CONFIG_KEY.GROUP_DESC] ?? '') as string;
+  const groupDesc = (nodeService.state.configMap.get(props.groupId)?.[GROUP_CONFIG_KEY.GROUP_DESC] ?? '') as string;
+  const group = nodeService.state.groupMap[props.groupId];
+  // const isOwner = group?.user_pubkey === group?.owner_pubkey;
 
   return (
     <ClickAwayListener
@@ -54,16 +53,21 @@ export const GroupPopup = observer((props: Props) => {
       <div className="shadow-3 w-[400px] border-black border text-white">
         <div className="flex items-center bg-black h-[50px] px-4">
           <div className="flex-1 text-16 truncate">
-            {props.group.group_name}
+            {group?.group_name}
           </div>
         </div>
-        <div className="flex bg-white text-black">
+        <div className="flex bg-white text-black align-center">
           <div className="flex-1 p-4 max-h-[200px] overflow-y-auto">
             {groupDesc && (
               <div className="text-gray-9c text-12 pb-3 leading-normal">
                 {groupDesc}
               </div>
             )}
+            <div className="flex">
+              {bookService.state.groupMap.get(props.groupId)?.length ?? 0}
+              本书籍
+            </div>
+
             {/* <div className="flex items-center justify-center">
               <Avatar
                 className="flex-none"
@@ -95,7 +99,7 @@ export const GroupPopup = observer((props: Props) => {
               onClick={async () => {
                 props.onClose();
                 await sleep(300);
-                groupInfo(props.group);
+                groupInfo({ groupId: props.groupId });
               }}
             >
               <MdInfoOutline className="text-18 text-gray-600 opacity-50  mr-3" />

@@ -8,13 +8,13 @@ import { EditOutlined } from '@mui/icons-material';
 
 import { IGroup } from '~/apis';
 import { lang } from '~/utils';
-import { nodeService, dialogService, loadingService, tooltipService, epubService } from '~/service';
+import { nodeService, dialogService, loadingService, tooltipService, bookService } from '~/service';
+import { UploadBookButton } from '~/components';
 
 import IconSeednetManage from '~/assets/icon_seednet_manage.svg';
 import {
   editEpubCover,
-  uploadEpub,
-  UploadEpubButton,
+  uploadBook,
   manageGroup,
   editEpubMetadata,
   groupInfo,
@@ -32,7 +32,7 @@ export const GroupMenu = observer((props: Props) => {
     showMutedListModal: false,
 
     get currentBookId() {
-      return epubService.state.current.bookTrx;
+      return bookService.state.current.bookId;
     },
   }));
   const isGroupOwner = props.group.user_pubkey === props.group.owner_pubkey;
@@ -49,7 +49,7 @@ export const GroupMenu = observer((props: Props) => {
 
   const openGroupInfoModal = () => {
     handleMenuClose();
-    groupInfo(props.group);
+    groupInfo({ groupId: props.group.group_id });
   };
 
   // const openMutedListModal = () => {
@@ -99,12 +99,18 @@ export const GroupMenu = observer((props: Props) => {
   };
 
   const handleEditMetadata = () => {
-    editEpubMetadata();
+    editEpubMetadata({
+      groupId: bookService.state.current.groupId,
+      bookId: bookService.state.current.bookId,
+    });
     handleMenuClose();
   };
 
   const handleEditCover = () => {
-    editEpubCover();
+    editEpubCover({
+      groupId: bookService.state.current.groupId,
+      bookId: bookService.state.current.bookId,
+    });
     handleMenuClose();
   };
 
@@ -162,9 +168,9 @@ export const GroupMenu = observer((props: Props) => {
         </MenuItem>
       )}
       {isGroupOwner && (
-        <UploadEpubButton>
+        <UploadBookButton>
           {() => (
-            <MenuItem onClick={() => { uploadEpub(); handleMenuClose(); }}>
+            <MenuItem onClick={() => { uploadBook({ groupId: props.group.group_id }); handleMenuClose(); }}>
               <div className="flex items-center text-gray-600 leading-none pl-1 py-2">
                 <span className="flex items-center w-7 flex-none">
                   <UploadIcon className="text-18" />
@@ -173,7 +179,7 @@ export const GroupMenu = observer((props: Props) => {
               </div>
             </MenuItem>
           )}
-        </UploadEpubButton>
+        </UploadBookButton>
       )}
       {isGroupOwner && !!state.currentBookId && (
         <MenuItem onClick={handleEditMetadata}>

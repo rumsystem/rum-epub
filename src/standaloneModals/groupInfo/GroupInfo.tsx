@@ -1,71 +1,46 @@
-import React from 'react';
-import { createRoot } from 'react-dom/client';
 import { action } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
-import { GroupStatus, IGroup } from '~/apis';
-import { Tooltip, Dialog } from '@mui/material';
+import { Dialog } from '@mui/material';
 
-import { i18n } from '~/service';
+import { i18n, nodeService } from '~/service';
 import { lang, ago } from '~/utils';
-import { ThemeRoot } from '~/utils/theme';
 
-export const groupInfo = async (group: IGroup) => new Promise<void>((rs) => {
-  const div = document.createElement('div');
-  const root = createRoot(div);
-  document.body.append(div);
-  const unmount = () => {
-    root.unmount();
-    div.remove();
-  };
-  root.render(
-    (
-      <ThemeRoot>
-        <GroupInfo
-          group={group}
-          rs={() => {
-            rs();
-            setTimeout(unmount, 3000);
-          }}
-        />
-      </ThemeRoot>
-    ),
-  );
-});
-
-
-interface Props {
-  group: IGroup
-  rs: () => unknown
+export interface Props {
+  groupId: string
 }
 
-const GroupInfo = observer((props: Props) => {
+export const GroupInfo = observer((props: { destroy: () => unknown } & Props) => {
   const state = useLocalObservable(() => ({
     loading: true,
     open: true,
     owner: {} as any,
   }));
 
+  const group = nodeService.state.groupMap[props.groupId];
+
   // const database = useDatabase();
   // const { activeGroupStore } = useStore();
 
   const handleClose = action(() => {
     state.open = false;
-    props.rs();
+    setTimeout(action(() => {
+      props.destroy();
+    }), 2000);
   });
 
-  const status = {
-    [GroupStatus.IDLE]: lang.group.idle,
-    [GroupStatus.SYNCING]: lang.group.syncing,
-    [GroupStatus.SYNC_FAILED]: lang.group.syncFailed,
-  };
+  // const status = {
+  //   [GroupStatus.IDLE]: lang.group.idle,
+  //   [GroupStatus.SYNCING]: lang.group.syncing,
+  //   [GroupStatus.SYNC_FAILED]: lang.group.syncFailed,
+  // };
   const width = i18n.state.lang === 'cn' ? 'w-20' : 'w-32';
 
   // React.useEffect(() => {
   //   (async () => {
   //     const db = database;
   //     const user = await PersonModel.getUser(db, {
-  //       GroupId: props.group.group_id,
-  //       Publisher: props.group.owner_pubkey,
+  //       GroupId: group?.group_id,
+  //       Publisher: group?.owner_pubkey,
   //     });
   //     state.owner = user;
   //     state.loading = false;
@@ -95,21 +70,27 @@ const GroupInfo = observer((props: Props) => {
             <div className="flex items-center">
               <span className={width}>{lang.group.name}：</span>
               <span className="text-gray-4a opacity-90">
-                {props.group.group_name}
+                {group?.group_name}
               </span>
             </div>
             <div className="mt-4 flex items-center">
               <span className={width}>ID：</span>
               <span className="text-gray-4a opacity-90">
-                {props.group.group_id}
+                {group?.group_id}
               </span>
             </div>
             <div className="mt-4 flex items-center">
+              <span className={width}>{lang.group.owner}：</span>
+              <div className="text-gray-4a opacity-90">
+                {group?.owner_pubkey}
+              </div>
+            </div>
+            {/* <div className="mt-4 flex items-center">
               <span className={width}>{lang.group.highestBlockId}：</span>
               <span className="text-gray-4a opacity-90">
-                {props.group.highest_block_id}
+                {group?.currt_top_block}
               </span>
-            </div>
+            </div> */}
             {/* <div className="mt-4 flex items-center">
               <span className={width}>{lang.owner}：</span>
               {!state.loading && (
@@ -126,25 +107,26 @@ const GroupInfo = observer((props: Props) => {
             <div className="mt-4 flex items-center">
               <span className={width}>{lang.group.highestHeight}：</span>
               <span className="text-gray-4a opacity-90">
-                {props.group.highest_height}
+                {group?.currt_top_block}
               </span>
             </div>
             <div className="mt-4 flex items-center">
               <span className={width}>{lang.group.lastUpdated}：</span>
               <span className="text-gray-4a opacity-90">
-                {ago(props.group.last_updated)}
+                {ago(group?.last_updated ?? 0)}
               </span>
             </div>
-            <div className="mt-4 flex items-center">
+            {/* TODO: group status */}
+            {/* <div className="mt-4 flex items-center">
               <span className={width}>{lang.group.status}：</span>
               <span className="text-gray-4a opacity-90">
-                <Tooltip title={props.group.group_status} placement="right">
+                <Tooltip title={group?.group_status} placement="right">
                   <span>
-                    {status[props.group.group_status]}
+                    {status[group?.group_status]}
                   </span>
                 </Tooltip>
               </span>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

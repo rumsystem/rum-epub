@@ -1,53 +1,51 @@
-import { nodeService } from './node';
-import { quorumService } from './quorum';
+import { bookService } from './book';
 import { dbService } from './db';
-import { epubService } from './epub';
+import { escService } from './esc';
+import { nodeService } from './node';
+import { pollingService } from './polling';
+import { profileService } from './profile';
+import { quorumService } from './quorum';
 import { readerSettingsService } from './readerSettings';
 import { updateService } from './update';
-import { trxAckService } from './trxAck';
-import { profileService } from './profile';
-import { escService } from './esc';
 
 import { ConfirmDialogContainer } from './dialog/ConfirmDialogContainer';
 import { LoadingContainer } from './loading/LoadingContainer';
 import { TooltipContainer } from './tooltip/TooltipContainer';
 import { UpdateContainer } from './update/UpdateContainer';
 
+export * from './book';
 export * from './bus';
 export * from './db';
 export * from './dialog';
-export * from './epub';
 export * from './esc';
 export * from './i18n';
 export * from './loading';
 export * from './node';
+export * from './polling';
 export * from './profile';
 export * from './quorum';
 export * from './readerSettings';
 export * from './tooltip';
-export * from './trxAck';
 export * from './update';
 
 export const initService = () => {
-  if (process.env.NODE_ENV === 'development') {
-    Object.entries({
-      nodeService,
-      quorumService,
-      epubService,
-      updateService,
-      dbService,
-    }).forEach(([k, v]) => {
-      (window as any)[k] = v;
-    });
-  }
+  Object.entries({
+    nodeService,
+    quorumService,
+    bookService,
+    updateService,
+    dbService,
+    pollingService,
+  }).forEach(([k, v]) => {
+    (window as any)[k] = v;
+  });
 
   const disposes = [
     nodeService.init(),
     quorumService.init(),
     readerSettingsService.init(),
-    epubService.init(),
+    bookService.init(),
     updateService.init(),
-    trxAckService.init(),
     escService.init(),
   ];
 
@@ -58,7 +56,8 @@ export const initServiceAfterDB = () => {
   const disposes = [
     nodeService.startPolling(true),
     profileService.init(),
-    epubService.initAfterDB(),
+    bookService.initAfterDB(),
+    pollingService.initAfterDB(),
   ];
 
   return () => disposes.forEach((v) => v());

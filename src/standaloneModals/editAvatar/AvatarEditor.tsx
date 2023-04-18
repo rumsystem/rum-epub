@@ -52,6 +52,7 @@ export const AvatarEditor = observer((props: Props) => {
                 style={{
                   transform: 'translateX(-50%)',
                   left: '50%',
+                  transformOrigin: 'top',
                 }}
               >
                 <ReactAvatarEditor
@@ -95,11 +96,6 @@ export const AvatarEditor = observer((props: Props) => {
               </Button>
             </div>
           </div>
-          <style jsx>{`
-        .canvas-container {
-          transform-origin: top;
-        }
-      `}</style>
         </div>
       </div>
     </Dialog>

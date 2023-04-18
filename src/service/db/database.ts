@@ -1,127 +1,109 @@
 import Dexie from 'dexie';
+import { IContentItem } from '~/apis';
 import { createSchema } from './helper';
 import { applyOldVersions } from './oldVersions';
+import { EpubMetadata } from '~/utils';
 
-export interface FileInfo {
-  mediaType: string
-  name: string
+export interface BookSummary {
+  id: string
+  groupId: string
+  trxId: string
   title: string
   sha256: string
-  segments: Array<{
-    id: string
-    sha256: string
-  }>
-}
-export interface CoverFileInfo {
-  mediaType: string
-  name: string
-  bookTrx: string
-  sha256: string
-  segments: Array<{
-    id: string
-    sha256: string
-  }>
-}
-
-export interface EpubMetadata {
-  description: string
-  subTitle: string
-  isbn: string
-  author: string
-  translator: string
-  publishDate: string
-  publisher: string
-  languages: Array<string>
-  subjects: Array<string>
-  series: string
-  seriesNumber: string
-  categoryLevel1: string
-  categoryLevel2: string
-  categoryLevel3: string
-}
-
-export interface HighlightItem {
-  id?: number
-  groupId: string
-  bookTrx: string
-  cfiRange: string
-}
-
-export interface ReadingProgressItem {
-  id?: number
-  groupId: string
-  bookTrx: string
-  readingProgress: string
-}
-
-export interface BookDatabaseItem {
-  id?: number
-  groupId: string
-  bookTrx: string
-  fileInfo: FileInfo
   size: number
-  status: 'incomplete' | 'complete' | 'broken'
-  time: number
+  segments: Array<{
+    sha256: string
+  }>
+  status: 'synced' | 'pending'
+  complete: boolean
+  timestamp: number
   openTime: number
+  userAddress: string
 }
 
-export interface GroupLatestParsedTrxItem {
-  id?: number
+export interface BookBuffer {
+  groupId: string
+  bookId: string
+  file: Uint8Array
+}
+
+export interface BookSegment {
+  trxId: string
+  groupId: string
+  bookId: string
+  sha256: string
+  buffer: Uint8Array
+  userAddress: string
+  status: 'synced' | 'pending'
+}
+
+export interface GroupStatus {
   groupId: string
   trxId: string
 }
 
-export interface BookBufferItem {
-  id?: number
+export interface PendingTrxItem {
   groupId: string
-  bookTrx: string
-  file: Uint8Array
+  trxId: string
+  value: IContentItem
 }
 
-export interface BookSegmentItem {
-  id?: number
+export interface CoverSummary {
+  id: string
   groupId: string
-  bookTrx: string
-  segments: Record<string, {
-    id: string
+  trxId: string
+  bookId: string
+  sha256: string
+  size: number
+  segments: Array<{
     sha256: string
-    buf: Uint8Array
   }>
+  status: 'synced' | 'pending'
+  complete: boolean
+  timestamp: number
+  userAddress: string
 }
 
-export interface CoverItem {
-  id?: number
+export interface CoverSegment {
+  trxId: string
   groupId: string
-  bookTrx: string
-  fileInfo: CoverFileInfo | null
-  coverTrx: string
-  status: 'incomplete' | 'complete' | 'broken'
+  coverId: string
+  sha256: string
+  buffer: Uint8Array
+  userAddress: string
+  status: 'synced' | 'pending'
 }
 
-export interface CoverBufferItem {
+export interface CoverBuffer {
   id?: number
+  coverId: string
   groupId: string
-  bookTrx: string
-  coverTrx?: string
+  bookId: string
   file: Uint8Array
+  timestamp: number
 }
 
-export interface CoverSegmentItem {
+export interface BookMetadata {
   id?: number
   groupId: string
-  coverTrx: string
-  segments: Record<string, {
-    id: string
-    sha256: string
-    buf: Uint8Array
-  }>
-}
-
-export interface BookMetadataItem {
-  id?: number
-  groupId: string
-  bookTrx: string
+  trxId: string
+  bookId: string
   metadata: EpubMetadata
+  timestamp: number
+  userAddress: string
+  status: 'synced' | 'pending'
+}
+
+export interface HighlightItem {
+  groupId: string
+  bookId: string
+  cfiRange: string
+}
+
+export interface ReadingProgress {
+  groupId: string
+  bookId: string
+  readingProgress: string
 }
 
 export interface ProfileItem {
@@ -159,151 +141,127 @@ export interface GlobalProfile {
   }
 }
 
+export interface EmptyTrxItem {
+  groupId: string
+  trxId: string
+  timestamp: number
+  lastChecked: number
+}
+
 export class Database extends Dexie {
-  public book: Dexie.Table<BookDatabaseItem, number>;
-  public bookBuffer: Dexie.Table<BookBufferItem, number>;
-  public bookSegment: Dexie.Table<BookSegmentItem, number>;
-  public cover: Dexie.Table<CoverItem, number>;
-  public coverBuffer: Dexie.Table<CoverBufferItem, number>;
-  public coverSegment: Dexie.Table<CoverSegmentItem, number>;
+  public book: Dexie.Table<BookSummary>;
+  public bookBuffer: Dexie.Table<BookBuffer>;
+  public bookSegment: Dexie.Table<BookSegment>;
+
+  public cover: Dexie.Table<CoverSummary>;
+  public coverBuffer: Dexie.Table<CoverBuffer>;
+  public coverSegment: Dexie.Table<CoverSegment>;
+
+
+  public groupStatus: Dexie.Table<GroupStatus>;
+  public pendingTrx: Dexie.Table<PendingTrxItem>;
+  public emptyTrx: Dexie.Table<EmptyTrxItem, number>;
+
   public highlights: Dexie.Table<HighlightItem, number>;
-  public readingProgress: Dexie.Table<ReadingProgressItem, number>;
-  public groupLatestParsedTrx: Dexie.Table<GroupLatestParsedTrxItem, number>;
-  public bookMetadata: Dexie.Table<BookMetadataItem, number>;
-  public profile: Dexie.Table<ProfileItem, number>;
-  public globalProfile: Dexie.Table<GlobalProfile, number>;
+  public readingProgress: Dexie.Table<ReadingProgress, number>;
+  public bookMetadata: Dexie.Table<BookMetadata, number>;
+  // public profile: Dexie.Table<ProfileItem, number>;
+  // public globalProfile: Dexie.Table<GlobalProfile, number>;
 
   public constructor(name: string) {
     super(name);
     applyOldVersions(this);
 
-    this.version(11).stores(createSchema({
+    this.version(1).stores(createSchema({
       book: [
-        'groupId',
-        'bookTrx',
-        'status',
-        '[groupId+bookTrx]',
+        '[groupId+id]',
         '[groupId+status]',
-      ],
-      bookBuffer: [
+        '[groupId+status+timestamp]',
         'groupId',
-        'bookTrx',
-        '[groupId+bookTrx]',
+        'status',
       ],
       bookSegment: [
+        '[groupId+trxId]',
+        '[groupId+bookId]',
         'groupId',
-        'bookTrx',
-        '[groupId+bookTrx]',
       ],
-      coverSegment: [
+      bookBuffer: [
+        '[groupId+bookId]',
         'groupId',
-        'bookTrx',
-        'coverTrx',
-        '[groupId+bookTrx]',
       ],
       cover: [
+        '[groupId+id]',
+        '[groupId+status]',
+        '[groupId+status+timestamp]',
         'groupId',
-        'bookTrx',
-        'coverTrx',
         'status',
-        '[groupId+bookTrx]',
-        '[groupId+bookTrx+status]',
+      ],
+      coverSegment: [
+        '[groupId+trxId]',
+        '[groupId+coverId]',
+        'groupId',
       ],
       coverBuffer: [
+        'id++',
+        '[groupId+coverId]',
+        '[groupId+bookId]',
+        '[groupId+bookId+timestamp]',
         'groupId',
-        'coverTrx',
-        '[groupId+coverTrx]',
       ],
-      groupLatestParsedTrx: [
+      pendingTrx: [
         'groupId',
-        'trxId',
+        '[groupId+trxId]',
+      ],
+      groupStatus: [
+        'groupId',
+      ],
+      emptyTrx: [
+        '[groupId+trxId]',
+        'groupId',
       ],
       highlights: [
+        '[groupId+bookId]',
         'groupId',
-        'bookTrx',
-        '[groupId+bookTrx]',
-        '[groupId+bookTrx+cfiRange]',
+        '[groupId+bookId+cfiRange]',
       ],
       readingProgress: [
+        '[groupId+bookId]',
         'groupId',
-        'bookTrx',
-        '[groupId+bookTrx]',
       ],
       bookMetadata: [
+        'id++',
+        '[groupId+trxId]',
+        '[groupId+bookId]',
+        '[groupId+bookId+timestamp]',
         'groupId',
-        'bookTrx',
-        '[groupId+bookTrx]',
       ],
-      profile: [
-        'groupId',
-        'publisher',
-        'status',
-        '[groupId+status]',
-        '[groupId+publisher+status]',
-      ],
-      globalProfile: [
-        'profile',
-      ],
+      // profile: [
+      //   'groupId',
+      //   'publisher',
+      //   'status',
+      //   '[groupId+status]',
+      //   '[groupId+publisher+status]',
+      // ],
+      // globalProfile: [
+      //   'profile',
+      // ],
     }));
 
     this.book = this.table('book');
-    this.bookBuffer = this.table('bookBuffer');
     this.bookSegment = this.table('bookSegment');
+    this.bookBuffer = this.table('bookBuffer');
+    this.pendingTrx = this.table('pendingTrx');
     this.cover = this.table('cover');
-    this.coverBuffer = this.table('coverBuffer');
     this.coverSegment = this.table('coverSegment');
-    this.groupLatestParsedTrx = this.table('groupLatestParsedTrx');
+    this.coverBuffer = this.table('coverBuffer');
+
+    this.groupStatus = this.table('groupStatus');
+    this.emptyTrx = this.table('emptyTrx');
 
     this.highlights = this.table('highlights');
     this.readingProgress = this.table('readingProgress');
     this.bookMetadata = this.table('bookMetadata');
-    this.profile = this.table('profile');
-    this.globalProfile = this.table('globalProfile');
-  }
-
-  public get parsingRelatedTables() {
-    return [
-      this.book,
-      this.bookBuffer,
-      this.bookSegment,
-      this.cover,
-      this.coverBuffer,
-      this.coverSegment,
-      this.groupLatestParsedTrx,
-      this.bookMetadata,
-    ];
-  }
-
-  public get groupRelatedTables() {
-    return [
-      this.book,
-      this.bookBuffer,
-      this.bookSegment,
-      this.cover,
-      this.coverBuffer,
-      this.coverSegment,
-      this.groupLatestParsedTrx,
-      this.highlights,
-      this.readingProgress,
-      this.bookMetadata,
-      this.profile,
-    ];
-  }
-
-  public get allTables() {
-    return [
-      this.book,
-      this.bookBuffer,
-      this.bookSegment,
-      this.cover,
-      this.coverBuffer,
-      this.coverSegment,
-      this.groupLatestParsedTrx,
-      this.highlights,
-      this.readingProgress,
-      this.bookMetadata,
-      this.profile,
-      this.globalProfile,
-    ];
+    // this.profile = this.table('profile');
+    // this.globalProfile = this.table('globalProfile');
   }
 }

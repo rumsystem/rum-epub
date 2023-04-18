@@ -1,13 +1,11 @@
-import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { action, runInAction } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
-import copy from 'copy-to-clipboard';
 import { app } from '@electron/remote';
 import { Tooltip } from '@mui/material';
 import { Dialog, Button, MiddleTruncate } from '~/components';
 
-import { lang } from '~/utils';
+import { lang, setClipboard } from '~/utils';
 import { ThemeRoot } from '~/utils/theme';
 import { dialogService, nodeService, NODE_TYPE, quorumService, tooltipService } from '~/service';
 
@@ -112,7 +110,7 @@ const MyNodeInfo = observer((props: Props) => {
                 className="rounded-r-0"
                 size="small"
                 onClick={() => {
-                  copy(nodeService.state.nodeInfo.node_publickey);
+                  setClipboard(nodeService.state.nodeInfo.node_publickey);
                   tooltipService.show({
                     content: lang.copied,
                   });
@@ -148,7 +146,7 @@ const MyNodeInfo = observer((props: Props) => {
                 title={`quorum latest commit: ${nodeService.state.nodeInfo.node_version.split(' - ')[1]}`}
                 arrow
               >
-                <div>{lang.node.version} {process.env.IS_ELECTRON ? app.getVersion() : ''}</div>
+                <div>{lang.node.version} {app.getVersion()}</div>
               </Tooltip>
               <div className="px-4">|</div>
 

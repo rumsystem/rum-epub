@@ -19,6 +19,7 @@ import {
   tooltipService,
   NodeInfoStore,
   initServiceAfterDB,
+  bookService,
 } from '~/service';
 import { lang } from '~/utils';
 import { selectRumFolder } from './helper';
@@ -197,6 +198,7 @@ export const Init = observer((props: Props) => {
         }
       }),
     ]);
+    bookService.initLoad();
     props.onInitSuccess();
   };
 

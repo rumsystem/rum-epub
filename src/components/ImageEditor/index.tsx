@@ -295,11 +295,7 @@ export const ImageEditor = observer((props: IProps) => {
           } else if (action === 'openPresetImages') {
             state.showPresetImages = true;
           } else if (action === 'makeAvatar') {
-            if (process.env.IS_ELECTRON) {
-              shell.openExternal('https://cvbox.org/');
-            } else {
-              window.open('https://cvbox.org/');
-            }
+            shell.openExternal('https://cvbox.org/');
           }
         }}
       />

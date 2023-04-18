@@ -1,38 +1,22 @@
 import { action, observable, reaction, runInAction } from 'mobx';
-import * as J from 'fp-ts/Json';
-import * as E from 'fp-ts/Either';
+import { json, either, function as fp } from 'fp-ts';
 import {
-  IGroup,
-  fetchMyGroups,
-  createGroup as createGroupApi,
-  joinGroup as joinGroupApi,
-  leaveGroup as leaveGroupApi,
-  syncGroup as syncGroupApi,
-  fetchMyNodeInfo,
-  fetchNetwork,
-  INetworkGroup,
-  getGroupConfigKeyList,
-  getGroupConfigItem,
-  GroupStatus,
-  getTrxAuthType,
-  TrxType,
-  AuthType,
-  getAllowList,
-  AllowOrDenyListItem,
-  getDenyList,
-  refreshToken,
+  fetchMyGroups, createGroup as createGroupApi, joinGroup as joinGroupApi,
+  leaveGroup as leaveGroupApi, fetchMyNodeInfo, fetchNetwork,
+  getAllowList, getDenyList, getFollowingRule, getGroupConfigItem,
+  getGroupConfigKeyList, refreshToken,
+  AuthTypeUpper, IAllowOrDenyListItem, IGroup, INetwork, TrxType,
 } from '~/apis';
 import { PollingTask, sleep } from '~/utils';
 import { dbService } from '~/service/db';
 import { busService } from '~/service/bus';
 import { GROUP_TEMPLATE_TYPE } from '~/utils/constant';
 import { getConfig, NodeInfoStore, NODE_TYPE, writeConfig } from './helper';
-import { pipe } from 'fp-ts/lib/function';
 
 export { NODE_TYPE } from './helper';
 export type { NodeInfoStore } from './helper';
 
-export type GroupTrxAuthRecord = Partial<Record<TrxType, AuthType | undefined>>;
+export type GroupTrxAuthRecord = Partial<Record<TrxType, AuthTypeUpper | undefined>>;
 export const GROUP_JOIN_ORDER_STORAGE_KEY = 'GROUP_JOIN_ORDER_STORAGE_KEY';
 
 const state = observable({
@@ -46,17 +30,17 @@ const state = observable({
     peers: {} as Record<string, string[]>,
   },
   network: {
-    groups: null as INetworkGroup[] | null,
-    addrs: [] as Array<string>,
-    ethaddr: '',
+    groups: null,
+    addrs: [],
+    eth_addr: '',
     nat_enabled: false,
     nat_type: '',
-    peerid: '',
+    peer_id: '',
     node: null,
-  },
+  } as INetwork,
   trxAuthTypeMap: new Map<string, GroupTrxAuthRecord>(),
-  allowListMap: new Map<string, Array<AllowOrDenyListItem>>(),
-  denyListMap: new Map<string, Array<AllowOrDenyListItem>>(),
+  allowListMap: new Map<string, Array<IAllowOrDenyListItem >>(),
+  denyListMap: new Map<string, Array<IAllowOrDenyListItem>>(),
   configMap: new Map<string, Record<string, string | boolean | number>>(),
 
   groupJoinOrder: [] as Array<string>,
@@ -145,7 +129,7 @@ const updateTrxAuthType = async (groupId: string) => {
       state.trxAuthTypeMap.set(groupId, groupItem);
     });
   }
-  const postAuthType = await getTrxAuthType(groupId, 'POST');
+  const postAuthType = await getFollowingRule(groupId, 'POST');
   runInAction(() => {
     groupItem.POST = postAuthType.AuthType;
   });
@@ -246,40 +230,19 @@ export const leaveGroup = async (group: string | IGroup) => {
   });
 
   // clear data
-  dbService.db.transaction(
-    'rw',
-    dbService.db.groupRelatedTables,
-    async () => {
-      await Promise.all(
-        dbService.db.groupRelatedTables.map((v) => v.where({ groupId }).delete()),
-      );
-    },
-  );
+  await dbService.deleteAllDataFromGroup(groupId);
 };
 
-export const syncGroup = async (group: string | IGroup) => {
-  const groupId = typeof group === 'string'
-    ? group
-    : group.group_id;
-
-  if (!state.groups.some((v) => v.group_id === groupId)) {
-    throw new Error(`try sync group ${groupId} that is not in it`);
-  }
-
-  if (state.groupMap[groupId]?.group_status === GroupStatus.SYNCING) {
-    return;
-  }
-
-  await syncGroupApi(groupId);
-  await sleep(500);
+export const syncGroup = (_group: string | IGroup) => {
+  // TODO: sync group
   state.pollings.updateGroups?.runImmediately();
 };
 
 const init = action(() => {
-  state.groupJoinOrder = pipe(
-    J.parse(localStorage.getItem(GROUP_JOIN_ORDER_STORAGE_KEY) ?? ''),
-    E.map((v) => (Array.isArray(v) ? v as Array<string> : [])),
-    E.getOrElse(() => [] as Array<string>),
+  state.groupJoinOrder = fp.pipe(
+    json.parse(localStorage.getItem(GROUP_JOIN_ORDER_STORAGE_KEY) ?? ''),
+    either.map((v) => (Array.isArray(v) ? v as Array<string> : [])),
+    either.getOrElse(() => [] as Array<string>),
   );
 
   const disposes = [
@@ -321,7 +284,7 @@ const resetNodeConfig = async () => {
   await saveNodeConfig();
 };
 
-const startPolling = (restart = false) => {
+const startPolling = action((restart = false) => {
   if (!restart && Object.values(state.pollings).some(Boolean)) {
     throw new Error('can\'t start polling twice');
   }
@@ -339,7 +302,7 @@ const startPolling = (restart = false) => {
   state.pollingStarted = true;
 
   return stopPolling;
-};
+});
 
 const stopPolling = action(() => {
   Object.keys(state.pollings).forEach((k) => {

@@ -1,8 +1,13 @@
-import request from '../request';
+import type {
+  TrxTypeUpper,
+  AuthTypeLower,
+  TrxTypeLower,
+  IUpdateChainConfig,
+} from 'rum-fullnode-sdk/dist/apis/auth';
+import { getClient } from './client';
 
-export type TrxType = 'POST' | 'ANNOUNCE' | 'REQ_BLOCK_FORWARD' | 'REQ_BLOCK_BACKWARD' | 'BLOCK_SYNCED' | 'BLOCK_PRODUCED' | 'ASK_PEERID';
-
-export type AuthType = 'FOLLOW_ALW_LIST' | 'FOLLOW_DNY_LIST';
+export type TrxType = TrxTypeUpper;
+export type AuthType = AuthTypeLower;
 
 export interface AuthResponse {
   'group_id': string
@@ -11,79 +16,21 @@ export interface AuthResponse {
   'trx_id': string
 }
 
-export interface AllowOrDenyListItem {
-  Pubkey: string
-  TrxType: TrxType
-  GroupOwnerPubkey: string
-  GroupOwnerSign: string
-  TimeStamp: number
-  Memo: string
-}
+export const getFollowingRule = async (groupId: string, trxType: TrxType) => getClient().Auth.getAuthRule(groupId, trxType);
 
-export interface TrxAuthTypeResult {
-  'TrxType': TrxType
-  'AuthType': AuthType
-}
+export const updateFollowingRule = async (params: IUpdateChainConfig) => getClient().Auth.updateChainConfig(params);
 
-export const getTrxAuthType = async (groupId: string, trxType: TrxType) => request(
-  `/api/v1/group/${groupId}/trx/auth/${trxType.toLowerCase()}`,
-  {
-    method: 'GET',
-    quorum: true,
-    jwt: true,
-  },
-) as Promise<TrxAuthTypeResult>;
-
-export interface ChainAuthModeParams {
-  group_id: string
-  type: 'set_trx_auth_mode'
-  config: {
-    trx_type: TrxType
-    trx_auth_mode: Lowercase<AuthType>
-    memo: string
-  }
-}
-
-export interface ChainAuthListParams {
+export const updateAuthList = async (params: {
   group_id: string
   type: 'upd_alw_list' | 'upd_dny_list'
   config: {
     action: 'add' | 'remove'
     pubkey: string
-    trx_type: TrxType[]
+    trx_type: TrxTypeLower[]
     memo: string
   }
-}
+}) => getClient().Auth.updateChainConfig(params);
 
-export type ChainConfigParams = ChainAuthModeParams | ChainAuthListParams;
+export const getAllowList = async (groupId: string) => getClient().Auth.getAllowList(groupId);
 
-export const setChainConfig = async (params: ChainConfigParams) => request(
-  '/api/v1/group/chainconfig',
-  {
-    method: 'POST',
-    quorum: true,
-    body: {
-      ...params,
-      config: JSON.stringify(params.config),
-    },
-    jwt: true,
-  },
-) as Promise<AuthResponse>;
-
-export const getAllowList = async (groupId: string) => request(
-  `/api/v1/group/${groupId}/trx/allowlist`,
-  {
-    method: 'GET',
-    quorum: true,
-    jwt: true,
-  },
-) as Promise<Array<AllowOrDenyListItem> | null>;
-
-export const getDenyList = async (groupId: string) => request(
-  `/api/v1/group/${groupId}/trx/denylist`,
-  {
-    method: 'GET',
-    quorum: true,
-    jwt: true,
-  },
-) as Promise<Array<AllowOrDenyListItem> | null>;
+export const getDenyList = async (groupId: string) => getClient().Auth.getDenyList(groupId);

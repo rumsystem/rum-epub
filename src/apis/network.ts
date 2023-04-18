@@ -1,20 +1,5 @@
 import request from '../request';
-
-export interface INetworkGroup {
-  GroupId: string
-  GroupName: string
-  Peers: string[] | null
-}
-
-export interface INetwork {
-  groups: INetworkGroup[] | null
-  addrs: string[]
-  ethaddr: string
-  nat_enabled: boolean
-  nat_type: string
-  peerid: string
-  node: any
-}
+import { getClient } from './client';
 
 export interface INetworkStatsSummaryItem {
   action: string
@@ -36,12 +21,7 @@ export interface INetworkStats {
     subscribe_topic: INetworkStatsSummaryItem
   }
 }
-export const fetchNetwork = () => request('/api/v1/network', {
-  method: 'GET',
-  quorum: true,
-  jwt: true,
-}) as Promise<INetwork>;
-
+export const fetchNetwork = () => getClient().Network.get();
 
 export const fetchNetworkStats = (start: string, end: string) => request(
   `/api/v1/network/stats?start=${start}&end=${end}`,

@@ -4,7 +4,7 @@ import {
   dialogService,
   highlightTheme,
   readerSettingsService,
-  epubService,
+  bookService,
 } from '~/service';
 import { lang } from '~/utils';
 
@@ -16,7 +16,7 @@ interface HighLightRangeParams {
 }
 
 export const highLightRange = (params: HighLightRangeParams) => {
-  epubService.highlight.save(epubService.state.current.groupId, params.bookTrx, params.cfiRange);
+  bookService.highlight.save(bookService.state.current.groupId, params.bookTrx, params.cfiRange);
   params.book.rendition.annotations.highlight(
     params.cfiRange,
     {},
@@ -39,7 +39,7 @@ export const highLightRange = (params: HighLightRangeParams) => {
 
       if (result === 'confirm') {
         params.book.rendition.annotations.remove(cfiRange, 'highlight');
-        epubService.highlight.delete(epubService.state.current.groupId, params.bookTrx, params.cfiRange);
+        bookService.highlight.delete(bookService.state.current.groupId, params.bookTrx);
       }
     },
     'rum-annotation-hl',

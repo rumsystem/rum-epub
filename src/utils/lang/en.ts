@@ -27,6 +27,7 @@ export const content: Content = {
     exit: 'Exit',
     name: 'Name',
     owner: 'Owner',
+    auth: 'Permission',
     groupInfo: 'SeedNet details',
     idle: 'Idle',
     syncing: 'Syncing',

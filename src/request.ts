@@ -1,5 +1,4 @@
-import { sleep } from '~/utils';
-import getBase from './utils/getBase';
+import { sleep, getBase } from '~/utils';
 
 interface RequestOption extends Omit<RequestInit, 'body'> {
   base: string

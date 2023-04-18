@@ -3,7 +3,7 @@ import classNames from 'classnames';
 import { observer } from 'mobx-react-lite';
 import { ipcRenderer } from 'electron';
 import { getCurrentWindow, shell, app } from '@electron/remote';
-import { Button, Tooltip } from '@mui/material';
+import { Tooltip } from '@mui/material';
 import { Check, ChevronRight } from '@mui/icons-material';
 
 import { lang } from '~/utils';
@@ -22,8 +22,8 @@ import {
   importKeyData,
   exportKeyData,
   myLibrary,
-  myLibraryState,
 } from '~/standaloneModals';
+import { myLibraryState } from '~/standaloneModals/myLibrary/state';
 import IconLangLocal from '~/assets/lang_local.svg';
 import { exportLog } from './helper';
 import { TitleBarMenu } from './TitleBarMenu';
@@ -54,21 +54,13 @@ export const TitleBar = observer((props: Props) => {
         {
           content: `${lang.titleBar.manual} ...`,
           action: () => {
-            if (process.env.IS_ELECTRON) {
-              shell.openExternal('https://docs.prsdev.club/#/rum-app/');
-            } else {
-              window.open('https://docs.prsdev.club/#/rum-app/');
-            }
+            shell.openExternal('https://docs.prsdev.club/#/rum-app/');
           },
         },
         {
           content: `${lang.titleBar.report} ...`,
           action: () => {
-            if (process.env.IS_ELECTRON) {
-              shell.openExternal('https://github.com/noe132/rum-epub/issues');
-            } else {
-              window.open('https://github.com/noe132/rum-epub/issues');
-            }
+            shell.openExternal('https://github.com/noe132/rum-epub/issues');
           },
         },
         {
@@ -232,11 +224,7 @@ export const TitleBar = observer((props: Props) => {
         <button
           className="px-4 mx-1 cursor-pointer flex items-center focus:bg-gray-4a text-12"
           onClick={() => {
-            if (!process.env.IS_ELECTRON) {
-              window.location.reload();
-            } else {
-              getCurrentWindow().reload();
-            }
+            getCurrentWindow().reload();
           }}
         >
           {lang.node.refresh}
@@ -261,7 +249,7 @@ export const TitleBar = observer((props: Props) => {
             </div>
           </button>
         )}
-        <TitleBarMenu items={menuRight} />
+        {false && <TitleBarMenu items={menuRight} />}
       </div>
     </div>
   </>);

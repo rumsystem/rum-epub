@@ -164,5 +164,3 @@ export const quorumService = {
   external,
   getLog,
 };
-
-(window as any).quorumService = quorumService;
