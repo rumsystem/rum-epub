@@ -1,5 +1,8 @@
 import Dexie from 'dexie';
-import { BookBuffer, BookMetadata, BookSummary, BookSegment, CoverBuffer, CoverSummary, CoverSegment, Database, EmptyTrxItem, PendingTrxItem } from './database';
+import {
+  BookBuffer, BookMetadata, BookSummary, BookSegment, CoverBuffer,
+  CoverSummary, CoverSegment, Database, EmptyTrxItem, PendingTrxItem,
+} from './database';
 
 export * from './database';
 
@@ -9,7 +12,7 @@ const state = {
 
 export const initDb = (hash: string) => {
   if (state.db) { return; }
-  state.db = new Database(`${hash}-rumbrary`);
+  state.db = new Database(`${hash}-rumbrary-v1`);
 };
 
 export const init = () => () => state.db?.close();

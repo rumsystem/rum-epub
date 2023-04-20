@@ -1,4 +1,3 @@
-import React from 'react';
 import classNames from 'classnames';
 import { observer } from 'mobx-react-lite';
 import { ipcRenderer } from 'electron';
@@ -8,21 +7,10 @@ import { Check, ChevronRight } from '@mui/icons-material';
 
 import { lang } from '~/utils';
 import {
-  i18n,
-  AllLanguages,
-  nodeService,
-  dbService,
-  dialogService,
-  updateService,
-  profileService,
+  i18n, AllLanguages, nodeService, dbService, dialogService,
+  updateService, profileService,
 } from '~/service';
-import {
-  nodeInfoModal,
-  editProfile,
-  importKeyData,
-  exportKeyData,
-  myLibrary,
-} from '~/standaloneModals';
+import { nodeInfoModal, myLibrary } from '~/standaloneModals';
 import { myLibraryState } from '~/standaloneModals/myLibrary/state';
 import IconLangLocal from '~/assets/lang_local.svg';
 import { exportLog } from './helper';
@@ -128,39 +116,39 @@ export const TitleBar = observer((props: Props) => {
     !!nodeService.state.pollingStarted && {
       content: (
         <div className="flex flex-center gap-x-2">
-          <div
+          {/* <div
             className="w-8 h-8 rounded-full bg-contain"
             style={{
               backgroundImage: `url("${profileService.state.profileImage}")`,
             }}
-          />
+          /> */}
           {profileService.state.profileName}
           <ChevronRight className="rotate-90 text-bright-orange -mx-1" />
         </div>
       ),
       children: [
-        {
-          content: lang.titleBar.editProfile,
-          action: () => editProfile(),
-        },
-        {
-          content: lang.titleBar.editWallet,
-          action: () => editProfile(),
-        },
+        // {
+        //   content: lang.titleBar.editProfile,
+        //   action: () => editProfile(),
+        // },
+        // {
+        //   content: lang.titleBar.editWallet,
+        //   action: () => editProfile(),
+        // },
         !!nodeService.state.nodeInfo.node_publickey && {
           content: lang.titleBar.nodeAndNetwork,
           action: () => {
             nodeInfoModal();
           },
         },
-        {
-          content: `${lang.titleBar.exportKey} ...`,
-          action: exportKeyData,
-        },
-        {
-          content: `${lang.titleBar.importKey} ...`,
-          action: importKeyData,
-        },
+        // {
+        //   content: `${lang.titleBar.exportKey} ...`,
+        //   action: exportKeyData,
+        // },
+        // {
+        //   content: `${lang.titleBar.importKey} ...`,
+        //   action: importKeyData,
+        // },
       ].filter(<T extends unknown>(v: T | false): v is T => !!v),
     },
     {
@@ -249,7 +237,7 @@ export const TitleBar = observer((props: Props) => {
             </div>
           </button>
         )}
-        {false && <TitleBarMenu items={menuRight} />}
+        <TitleBarMenu items={menuRight} />
       </div>
     </div>
   </>);
