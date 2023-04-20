@@ -153,9 +153,9 @@ export const EpubHeader = observer(() => {
           }}
         </UploadBookButton>
 
-        <Button className="ml-6">
+        {/* <Button className="ml-6">
           {lang.epub.setAsPublic}
-        </Button>
+        </Button> */}
       </div>
 
       <div className="flex items-center gap-x-6">
