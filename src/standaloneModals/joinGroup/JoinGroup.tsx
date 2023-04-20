@@ -25,16 +25,6 @@ export const JoinGroup = observer((props: { destroy: () => unknown }) => {
       return;
     }
 
-    try {
-      JSON.parse(state.seedString);
-    } catch (e) {
-      tooltipService.show({
-        content: lang.joinGroup.seedParsingError,
-        type: 'error',
-      });
-      return;
-    }
-
     runInAction(() => { state.done = false; });
     runLoading(
       (l) => { state.loading = l; },
