@@ -1,31 +1,30 @@
 import { format } from 'date-fns';
 import { lang } from '~/utils/lang';
 
+const MINUTE = 1000 * 60;
+const HOUR = MINUTE * 60;
+const DAY = HOUR * 24;
+
 export const ago = (blockTimeStamp: number, options: { trimmed?: boolean } = {}) => {
-  const time = new Date(blockTimeStamp / 1000000);
+  const time = new Date(blockTimeStamp > 10 ** 14 ? blockTimeStamp / 1000000 : blockTimeStamp);
   const now = new Date().getTime();
   const past = new Date(time).getTime();
   const diffValue = now - past;
-  const minute = 1000 * 60;
-  const hour = minute * 60;
-  const day = hour * 24;
-  const _week = diffValue / (7 * day);
-  const _day = diffValue / day;
-  const _hour = diffValue / hour;
-  const _min = diffValue / minute;
+  const day = diffValue / DAY;
+  const hour = diffValue / HOUR;
+  const min = diffValue / MINUTE;
   let result = '';
   const isLastYear = new Date().getFullYear() > time.getFullYear();
-  const isDiffDay = new Date().getDate() !== time.getDate();
-  if (isLastYear && _week >= 15) {
+  if (isLastYear) {
     result = format(time, options.trimmed ? 'yyyy-MM-dd' : 'yyyy-MM-dd HH:mm');
-  } else if (_day >= 1 || isDiffDay) {
+  } else if (day > 7) {
     result = format(time, options.trimmed ? 'MM-dd' : 'MM-dd HH:mm');
-  } else if (_hour >= 4) {
-    result = format(time, 'HH:mm');
-  } else if (_hour >= 1) {
-    result = Math.floor(_hour) + lang.ago.hoursAgo;
-  } else if (_min >= 1) {
-    result = Math.floor(_min) + lang.ago.minutesAgo;
+  } else if (day >= 1) {
+    result = Math.floor(day) + ' ' + lang.ago.daysAgo;
+  } else if (hour >= 1) {
+    result = Math.floor(hour) + ' ' + lang.ago.hoursAgo;
+  } else if (min >= 1) {
+    result = Math.floor(min) + ' ' + lang.ago.minutesAgo;
   } else {
     result = lang.ago.justNow;
   }

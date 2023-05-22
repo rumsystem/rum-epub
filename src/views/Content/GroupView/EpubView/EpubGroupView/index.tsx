@@ -32,7 +32,10 @@ export const EpubGroupView = observer((props: { className?: string }) => {
   const handleOpenNewBook = () => {
     const bookId = state.uploadJob?.bookId;
     if (bookId) {
-      bookService.openBook(state.groupId, bookId);
+      bookService.openBook({
+        groupId: state.groupId,
+        bookId,
+      });
     }
   };
 
@@ -152,7 +155,7 @@ export const EpubGroupView = observer((props: { className?: string }) => {
                     <Button
                       className="rounded-none px-6 opacity-90"
                       size="small"
-                      onClick={() => bookService.openBook(state.groupId, book.id)}
+                      onClick={() => bookService.openBook({ groupId: state.groupId, bookId: book.id })}
                     >
                       {state.readingProgress[book.id] ? lang.epub.continueReading : lang.epub.startReading}
                     </Button>

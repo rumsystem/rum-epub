@@ -10,18 +10,22 @@ import { lang } from '~/utils';
 
 interface HighLightRangeParams {
   groupId: string
-  bookTrx: string
+  bookId: string
   cfiRange: string
   book: Book
+  temp?: boolean
 }
 
 export const highLightRange = (params: HighLightRangeParams) => {
-  bookService.highlight.save(bookService.state.current.groupId, params.bookTrx, params.cfiRange);
   params.book.rendition.annotations.highlight(
     params.cfiRange,
     {},
     async (e: MouseEvent) => {
       const cfiRange = (e.target as HTMLElement).dataset.epubcfi!;
+      if (params.temp) {
+        params.book.rendition.annotations.remove(cfiRange, 'highlight');
+        return;
+      }
       const range = await params.book.getRange(cfiRange);
       const text = range.toString();
 
@@ -39,7 +43,7 @@ export const highLightRange = (params: HighLightRangeParams) => {
 
       if (result === 'confirm') {
         params.book.rendition.annotations.remove(cfiRange, 'highlight');
-        bookService.highlight.delete(bookService.state.current.groupId, params.bookTrx);
+        bookService.highlight.delete(bookService.state.current.groupId, params.bookId, params.cfiRange);
       }
     },
     'rum-annotation-hl',

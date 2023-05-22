@@ -33,7 +33,7 @@ export const EpubSelectBookButton = observer((props: Props) => {
   const buttonRef = React.useRef<HTMLDivElement>(null);
 
   const handleOpenBook = (book: BookSummary) => {
-    bookService.openBook(book.groupId, book.id);
+    bookService.openBook({ groupId: book.groupId, bookId: book.id });
     handleClose();
   };
 

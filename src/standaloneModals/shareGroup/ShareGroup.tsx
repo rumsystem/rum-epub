@@ -2,12 +2,12 @@ import React from 'react';
 import fs from 'fs/promises';
 import { action, runInAction } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
+import { utils } from 'rum-sdk-browser';
 import { dialog } from '@electron/remote';
 import { OutlinedInput } from '@mui/material';
 import { IoMdCopy } from 'react-icons/io';
 import { Dialog, Button } from '~/components';
-import { sleep, runLoading, lang } from '~/utils';
-import { setClipboard } from '~/utils/setClipboard';
+import { sleep, runLoading, lang, setClipboard } from '~/utils';
 import { fetchSeed } from '~/apis';
 import { bookService, nodeService, tooltipService } from '~/service';
 
@@ -17,27 +17,32 @@ export const ShareGroup = observer((props: Props & { destroy: () => unknown }) =
   const state = useLocalObservable(() => ({
     open: true,
     loading: false,
-    seed: null as null | Record<string, any>,
-    groupName: '',
+    seed: '',
+    get group() {
+      try {
+        return utils.seedUrlToGroup(this.seed);
+      } catch (e) {
+        return null;
+      }
+    },
     get inGroup() {
-      return nodeService.state.groups.some((v) => v.group_id === state.seed?.group_id);
+      return nodeService.state.groups.some((v) => v.group_id === state.group?.groupId);
     },
     get isActiveGroupSeed() {
-      return bookService.state.current.groupId && state.seed?.group_id === bookService.state.current.groupId;
+      return bookService.state.current.groupId && state.group?.groupId === bookService.state.current.groupId;
     },
   }));
 
   const handleDownloadSeed = async () => {
     try {
-      const seed = JSON.stringify(state.seed, null, 2);
-      const seedName = `seed.${state.groupName}.json`;
+      const seedName = `seed.${state.group?.groupName}.json`;
       const file = await dialog.showSaveDialog({
         defaultPath: seedName,
       });
       if (file.canceled || !file.filePath) {
         return;
       }
-      await fs.writeFile(file.filePath.toString(), seed);
+      await fs.writeFile(file.filePath.toString(), state.seed);
       await sleep(400);
       handleClose();
       tooltipService.show({
@@ -61,22 +66,20 @@ export const ShareGroup = observer((props: Props & { destroy: () => unknown }) =
   });
 
   const handleJoinOrOpen = async () => {
-    const groupId = state.seed?.group_id;
+    const groupId = state.group?.groupId;
     if (state.inGroup) {
-      bookService.openBook(groupId, '');
+      bookService.openBook({ groupId: groupId! });
       handleClose();
       return;
     }
-    if (state.loading) {
-      return;
-    }
+    if (state.loading) { return; }
 
     await runLoading(
       (l) => { state.loading = l; },
       async () => {
         try {
           const group = await nodeService.joinGroup(state.seed as any);
-          bookService.openBook(group.group_id, '');
+          bookService.openBook({ groupId: group.group_id });
         } catch (err: any) {
           console.error(err);
           if (err.message.includes('existed')) {
@@ -102,22 +105,16 @@ export const ShareGroup = observer((props: Props & { destroy: () => unknown }) =
           if (props.groupId) {
             const seed = await fetchSeed(props.groupId);
             runInAction(() => {
-              state.seed = seed;
+              state.seed = seed.seed;
               state.open = true;
             });
-            const group = nodeService.state.groups.find((v) => v.group_id === props.groupId);
-            if (group) {
-              state.groupName = group.group_name;
-            }
           }
         } catch (_) {}
       })();
     } else {
       try {
         runInAction(() => {
-          const seed = JSON.parse(props.seed);
-          state.seed = seed;
-          state.groupName = seed.group_name;
+          state.seed = props.seed;
         });
       } catch (e) {
       }
@@ -139,7 +136,7 @@ export const ShareGroup = observer((props: Props & { destroy: () => unknown }) =
             className="mt-6 w-100 p-0 break-all"
             onFocus={(e) => e.target.select()}
             classes={{ input: 'p-4 text-12 leading-normal text-gray-9b' }}
-            value={JSON.stringify(state.seed, null, 2)}
+            value={state.seed}
             multiline
             minRows={6}
             maxRows={10}

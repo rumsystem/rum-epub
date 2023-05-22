@@ -11,6 +11,7 @@ import type {
 import { fetchTrx, postContent } from '~/apis';
 import { sleep, parseEpub, FileInfo, EpubMetadata, hashBufferSha256, FileSegment, splitFile } from '~/utils';
 import { busService } from '../bus';
+import { GROUP_TEMPLATE_TYPE } from '~/utils/constant';
 
 interface UploadJob {
   id: number
@@ -63,14 +64,19 @@ export interface GroupMapBookItem {
 const state = observable({
   current: {
     groupId: '',
+    linkGroupId: '',
     bookId: '',
+    href: '',
   },
   groupMap: new Map<string, Array<GroupMapBookItem>>(),
   get groups() {
-    return nodeService.state.groups.map((group) => ({
-      group,
-      books: this.groupMap.get(group.group_id) ?? [],
-    }));
+    return nodeService.state.groups
+      .filter((v) => v.app_key === GROUP_TEMPLATE_TYPE.EPUB)
+      .map((group) => ({
+        group,
+        books: this.groupMap.get(group.group_id) ?? [],
+        groupLink: nodeService.state.groups.find((v) => v.group_id === nodeService.state.groupLink[group.group_id]),
+      }));
   },
   upload: {
     jobs: [] as Array<UploadJob>,
@@ -131,13 +137,36 @@ const updateBookMetadata = action((items: Array<BookMetadata>) => {
   });
 });
 
-const openBook = action((groupId: string, bookId: string) => {
-  if (state.current.groupId === groupId && state.current.bookId === bookId) {
+interface OpenBook {
+  (p1: { groupId: string }): unknown
+  (p2: { groupId: string, bookId: string, href?: string }): unknown
+  (p3: { groupId: string, linkGroupId: string }): unknown
+  (p4: { linkGroupId: string }): unknown
+}
+
+interface OpenBookParams {
+  groupId?: string
+  bookId?: string
+  linkGroupId?: string
+  href?: string
+}
+
+const openBook: OpenBook = action((params: OpenBookParams) => {
+  const newCurrent = {
+    groupId: params.groupId ?? '',
+    bookId: params.bookId ?? '',
+    linkGroupId: params.linkGroupId ?? '',
+    href: params.href ?? '',
+  };
+  const keys = Object.keys(newCurrent) as Array<keyof typeof newCurrent>;
+  if (keys.every((k) => newCurrent[k] === state.current[k])) {
     return;
   }
   state.current = {
-    groupId,
-    bookId,
+    groupId: params.groupId ?? '',
+    bookId: params.bookId ?? '',
+    linkGroupId: params.linkGroupId ?? '',
+    href: params.href ?? '',
   };
 });
 
@@ -488,6 +517,7 @@ const readingProgress = {
       groupId,
       bookId,
       readingProgress,
+      timestamp: Date.now(),
     });
   },
 };
@@ -509,10 +539,11 @@ const highlight = {
     });
   },
 
-  delete: async (groupId: string, bookId: string) => {
+  delete: async (groupId: string, bookId: string, cfiRange: string) => {
     await dbService.db.highlights.where({
       groupId,
       bookId,
+      cfiRange,
     }).delete();
   },
 };
@@ -520,11 +551,23 @@ const highlight = {
 const init = () => {
   const dispose = busService.on('group_leave', (v) => {
     const groupId = v.data.groupId;
+    if (state.current.linkGroupId === groupId) {
+      runInAction(() => {
+        state.current = {
+          groupId: state.current.groupId || (nodeService.state.groups.at(0)?.group_id ?? ''),
+          bookId: '',
+          linkGroupId: '',
+          href: '',
+        };
+      });
+    }
     if (state.current.groupId === groupId) {
       runInAction(() => {
         state.current = {
           groupId: nodeService.state.groups.at(0)?.group_id ?? '',
           bookId: '',
+          linkGroupId: '',
+          href: '',
         };
       });
     }
@@ -533,14 +576,19 @@ const init = () => {
 };
 
 const initLoad = async () => {
-  const lastRedingProgress = await dbService.db.readingProgress.toCollection().last();
+  const lastRedingProgress = await dbService.db.readingProgress.orderBy('timestamp').last();
   for (const group of nodeService.state.groups) {
     await loadBooks(group.group_id);
   }
   if (lastRedingProgress) {
-    openBook(lastRedingProgress.groupId, lastRedingProgress.bookId);
+    openBook({
+      groupId: lastRedingProgress.groupId,
+      bookId: lastRedingProgress.bookId,
+    });
   } else {
-    openBook(nodeService.state.groups.at(0)?.group_id ?? '', '');
+    openBook({
+      groupId: nodeService.state.groups.at(0)?.group_id ?? '',
+    });
   }
 };
 

@@ -2,6 +2,7 @@ import { shell } from '@electron/remote';
 import escapeStringRegexp from 'escape-string-regexp';
 import { runInAction } from 'mobx';
 
+export { default as base64 } from './base64';
 export * from './PollingTask';
 export * from './ago';
 export * from './enum';
@@ -186,3 +187,15 @@ export const formatPath = (path: string, options: { truncateLength: number }) =>
     ? `...${_path.slice(-options.truncateLength)}`
     : _path;
 };
+
+interface HotCountParams {
+  likeCount: number
+  dislikeCount: number
+  commentCount: number
+}
+export const getHotCount = (options: HotCountParams) => {
+  const { likeCount, dislikeCount, commentCount } = options;
+  return likeCount * 10 + commentCount * 4 - dislikeCount * 10;
+};
+
+export const notNullFilter = <T>(v: T | undefined | null): v is T => v !== undefined && v !== null;

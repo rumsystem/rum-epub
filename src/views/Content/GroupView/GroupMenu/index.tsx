@@ -1,25 +1,25 @@
-import React from 'react';
-import { action } from 'mobx';
+import { useRef } from 'react';
+import { action, runInAction } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import { FiMoreHorizontal, FiDelete } from 'react-icons/fi';
 import { MdInfoOutline } from 'react-icons/md';
 import { Menu, MenuItem } from '@mui/material';
-import { EditOutlined } from '@mui/icons-material';
+import { EditOutlined, Link } from '@mui/icons-material';
+import UploadIcon from 'boxicons/svg/regular/bx-upload.svg?fill-icon';
 
+import IconSeednetManage from '~/assets/icon_seednet_manage.svg';
 import { IGroup } from '~/apis';
 import { lang } from '~/utils';
 import { nodeService, dialogService, loadingService, tooltipService, bookService } from '~/service';
 import { UploadBookButton } from '~/components';
-
-import IconSeednetManage from '~/assets/icon_seednet_manage.svg';
 import {
   editEpubCover,
   uploadBook,
   manageGroup,
   editEpubMetadata,
   groupInfo,
+  groupLink,
 } from '~/standaloneModals';
-import UploadIcon from 'boxicons/svg/regular/bx-upload.svg?fill-icon';
 
 interface Props {
   group: IGroup
@@ -36,8 +36,10 @@ export const GroupMenu = observer((props: Props) => {
     },
   }));
   const isGroupOwner = props.group.user_pubkey === props.group.owner_pubkey;
+  const linkGroupId = nodeService.state.groupLink[props.group.group_id];
+  const linkGroup = nodeService.state.groups.find((v) => v.group_id === linkGroupId);
 
-  const menuButtonRef = React.useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef<HTMLDivElement>(null);
 
   const handleMenuClick = action(() => {
     state.open = true;
@@ -47,9 +49,33 @@ export const GroupMenu = observer((props: Props) => {
     state.open = false;
   });
 
-  const openGroupInfoModal = () => {
+  const handleOpenGroupInfoModal = () => {
     handleMenuClose();
     groupInfo({ groupId: props.group.group_id });
+  };
+
+  const handleOpenGroupLinkModal = () => {
+    handleMenuClose();
+    groupLink({ groupId: props.group.group_id });
+  };
+
+  const handleCancelGroupLink = async () => {
+    handleMenuClose();
+    const result = await dialogService.open({
+      content: lang.linkGroup.unlinkTip,
+    });
+    if (result === 'cancel') {
+      return;
+    }
+    if (bookService.state.current.linkGroupId) {
+      bookService.openBook({ groupId: props.group.group_id });
+    }
+    runInAction(() => {
+      delete nodeService.state.groupLink[props.group.group_id];
+    });
+    tooltipService.show({
+      content: lang.linkGroup.unlinked,
+    });
   };
 
   // const openMutedListModal = () => {
@@ -94,7 +120,7 @@ export const GroupMenu = observer((props: Props) => {
   };
 
   const handleManageGroup = () => {
-    manageGroup(props.group.group_id);
+    manageGroup({ groudId: props.group.group_id });
     handleMenuClose();
   };
 
@@ -139,7 +165,7 @@ export const GroupMenu = observer((props: Props) => {
       }}
       autoFocus={false}
     >
-      <MenuItem onClick={openGroupInfoModal}>
+      <MenuItem onClick={handleOpenGroupInfoModal}>
         <div className="flex items-center text-gray-600 leading-none pl-1 py-2">
           <div className="flex items-center w-7 flex-none">
             <MdInfoOutline className="text-18" />
@@ -147,6 +173,26 @@ export const GroupMenu = observer((props: Props) => {
           <span className="font-bold text-14">{lang.group.info}</span>
         </div>
       </MenuItem>
+      {!linkGroup && (
+        <MenuItem onClick={handleOpenGroupLinkModal}>
+          <div className="flex items-center text-gray-600 leading-none pl-1 py-2">
+            <div className="flex items-center w-7 flex-none">
+              <Link className="text-18" />
+            </div>
+            <span className="font-bold text-14">{lang.group.linkGroup}</span>
+          </div>
+        </MenuItem>
+      )}
+      {!!linkGroup && (
+        <MenuItem onClick={handleCancelGroupLink}>
+          <div className="flex items-center text-gray-600 leading-none pl-1 py-2">
+            <div className="flex items-center w-7 flex-none">
+              <Link className="text-18" />
+            </div>
+            <span className="font-bold text-14">{lang.group.unLinkGroup}</span>
+          </div>
+        </MenuItem>
+      )}
       {/* {activeGroupMutedPublishers.length > 0 && (
           <MenuItem onClick={() => openMutedListModal()}>
             <div className="flex items-center text-gray-600 leading-none pl-1 py-2">

@@ -1,18 +1,16 @@
 import React from 'react';
 import classNames from 'classnames';
-import { action } from 'mobx';
+import { action, runInAction } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import { shell } from '@electron/remote';
 import AvatarEditor from 'react-avatar-editor';
 import { MdEdit, MdCameraAlt } from 'react-icons/md';
 import { RiZoomOutLine, RiZoomInLine } from 'react-icons/ri';
 import { Dialog, Slider } from '@mui/material';
-import { withStyles } from '@mui/styles';
 
 import { Button } from '~/components/Button';
-import { sleep, lang } from '~/utils';
+import { sleep, lang, base64 } from '~/utils';
 import MimeType from '~/utils/mimeType';
-import Base64 from '~/utils/base64';
 
 import Menu from './Menu';
 import ImageLibModal from './ImageLibModal';
@@ -43,28 +41,20 @@ export const ImageEditor = observer((props: IProps) => {
     mimeType: '',
     isUploadingOriginImage: false,
 
-    nickname: '',
-    bio: '',
-    submitting: false,
-    submitDone: false,
-
     avatarTemp: '',
     avatarDialogOpen: false,
     avatarLoading: false,
     scale: 1,
   }));
 
-  const width: any = React.useMemo(() => props.width || 120, [props.width]);
-  const ratio: any = React.useMemo(() => props.ratio || 1, [props.ratio]);
-  const placeholderScale: any = React.useMemo(
+  const width = React.useMemo(() => props.width || 120, [props.width]);
+  const ratio = React.useMemo(() => props.ratio || 1, [props.ratio]);
+  const placeholderScale = React.useMemo(
     () => (props.placeholderWidth ? props.placeholderWidth / props.width : 1),
     [props.placeholderWidth, props.width],
   );
-  const editorPlaceholderScale: any = React.useMemo(
-    () =>
-      (props.editorPlaceholderWidth
-        ? props.editorPlaceholderWidth / props.width
-        : 1),
+  const editorPlaceholderScale = React.useMemo(
+    () => (props.editorPlaceholderWidth ? props.editorPlaceholderWidth / props.width : 1),
     [props.editorPlaceholderWidth, props.width],
   );
 
@@ -73,30 +63,37 @@ export const ImageEditor = observer((props: IProps) => {
 
   React.useEffect(() => {
     if (!state.showMenu) {
-      (async () => {
-        await sleep(200);
+      sleep(200).then(action(() => {
         state.isUploadingOriginImage = false;
-      })();
+      }));
     }
   }, [state, state.showMenu]);
 
   const handleAvatarInputChange = () => {
     const file = avatarInputRef.current!.files![0];
-    state.mimeType = file.type;
+    runInAction(() => {
+      state.mimeType = file.type;
+    });
     avatarInputRef.current!.value = '';
     if (file) {
       const reader = new FileReader();
       reader.addEventListener('load', async () => {
         if (props.useOriginImage) {
-          state.isUploadingOriginImage = true;
+          runInAction(() => {
+            state.isUploadingOriginImage = true;
+          });
           const url = reader.result as string;
-          const ret: any = await Base64.getFromBlobUrl(url);
+          const ret: any = await base64.getFromBlobUrl(url);
           props.getImageUrl(ret.url);
           await sleep(300);
-          state.showMenu = false;
+          runInAction(() => {
+            state.showMenu = false;
+          });
         } else {
-          state.avatarTemp = reader.result as string;
-          state.avatarDialogOpen = true;
+          runInAction(() => {
+            state.avatarTemp = reader.result as string;
+            state.avatarDialogOpen = true;
+          });
         }
       });
       reader.readAsDataURL(file);
@@ -113,8 +110,9 @@ export const ImageEditor = observer((props: IProps) => {
     if (state.avatarLoading) {
       return;
     }
-
-    state.avatarLoading = true;
+    runInAction(() => {
+      state.avatarLoading = true;
+    });
 
     const imageElement = new Image();
     if (state.proxyImageUrl) {
@@ -142,120 +140,49 @@ export const ImageEditor = observer((props: IProps) => {
     const url = imageBase64;
     props.getImageUrl(url);
     await sleep(500);
-    state.avatarLoading = false;
-    state.avatarDialogOpen = false;
-    state.showMenu = false;
+    runInAction(() => {
+      state.avatarLoading = false;
+      state.avatarDialogOpen = false;
+      state.showMenu = false;
+    });
   };
 
-  React.useEffect(() => {
+  React.useEffect(action(() => {
     if (!state.avatarDialogOpen) {
       state.scale = 1;
       state.proxyImageUrl = '';
       state.mimeType = '';
       state.avatarTemp = '';
     }
-  }, [state, state.avatarDialogOpen]);
+  }), [state, state.avatarDialogOpen]);
 
-  const Content = () => (
-    <div>
-      <div>
-        <div className="text-center text-18 pt-8 pb-4 font-bold">
-          {lang.avatar.moveOrDragImage}
-        </div>
-      </div>
-      <div className="px-10 mt-2">
-        <div className="md:mx-5 w-[220px]">
-          <div
-            className="relative mx-auto"
-            style={{
-              width: width * editorPlaceholderScale,
-              height: (width * editorPlaceholderScale) / ratio,
-            }}
-          >
-            <div
-              className="top-0 canvas-container absolute"
-              style={{
-                transformOrigin: 'top',
-                transform: `translateX(-50%) scale(${editorPlaceholderScale})`,
-                left: '50%',
-              }}
-            >
-              <AvatarEditor
-                ref={avatarEditorRef}
-                width={width}
-                height={width / ratio}
-                border={0}
-                scale={state.scale}
-                image={state.proxyImageUrl || state.avatarTemp}
-              />
-            </div>
-          </div>
-
-          <div className="slider-box flex items-center text-gray-500 relative mt-[0px]  py-[14px] px-0 text-28">
-            <div className="text-20 opacity-50 absolute top-0 left-0 mt-[9px] -ml-6">
-              <RiZoomOutLine />
-            </div>
-            <AvatarScaleSlider
-              step={0.001}
-              min={1}
-              max={2}
-              onChange={(_e, v) => {
-                state.scale = v as number;
-              }}
-            />
-            <div className="text-20 opacity-50 absolute top-0 right-0 mt-[9px] -mr-6">
-              <RiZoomInLine />
-            </div>
-          </div>
-          <div className="mt-4 px-3 flex pb-8 justify-center">
-            <Button
-              outline
-              color="gray"
-              onClick={() => { state.avatarDialogOpen = false; }}
-              className="mr-5"
-            >
-              {lang.operations.back}
-            </Button>
-            <Button onClick={handleAvatarSubmit} isDoing={state.avatarLoading}>
-              {lang.operations.confirm}
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  return (
-    <div
-      className={`image-editor bg-white ml-1 relative ${props.className}`}
-    >
+  return (<>
+    <div className={classNames('image-editor bg-white ml-1 relative', props.className)}>
       <div
         className={classNames(
-          {
-            'rounded-full': props.roundedFull,
-            'rounded-8': !props.roundedFull,
-          },
-          'avatar-edit-box group',
+          props.roundedFull && 'rounded-full',
+          !props.roundedFull && 'rounded-8',
+          'group cursor-pointer border-2 overflow-hidden relative',
         )}
-        onClick={() => { state.showMenu = true; }}
+        onClick={action(() => { state.showMenu = true; })}
         style={{
           width: width * placeholderScale,
           height: (width * placeholderScale) / ratio,
         }}
         ref={props.openerRef}
       >
-        {!!props.imageUrl && <img src={props.imageUrl} alt="avatar" />}
         {!!props.imageUrl && (
-          <div className="flex items-center justify-center edit-button-wrap invisible group-hover:visible">
-            <div className="edit-button text-12 flex items-center justify-center">
-              <MdEdit className="edit-icon mr-[2px]" />
-              {lang.avatar.replace}{props.name || ''}
-            </div>
+          <img className="w-full h-full" src={props.imageUrl} alt="avatar" />
+        )}
+        {!!props.imageUrl && (
+          <div className="flex flex-center invisible group-hover:visible absolute bottom-0 left-0 right-0 bg-black/80 text-white text-12 py-1">
+            <MdEdit className="mr-[2px]" />
+            {lang.avatar.replace}{props.name || ''}
           </div>
         )}
         {!props.imageUrl && (
           <div
-            className="flex items-center justify-center text-3xl bg-gray-200 text-gray-500"
+            className="flex flex-center text-3xl bg-gray-200 text-gray-500"
             style={{
               width: width * placeholderScale,
               height: (width * placeholderScale) / ratio,
@@ -263,108 +190,155 @@ export const ImageEditor = observer((props: IProps) => {
           >
             <div className="flex flex-col items-center pt-3-px">
               <MdCameraAlt />
-              <div className="text-12 mt-1">{lang.avatar.upload}{props.name || lang.avatar.image}</div>
+              <div className="text-12 mt-1">
+                {lang.avatar.upload}
+                {props.name || lang.avatar.image}
+              </div>
             </div>
           </div>
         )}
       </div>
 
-      <div>
-        <input
-          ref={avatarInputRef}
-          hidden
-          onChange={handleAvatarInputChange}
-          accept="image/*"
-          type="file"
-        />
-      </div>
-
-      <Menu
-        open={state.showMenu}
-        close={() => {
-          state.showMenu = false;
-        }}
-        loading={state.isUploadingOriginImage}
-        showAvatarSelect={props.showAvatarSelect}
-        avatarMaker={props.avatarMaker}
-        selectMenuItem={(action) => {
-          if (action === 'upload') {
-            avatarInputRef.current!.click();
-          } else if (action === 'openImageLib') {
-            state.showImageLib = true;
-          } else if (action === 'openPresetImages') {
-            state.showPresetImages = true;
-          } else if (action === 'makeAvatar') {
-            shell.openExternal('https://cvbox.org/');
-          }
-        }}
+      <input
+        ref={avatarInputRef}
+        hidden
+        onChange={handleAvatarInputChange}
+        accept="image/*"
+        type="file"
       />
+    </div>
 
-      <ImageLibModal
-        open={state.showImageLib}
-        close={() => { state.showImageLib = false; }}
-        selectImage={async (url: string) => {
-          if (props.useOriginImage) {
+    <Menu
+      open={state.showMenu}
+      close={action(() => { state.showMenu = false; })}
+      loading={state.isUploadingOriginImage}
+      showAvatarSelect={props.showAvatarSelect}
+      avatarMaker={props.avatarMaker}
+      selectMenuItem={action((v) => {
+        if (v === 'upload') {
+          avatarInputRef.current!.click();
+        } else if (v === 'openImageLib') {
+          state.showImageLib = true;
+        } else if (v === 'openPresetImages') {
+          state.showPresetImages = true;
+        } else if (v === 'makeAvatar') {
+          shell.openExternal('https://cvbox.org/');
+        }
+      })}
+    />
+
+    <ImageLibModal
+      open={state.showImageLib}
+      close={action(() => { state.showImageLib = false; })}
+      selectImage={async (url: string) => {
+        if (props.useOriginImage) {
+          runInAction(() => {
             state.showImageLib = false;
             state.isUploadingOriginImage = true;
-            const ret: any = await Base64.getFromBlobUrl(url);
-            props.getImageUrl(ret.url);
-            await sleep(300);
+          });
+          const ret: any = await base64.getFromBlobUrl(url);
+          props.getImageUrl(ret.url);
+          await sleep(300);
+          runInAction(() => {
             state.avatarLoading = false;
             state.showMenu = false;
-          } else {
+          });
+        } else {
+          runInAction(() => {
             state.showImageLib = false;
             state.proxyImageUrl = url;
             state.mimeType = MimeType.getByExt(url.split('.').pop()!);
             state.avatarDialogOpen = true;
-          }
-        }}
-      />
+          });
+        }
+      }}
+    />
 
-      <PresetImagesModal
-        open={state.showPresetImages}
-        close={() => { state.showPresetImages = false; }}
-        onSelect={handlePresetImageSelect}
-      />
+    <PresetImagesModal
+      open={state.showPresetImages}
+      close={action(() => { state.showPresetImages = false; })}
+      onSelect={handlePresetImageSelect}
+    />
 
-      <Dialog
-        maxWidth={false}
-        className="setting-avatar-crop-dialog"
-        onClose={() => {
-          if (!state.avatarLoading) {
-            state.avatarDialogOpen = false;
-          }
-        }}
-        open={state.avatarDialogOpen}
-      >
-        {Content()}
-      </Dialog>
-    </div>
-  );
+    <Dialog
+      maxWidth={false}
+      className="setting-avatar-crop-dialog"
+      onClose={action(() => {
+        if (!state.avatarLoading) {
+          state.avatarDialogOpen = false;
+        }
+      })}
+      open={state.avatarDialogOpen}
+    >
+      <div>
+        <div>
+          <div className="text-center text-18 pt-8 pb-4 font-bold">
+            {lang.avatar.moveOrDragImage}
+          </div>
+        </div>
+        <div className="px-10 mt-2">
+          <div className="md:mx-5 w-[220px]">
+            <div
+              className="relative mx-auto"
+              style={{
+                width: width * editorPlaceholderScale,
+                height: (width * editorPlaceholderScale) / ratio,
+              }}
+            >
+              <div
+                className="top-0 canvas-container absolute"
+                style={{
+                  transformOrigin: 'top',
+                  transform: `translateX(-50%) scale(${editorPlaceholderScale})`,
+                  left: '50%',
+                }}
+              >
+                <AvatarEditor
+                  ref={avatarEditorRef}
+                  width={width}
+                  height={width / ratio}
+                  border={0}
+                  scale={state.scale}
+                  image={state.proxyImageUrl || state.avatarTemp}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center text-gray-500 relative gap-4 py-[14px] -mx-6 px-0 text-28">
+              <div className="text-20 opacity-50">
+                <RiZoomOutLine />
+              </div>
+              <Slider
+                step={0.001}
+                min={1}
+                max={3}
+                onChange={action((_e, v) => {
+                  state.scale = v as number;
+                })}
+              />
+              <div className="text-20 opacity-50">
+                <RiZoomInLine />
+              </div>
+            </div>
+            <div className="mt-4 px-3 flex pb-8 justify-center">
+              <Button
+                outline
+                color="gray"
+                onClick={action(() => { state.avatarDialogOpen = false; })}
+                className="mr-5"
+              >
+                {lang.operations.back}
+              </Button>
+              <Button onClick={handleAvatarSubmit} isDoing={state.avatarLoading}>
+                {lang.operations.confirm}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Dialog>
+  </>);
 });
-
-const AvatarScaleSlider = withStyles({
-  root: {
-    height: 6,
-  },
-  thumb: {
-    height: 20,
-    width: 20,
-    backgroundColor: '#fff',
-    border: '2px solid currentColor',
-    '&:focus,&:hover,&:active': {
-      boxShadow: 'inherit',
-    },
-  },
-  track: {
-    height: 6,
-    borderRadius: 4,
-  },
-  rail: {
-    height: 6,
-    borderRadius: 4,
-  },
-})(Slider);
 
 const getCroppedImg = (
   image: HTMLImageElement,

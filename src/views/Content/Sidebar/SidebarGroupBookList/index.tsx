@@ -3,9 +3,12 @@ import classNames from 'classnames';
 import { action } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import escapeStringRegexp from 'escape-string-regexp';
+import { Badge, Popover } from '@mui/material';
+import { Comment } from '@mui/icons-material';
 import { BookCoverImg, GroupIcon } from '~/components';
-import { BookSummary, GroupMapBookItem, bookService } from '~/service';
-import { Popover } from '@mui/material';
+import { BookSummary, GroupMapBookItem, bookService, linkGroupService, nodeService } from '~/service';
+import { GROUP_TEMPLATE_TYPE } from '~/utils/constant';
+import { lang } from '~/utils';
 import { GroupPopup } from './GroupPopup';
 
 interface Props {
@@ -23,14 +26,20 @@ export const SidebarGroupBookList = observer((props: Props) => {
       groupId: '',
     },
     cachedOpenTimes: new Map<string, number>(),
+    get notLinkedGroup() {
+      const linkedGroups = Object.values(nodeService.state.groupLink);
+      return nodeService.state.groups
+        .filter((v) => v.app_key === GROUP_TEMPLATE_TYPE.EPUB_LINK)
+        .filter((v) => !linkedGroups.includes(v.group_id));
+    },
   }));
 
   const handleClickGroup = action((groupId: string) => {
-    bookService.openBook(groupId, '');
+    bookService.openBook({ groupId });
   });
 
   const handleClickBook = (groupId: string, bookId: string) => {
-    bookService.openBook(groupId, bookId);
+    bookService.openBook({ groupId, bookId });
   };
 
   const filterSearch = React.useCallback((item: GroupMapBookItem) => {
@@ -65,16 +74,11 @@ export const SidebarGroupBookList = observer((props: Props) => {
         const bookActive = bookService.state.current.bookId === item.book.id;
         return (
           <div
-            className={classNames(
-              'flex-col items-center w-[76px]',
-            )}
+            className="flex-col items-center w-[76px] cursor-pointer"
             key={`${item.book.groupId}-${item.book.id}`}
             onClick={() => handleClickBook(item.book.groupId, item.book.id)}
           >
-            <BookCoverImg
-              bookId={item.book.id}
-              groupId={item.book.groupId}
-            >
+            <BookCoverImg bookId={item.book.id} groupId={item.book.groupId}>
               {(src) => (
                 <div
                   className={classNames(
@@ -83,9 +87,7 @@ export const SidebarGroupBookList = observer((props: Props) => {
                     !bookActive && 'shadow-1',
                     bookActive && 'shadow-4b',
                   )}
-                  style={{
-                    backgroundImage: `url("${src}")`,
-                  }}
+                  style={{ backgroundImage: `url("${src}")` }}
                 />
               )}
             </BookCoverImg>
@@ -118,7 +120,7 @@ export const SidebarGroupBookList = observer((props: Props) => {
         return (
           <div
             className={classNames(
-              'flex h-[50px] pr-4',
+              'flex h-[50px] pr-4 cursor-pointer',
               bookActive && 'bg-gray-ec',
             )}
             key={`${item.book.groupId}-${item.book.id}`}
@@ -185,8 +187,10 @@ export const SidebarGroupBookList = observer((props: Props) => {
     <div className="divide-y border-y">
       {!props.booksOnly && orderedGroups.map((item) => {
         const isOwner = item.group.owner_pubkey === item.group.user_pubkey;
+        const linkGroupActive = bookService.state.current.linkGroupId === item.groupLink?.group_id;
         const active = bookService.state.current.groupId === item.group.group_id
-          && !bookService.state.current.bookId;
+          && !bookService.state.current.bookId
+          && !linkGroupActive;
         const books = applyFilterAndSort(item.books);
 
         return (
@@ -235,6 +239,42 @@ export const SidebarGroupBookList = observer((props: Props) => {
               </div>
             </div>
 
+            {!!item.groupLink && (
+              <div
+                className={classNames(
+                  'flex items-center relative pl-6 pr-4 py-2',
+                  linkGroupActive && 'bg-gray-ec',
+                )}
+                onClick={() => bookService.openBook({ groupId: item.group.group_id, linkGroupId: item.groupLink!.group_id })}
+              >
+                <div
+                  className={classNames(
+                    'w-[3px] h-full flex flex-col items-stretch absolute left-0',
+                    !linkGroupActive && 'py-px',
+                  )}
+                >
+                  {item.groupLink.owner_pubkey === item.groupLink.user_pubkey && (
+                    <div className="flex-1 bg-[#ff931e]" />
+                  )}
+                </div>
+                <div className="flex flex-center w-6 mr-2">
+                  <Comment className="text-20 text-black/70" />
+                </div>
+                {item.groupLink.group_name}
+                <div className="flex-1" />
+                <Badge
+                  className="transform"
+                  classes={{
+                    badge: 'tracking-tighter text-gray-af',
+                  }}
+                  badgeContent={linkGroupService.state.notification.unreadCountMap[item.groupLink.group_id]}
+                  invisible={!linkGroupService.state.notification.unreadCountMap[item.groupLink.group_id]}
+                  variant="standard"
+                  max={99}
+                />
+              </div>
+            )}
+
             {!!books.length && (<>
               {props.viewMode === 'list' && renderListBooks(books)}
               {props.viewMode === 'grid' && renderGridBooks(books)}
@@ -245,6 +285,52 @@ export const SidebarGroupBookList = observer((props: Props) => {
       {props.booksOnly && props.viewMode === 'list' && renderListBooks(applyFilterAndSort(bookService.state.groups.flatMap((v) => v.books)), '', false)}
       {props.booksOnly && props.viewMode === 'grid' && renderGridBooks(applyFilterAndSort(bookService.state.groups.flatMap((v) => v.books)))}
     </div>
+
+    {!props.booksOnly && state.notLinkedGroup.length && (
+      <div>
+        <div className="flex px-3 py-2">
+          {lang.linkGroup.notLinkedSeednet}
+        </div>
+        <div className="flex-col">
+          {state.notLinkedGroup.map((group) => {
+            const linkGroupActive = bookService.state.current.linkGroupId === group.group_id;
+            return (
+              <div
+                className={classNames(
+                  'flex items-center gap-2 py-3 px-3 relative cursor-pointer',
+                  linkGroupActive && 'bg-gray-ec',
+                )}
+                key={group.group_id}
+                onClick={() => bookService.openBook({
+                  linkGroupId: group.group_id,
+                })}
+              >
+                <div
+                  className={classNames(
+                    'w-[3px] h-full flex flex-col items-stretch absolute left-0',
+                    !linkGroupActive && 'py-px',
+                  )}
+                >
+                  {group.owner_pubkey === group.user_pubkey && (
+                    <div className="flex-1 bg-[#ff931e]" />
+                  )}
+                </div>
+                <GroupIcon
+                  className="rounded-6 w-6 flex-none"
+                  width={24}
+                  height={24}
+                  fontSize={16}
+                  groupId={group.group_id}
+                />
+                <div className="flex flex-center text-gray-4a">
+                  {group.group_name}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    )}
 
     <Popover
       classes={{

@@ -25,7 +25,7 @@ export const NodeParams = observer(() => {
   };
 
   return (
-    <div className="bg-white rounded-0 p-8">
+    <div className="bg-white rounded-0 p-6">
       <div className="w-72 relative">
         <div className="text-18 font-bold text-gray-700 text-center">
           {lang.node.nodeParams}

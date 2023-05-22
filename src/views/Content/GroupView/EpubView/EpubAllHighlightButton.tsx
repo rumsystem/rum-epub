@@ -3,14 +3,14 @@ import classNames from 'classnames';
 import { action, reaction, runInAction } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import escapeStringRegexp from 'escape-string-regexp';
-import { Popover, Tooltip, Pagination, Input } from '@mui/material';
+import { Popover, Tooltip, Pagination, Input, Button } from '@mui/material';
 import { Book } from 'epubjs';
 import { Annotation } from 'epubjs/types/annotations';
 import TrashIcon from 'boxicons/svg/regular/bx-trash.svg?fill';
 
 import MarkerIcon from '~/assets/icon_marker.svg?fill';
 import { lang, modifierKeys, splitByHighlightText } from '~/utils';
-import { readerSettingsService } from '~/service';
+import { bookService, readerSettingsService } from '~/service';
 
 interface Props {
   className?: string
@@ -38,7 +38,7 @@ export const EpubAllHighlightButton = observer((props: Props) => {
       return this.arr.filter((v) => regexp.test(v.text));
     },
   }));
-  const buttonRef = React.useRef<HTMLDivElement>(null);
+  const buttonRef = React.useRef<HTMLButtonElement>(null);
 
   const handleOpen = action(async () => {
     state.open = true;
@@ -51,14 +51,16 @@ export const EpubAllHighlightButton = observer((props: Props) => {
     const annotations: Array<Annotation> = Object.values((book.rendition.annotations as any)._annotations);
 
     const arr = await Promise.all(
-      annotations.map(async (v) => {
-        const range = await book.getRange(v.cfiRange);
-        const text = range.toString();
-        return {
-          a: v,
-          text,
-        };
-      }),
+      annotations
+        .filter((v) => v.cfiRange !== bookService.state.current.href)
+        .map(async (v) => {
+          const range = await book.getRange(v.cfiRange);
+          const text = range.toString();
+          return {
+            a: v,
+            text,
+          };
+        }),
     );
 
     runInAction(() => {
@@ -106,22 +108,25 @@ export const EpubAllHighlightButton = observer((props: Props) => {
 
   return (<>
     <Tooltip title={lang.epubHighlights.all}>
-      <div
+      <Button
         className={classNames(
-          'flex flex-center cursor-pointer',
+          'flex flex-center p-0 w-8 h-8 min-w-0',
           props.className,
         )}
         onClick={handleOpen}
         ref={buttonRef}
+        variant="text"
       >
-        <MarkerIcon
-          className={classNames(
-            'text-22',
-            !readerSettingsService.state.dark && 'text-black',
-            readerSettingsService.state.dark && 'text-gray-af',
-          )}
-        />
-      </div>
+        <div className="flex flex-center">
+          <MarkerIcon
+            className={classNames(
+              'text-22',
+              !readerSettingsService.state.dark && 'text-black',
+              readerSettingsService.state.dark && 'text-gray-af',
+            )}
+          />
+        </div>
+      </Button>
     </Tooltip>
 
     <Popover

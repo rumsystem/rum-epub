@@ -104,12 +104,13 @@ export interface ReadingProgress {
   groupId: string
   bookId: string
   readingProgress: string
+  timestamp: number
 }
 
 export interface ProfileItem {
   id?: number
   groupId: string
-  publisher: string
+  userAddress: string
   profile: {
     name: string
     image?: {
@@ -148,6 +149,103 @@ export interface EmptyTrxItem {
   lastChecked: number
 }
 
+export interface PostRaw {
+  id: string
+  trxId: string
+  groupId: string
+  bookId: string
+  chapter: string
+  chapterId: string
+  quote: string
+  quoteRange: string
+  title: string
+  content: string
+  images?: Array<{
+    mediaType: string
+    content: string
+  } | {
+    url: string
+  }>
+  status: 'synced' | 'pending'
+  userAddress: string
+  timestamp: number
+  hotCount: number
+  likeCount: number
+  dislikeCount: number
+  commentCount: number
+  nonAuthorCommentCount: number
+  liked: boolean
+  disliked: boolean
+}
+
+export interface Post extends PostRaw {
+  user: Profile
+}
+
+export interface CommentRaw {
+  id: string
+  trxId: string
+  groupId: string
+  postId: string
+  threadId: string
+  replyTo: string
+  title: string
+  content: string
+  images?: Array<{
+    mediaType: string
+    content: string
+  } | {
+    url: string
+  }>
+  status: 'synced' | 'pending'
+  userAddress: string
+  timestamp: number
+  hotCount: number
+  commentCount: number
+  nonAuthorCommentCount: number
+  likeCount: number
+  dislikeCount: number
+  liked: boolean
+  disliked: boolean
+}
+export interface Comment extends CommentRaw {
+  user: Profile
+}
+
+export interface Counter {
+  trxId: string
+  groupId: string
+  type: 'like' | 'dislike' | 'undolike' | 'undodislike'
+  objectType: 'post' | 'comment'
+  objectId: string
+  userAddress: string
+  timestamp: number
+  status: 'synced' | 'pending'
+}
+
+export interface Profile {
+  trxId: string
+  userAddress: string
+  groupId: string
+  name: string
+  avatar?: {
+    mediaType: string
+    content: string
+  }
+  timestamp: number
+  status: 'synced' | 'pending'
+}
+
+export interface Notification {
+  id?: string
+  groupId: string
+  objectId: string
+  from: string
+  type: 'postLike' | 'commentLike' | 'comment' | 'commentReply'
+  status: 'read' | 'unread'
+  timestamp: number
+}
+
 export class Database extends Dexie {
   public book: Dexie.Table<BookSummary>;
   public bookBuffer: Dexie.Table<BookBuffer>;
@@ -165,8 +263,12 @@ export class Database extends Dexie {
   public highlights: Dexie.Table<HighlightItem, number>;
   public readingProgress: Dexie.Table<ReadingProgress, number>;
   public bookMetadata: Dexie.Table<BookMetadata, number>;
-  // public profile: Dexie.Table<ProfileItem, number>;
-  // public globalProfile: Dexie.Table<GlobalProfile, number>;
+
+  public post: Dexie.Table<PostRaw, number>;
+  public comment: Dexie.Table<CommentRaw, number>;
+  public counter: Dexie.Table<Counter, number>;
+  public profile: Dexie.Table<Profile, number>;
+  public notification: Dexie.Table<Notification, number>;
 
   public constructor(name: string) {
     super(name);
@@ -175,6 +277,12 @@ export class Database extends Dexie {
     this.version(1).stores(createSchema({
       book: [
         '[groupId+id]',
+        '[groupId+bookId+timestamp]',
+        '[groupId+userAddress+timestamp]',
+        '[groupId+bookId+userAddress+timestamp]',
+        '[groupId+bookId+hotCount]',
+        '[groupId+userAddress+hotCount]',
+        '[groupId+bookId+userAddress+hotCount]',
         '[groupId+status]',
         '[groupId+status+timestamp]',
         'groupId',
@@ -220,13 +328,14 @@ export class Database extends Dexie {
         'groupId',
       ],
       highlights: [
+        '[groupId+bookId+cfiRange]',
         '[groupId+bookId]',
         'groupId',
-        '[groupId+bookId+cfiRange]',
       ],
       readingProgress: [
         '[groupId+bookId]',
         'groupId',
+        'timestamp',
       ],
       bookMetadata: [
         'id++',
@@ -235,16 +344,58 @@ export class Database extends Dexie {
         '[groupId+bookId+timestamp]',
         'groupId',
       ],
-      // profile: [
-      //   'groupId',
-      //   'publisher',
-      //   'status',
-      //   '[groupId+status]',
-      //   '[groupId+publisher+status]',
-      // ],
-      // globalProfile: [
-      //   'profile',
-      // ],
+
+      post: [
+        '[groupId+id]',
+        '[groupId+trxId]',
+        '[groupId+hotCount]',
+        '[groupId+timestamp]',
+        '[groupId+userAddress]',
+        '[groupId+userAddress+hotCount]',
+        '[groupId+userAddress+timestamp]',
+        '[groupId+bookId+hotCount]',
+        '[groupId+bookId+timestamp]',
+        '[groupId+bookId+userAddress+hotCount]',
+        '[groupId+bookId+userAddress+timestamp]',
+        'groupId',
+      ],
+      comment: [
+        '[groupId+id]',
+        '[groupId+trxId]',
+        '[groupId+postId+hotCount]',
+        '[groupId+postId+timestamp]',
+        'groupId',
+      ],
+      counter: [
+        '[groupId+trxId]',
+        '[groupId+publisher]',
+        '[groupId+publisher+objectId]',
+        '[groupId+userAddress]',
+        '[groupId+userAddress+objectId]',
+        'groupId',
+      ],
+      profile: [
+        '[groupId+trxId]',
+        '[groupId+publisher]',
+        '[groupId+userAddress]',
+        '[groupId+trxId+timestamp]',
+        '[groupId+publisher+timestamp]',
+        '[groupId+userAddress+timestamp]',
+        'groupId',
+        'trxId',
+        'publisher',
+        'userAddress',
+      ],
+      notification: [
+        '++id',
+        'groupId',
+        'type',
+        'status',
+        'objectId',
+        '[groupId+status]',
+        '[groupId+type]',
+        '[groupId+type+status]',
+      ],
     }));
 
     this.book = this.table('book');
@@ -261,7 +412,11 @@ export class Database extends Dexie {
     this.highlights = this.table('highlights');
     this.readingProgress = this.table('readingProgress');
     this.bookMetadata = this.table('bookMetadata');
-    // this.profile = this.table('profile');
-    // this.globalProfile = this.table('globalProfile');
+
+    this.post = this.table('post');
+    this.comment = this.table('comment');
+    this.counter = this.table('counter');
+    this.profile = this.table('profile');
+    this.notification = this.table('notification');
   }
 }

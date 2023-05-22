@@ -23,13 +23,10 @@ export default (props: Props) => {
     <Dialog open={props.open} onClose={props.close} maxWidth={false}>
       <div className="bg-white rounded-0 text-center">
         <div className="text-18 font-bold mt-8 mb-4">{lang.avatar.selectAvatar}</div>
-        {/* 584 = 80 * 6 + 8 * 5 + 32 * 2 */}
         <div className="img-box overflow-y-auto pt-2 pb-3 px-8 mb-8 w-[90vw] max-w-[584px] max-h-[400px]">
           <div
-            className="img-grid-box grid gap-x-2 gap-y-3"
-            style={{
-              gridTemplateColumns: 'repeat(auto-fill, 80px)',
-            }}
+            className="img-grid-box grid gap-x-2 gap-y-3 justify-center"
+            style={{ gridTemplateColumns: 'repeat(auto-fill, 80px)' }}
           >
             {avatars.map((url: string) => (
               <Tooltip

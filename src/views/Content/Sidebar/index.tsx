@@ -7,7 +7,7 @@ import { Input, MenuItem, MenuList, Popover, Tooltip } from '@mui/material';
 
 import { lang } from '~/utils';
 import { GROUP_TEMPLATE_TYPE } from '~/utils/constant';
-import { nodeService } from '~/service';
+import { nodeService, sidebarService } from '~/service';
 import { createGroup, joinGroup } from '~/standaloneModals';
 import IconFold from '~/assets/fold.svg?react';
 import IconSearchAllSeed from '~/assets/icon_search_all_seed.svg';
@@ -19,7 +19,6 @@ import IconSeedNetVisible from '~/assets/icon_seednet_visible.svg?icon';
 import ListUlIcon from 'boxicons/svg/regular/bx-list-ul.svg?fill-icon';
 import GridAltIcon from 'boxicons/svg/regular/bx-grid-alt.svg?fill-icon';
 
-import { sidebarService } from './service';
 import { SidebarGroupBookList } from './SidebarGroupBookList';
 
 interface Props {

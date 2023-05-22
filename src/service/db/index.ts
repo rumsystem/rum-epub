@@ -1,8 +1,9 @@
 import Dexie from 'dexie';
 import {
   BookBuffer, BookMetadata, BookSummary, BookSegment, CoverBuffer,
-  CoverSummary, CoverSegment, Database, EmptyTrxItem, PendingTrxItem,
+  CoverSummary, CoverSegment, Database, EmptyTrxItem, PendingTrxItem, PostRaw, CommentRaw, Notification, Profile, Counter,
 } from './database';
+import { getHotCount, notNullFilter } from '~/utils';
 
 export * from './database';
 
@@ -12,7 +13,7 @@ const state = {
 
 export const initDb = (hash: string) => {
   if (state.db) { return; }
-  state.db = new Database(`${hash}-rumbrary-v1`);
+  state.db = new Database(`${hash}-rumbrary-v2`);
 };
 
 export const init = () => () => state.db?.close();
@@ -185,6 +186,281 @@ const putBookMetadata = async (items: Array<BookMetadata>) => {
   await db.bookMetadata.bulkPut(items);
 };
 
+interface GetPostOption {
+  groupId: string
+  id: string
+}
+interface GetPost {
+  (param: GetPostOption): Promise<PostRaw | undefined>
+  (param: Array<GetPostOption>): Promise<Array<PostRaw>>
+}
+
+const getPost: GetPost = async (param): Promise<any> => {
+  const db = dbService.db;
+  const params = Array.isArray(param) ? param : [param];
+  const posts = await db.post
+    .where('[groupId+id]')
+    .anyOf(params.map((v) => [v.groupId, v.id]))
+    .toArray();
+  return Array.isArray(param) ? posts : posts.at(0);
+};
+
+const putPost = async (posts: Array<PostRaw>) => {
+  const db = dbService.db;
+  await db.post.bulkPut(posts);
+};
+
+interface ListPostParams {
+  groupId: string
+  bookId?: string
+  offset: number
+  limit: number
+  userAddress?: string
+  search?: string
+  order: 'hot' | 'time'
+}
+
+const listPost = async (param: ListPostParams) => {
+  const db = dbService.db;
+  const where = [
+    'groupId',
+    param.bookId ? 'bookId' : '',
+    param.userAddress ? 'userAddress' : '',
+    param.order === 'hot' ? 'hotCount' : 'timestamp',
+  ].filter((v) => v).join('+');
+  const posts = await db.post
+    .where(`[${where}]`)
+    .between(
+      [param.groupId, param.bookId, param.userAddress, Dexie.minKey].filter((v) => v),
+      [param.groupId, param.bookId, param.userAddress, Dexie.maxKey].filter((v) => v),
+    )
+    .reverse()
+    .offset(param.offset)
+    .limit(param.limit)
+    .toArray();
+  return posts;
+};
+
+interface GetProfileByTrxId {
+  groupId: string
+  trxId: string
+}
+interface GetProfileByUserAddress {
+  groupId: string
+  userAddress: string
+}
+interface GetProfile {
+  (param: GetProfileByTrxId | GetProfileByUserAddress): Promise<Profile | undefined>
+  (param: Array<GetProfileByTrxId> | Array<GetProfileByUserAddress>): Promise<Array<Profile>>
+}
+const getProfile: GetProfile = async (param): Promise<any> => {
+  const db = dbService.db;
+  const params = Array.isArray(param) ? param : [param];
+  if (!params.length) { return []; }
+  let profiles: Profile[];
+  if ('trxId' in params[0]) {
+    const list = params as Array<GetProfileByTrxId>;
+    profiles = await db.profile
+      .where('[groupId+trxId]')
+      .anyOf(list.map((v) => [v.groupId, v.trxId]))
+      .toArray();
+  } else {
+    const list = params as Array<GetProfileByUserAddress>;
+    profiles = (await Promise.all(
+      list.map(async (item) => {
+        const profile = await db.profile
+          .where('[groupId+userAddress+timestamp]')
+          .between(
+            [item.groupId, item.userAddress, Dexie.minKey],
+            [item.groupId, item.userAddress, Dexie.maxKey],
+          )
+          .last();
+        return profile;
+      }),
+    )).filter(notNullFilter);
+  }
+  return Array.isArray(param) ? profiles : profiles.at(0);
+};
+
+const putProfile = async (profiles: Array<Profile>) => {
+  const db = dbService.db;
+  await db.profile.bulkPut(profiles);
+};
+
+interface GetCounterOption {
+  groupId: string
+  trxId: string
+}
+interface GetCounter {
+  (param: GetCounterOption): Promise<Counter | undefined>
+  (param: Array<GetCounterOption>): Promise<Array<Counter>>
+}
+const getCounter: GetCounter = async (param): Promise<any> => {
+  const db = dbService.db;
+  const params = Array.isArray(param) ? param : [param];
+  const counters = await db.counter
+    .where('[groupId+trxId]')
+    .anyOf(params.map((v) => [v.groupId, v.trxId]))
+    .toArray();
+  return Array.isArray(param) ? counters : counters.at(0);
+};
+
+const putCounter = async (counters: Array<Counter>) => {
+  const db = dbService.db;
+  await db.counter.bulkPut(counters);
+};
+
+interface UpdateObjectCounterParams {
+  object: PostRaw | CommentRaw
+  likeCount?: number
+  dislikeCount?: number
+  commentCount?: number
+  nonAuthorCommentCount?: number
+  liked?: boolean
+  disliked?: boolean
+}
+
+const updateObjectCounter = async (params: UpdateObjectCounterParams) => {
+  const { object } = params;
+  const db = dbService.db;
+  const table = 'postId' in object ? db.comment : db.post;
+  await table.where({
+    groupId: object.groupId,
+    id: object.id,
+  }).modify((item) => {
+    if ('likeCount' in params) {
+      item.likeCount += params.likeCount ?? 0;
+    }
+    if ('dislikeCount' in params) {
+      item.likeCount += params.dislikeCount ?? 0;
+    }
+    if ('commentCount' in params) {
+      item.commentCount += params.commentCount ?? 0;
+    }
+    if ('nonAuthorCommentCount' in params) {
+      item.nonAuthorCommentCount += params.nonAuthorCommentCount ?? 0;
+    }
+    if ('liked' in params) {
+      item.liked = !!params.liked;
+    }
+    if ('disliked' in params) {
+      item.disliked = !!params.disliked;
+    }
+    item.hotCount = getHotCount(item);
+  });
+};
+
+const putNotification = async (notifications: Array<Notification>) => {
+  const db = dbService.db;
+  await db.notification.bulkPut(notifications);
+};
+
+const getNotificationUnreadCount = async (groupId: string) => {
+  const db = dbService.db;
+  const count = await db.notification.where({
+    groupId,
+    status: 'unread',
+  }).count();
+  return count;
+};
+
+interface ListNotificationParams {
+  groupId: string
+  status?: Notification['status']
+  type?: Notification['type'] | Array<Notification['type']>
+  limit: number
+  offset: number
+}
+
+const listNotification = async (params: ListNotificationParams) => {
+  const db = dbService.db;
+  const type = params.type ? [params.type].flatMap((v) => v) : undefined;
+  if (!type) {
+    const items = await db.notification
+      .where({
+        groupId: params.groupId,
+        ...params.status ? { status: params.status } : {},
+      })
+      .reverse()
+      .offset(params.offset)
+      .limit(params.limit)
+      .toArray();
+    return items;
+  }
+
+  const arr = type.map((v) => [params.groupId, v, params.status].filter(notNullFilter));
+  const items = await db.notification
+    .where(params.status ? '[groupId+type+status]' : '[groupId+type]')
+    .anyOf(...arr)
+    .reverse()
+    .offset(params.offset)
+    .limit(params.limit)
+    .toArray();
+  return items;
+};
+
+const clearUnreadNotification = async (groupId: string) => {
+  const db = dbService.db;
+  await db.notification
+    .where({ groupId, status: 'unread' })
+    .modify({ status: 'read' });
+};
+
+interface GetCommentOption {
+  groupId: string
+  id: string
+}
+
+interface GetComment {
+  (param: GetCommentOption): Promise<CommentRaw | undefined>
+  (param: Array<GetCommentOption>): Promise<Array<CommentRaw>>
+}
+
+const getComment: GetComment = async (param): Promise<any> => {
+  const db = dbService.db;
+  const params = Array.isArray(param) ? param : [param];
+  const comments = await db.comment
+    .where('[groupId+id]')
+    .anyOf(params.map((v) => [v.groupId, v.id]))
+    .toArray();
+  return Array.isArray(param) ? comments : comments.at(0);
+};
+
+const putComment = async (comments: Array<CommentRaw>) => {
+  const db = dbService.db;
+  await db.comment.bulkPut(comments);
+};
+
+
+interface ListCommentParams {
+  groupId: string
+  postId: string
+  offset: number
+  limit: number
+  order: 'hot' | 'time'
+}
+
+const listComment = async (param: ListCommentParams) => {
+  const db = dbService.db;
+  const where = [
+    'groupId',
+    'postId',
+    param.order === 'hot' ? 'hotCount' : 'timestamp',
+  ].filter((v) => v).join('+');
+  const comments = await db.comment
+    .where(`[${where}]`)
+    .between(
+      [param.groupId, param.postId, Dexie.minKey],
+      [param.groupId, param.postId, Dexie.maxKey],
+    )
+    .limit(param.limit)
+    .offset(param.offset)
+    .reverse()
+    .toArray();
+  return comments;
+};
+
+
 const getGroupStatus = (groupId: string) => {
   const db = dbService.db;
   return db.groupStatus.where({ groupId }).first();
@@ -198,6 +474,14 @@ const setGroupStatus = (groupId: string, trxId: string) => {
 const addPendingTrx = (items: Array<PendingTrxItem>) => {
   const db = dbService.db;
   return db.pendingTrx.bulkPut(items);
+};
+
+const deletePendingTrx = (items: Array<Pick<PendingTrxItem, 'groupId' | 'trxId'>>) => {
+  const db = dbService.db;
+  return db.pendingTrx
+    .where('[groupId+trxId]')
+    .anyOf(items.map((v) => [v.groupId, v.trxId]))
+    .delete();
 };
 
 const getEmptyTrx = () => {
@@ -270,13 +554,35 @@ export const dbService = {
   getBookMetadataByTrxId,
   putBookMetadata,
 
+  getPost,
+  putPost,
+  listPost,
+
+  getProfile,
+  putProfile,
+
+  getCounter,
+  putCounter,
+  updateObjectCounter,
+
+  putNotification,
+  getNotificationUnreadCount,
+  listNotification,
+  clearUnreadNotification,
+
+  getComment,
+  putComment,
+  listComment,
+
   getGroupStatus,
   setGroupStatus,
 
   addPendingTrx,
+  deletePendingTrx,
 
   getEmptyTrx,
   putEmptyTrx,
   deleteEmptyTrx,
   deleteAllDataFromGroup,
+
 };

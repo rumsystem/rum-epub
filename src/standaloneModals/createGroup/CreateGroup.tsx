@@ -29,15 +29,27 @@ import { StepBox } from './StepBox';
 
 const TOTAL_STEPS = 2;
 
-export const CreateGroup = observer((props: { destroy: () => unknown }) => {
+export interface Props {
+  type?: 'link_group'
+  name?: string
+}
+
+export interface InternalProps {
+  destroy: () => unknown
+  rs: (v?: string) => unknown
+}
+
+export const CreateGroup = observer((props: Props & InternalProps) => {
   const state = useLocalObservable(() => ({
     open: false,
     step: 0,
 
-    name: '',
+    name: props.name ?? '',
     desc: '',
     icon: '',
-    type: GROUP_TEMPLATE_TYPE.EPUB,
+    type: props.type === 'link_group'
+      ? GROUP_TEMPLATE_TYPE.EPUB_LINK
+      : GROUP_TEMPLATE_TYPE.EPUB,
     authType: 'FOLLOW_ALW_LIST' as AuthType,
 
     consensusType: 'poa',
@@ -45,6 +57,7 @@ export const CreateGroup = observer((props: { destroy: () => unknown }) => {
 
     creating: false,
     dispose: escService.noop,
+    newGroupId: '',
   }));
 
   const scrollBox = React.useRef<HTMLDivElement>(null);
@@ -81,7 +94,9 @@ export const CreateGroup = observer((props: { destroy: () => unknown }) => {
     }
 
     const confirmResult = await dialogService.open({
-      title: lang.createGroup.confirmCreateEpubSeednet,
+      title: props.type === 'link_group'
+        ? lang.createGroup.confirmCreateEpubLinkSeednet
+        : lang.createGroup.confirmCreateEpubSeednet,
       content: (
         <div className="text-center">
           <p className="mb-4">《{state.name}》</p>
@@ -91,7 +106,9 @@ export const CreateGroup = observer((props: { destroy: () => unknown }) => {
         </div>
       ),
       cancel: lang.createGroup.backAndEdit,
-      confirm: lang.createGroup.confirmCreate,
+      confirm: props.type === 'link_group'
+        ? lang.createGroup.confirmCreate
+        : lang.createGroup.confirmCreateAndUpload,
     });
     if (confirmResult === 'cancel') { return; }
 
@@ -121,7 +138,12 @@ export const CreateGroup = observer((props: { destroy: () => unknown }) => {
       timeout: 1000,
     });
     const groupId = createGroupResult.right.group_id;
-    bookService.openBook(groupId, '');
+    runInAction(() => {
+      state.newGroupId = groupId;
+    });
+    if (!props.type) {
+      bookService.openBook({ groupId });
+    }
     handleClose();
 
     const changeAuthTypeResult = TE.tryCatch(
@@ -195,6 +217,7 @@ export const CreateGroup = observer((props: { destroy: () => unknown }) => {
   const handleClose = action(() => {
     state.open = false;
     state.dispose();
+    props.rs(state.newGroupId || undefined);
     setTimeout(props.destroy, 2000);
   });
 
@@ -215,18 +238,10 @@ export const CreateGroup = observer((props: { destroy: () => unknown }) => {
   }, []);
 
   return (
-    <Fade
-      in={state.open}
-      timeout={300}
-      mountOnEnter
-      unmountOnExit
-    >
+    <Fade in={state.open} timeout={300} mountOnEnter unmountOnExit>
       <div className="flex flex-col items-stretch fixed inset-0 top-[40px] bg-gray-f7 z-50">
         <div className="flex flex-none gap-x-10 px-10 h-17 items-center bg-white">
-          <button
-            className="flex flex-center text-16"
-            onClick={handleClose}
-          >
+          <button className="flex flex-center text-16" onClick={handleClose}>
             <ChevronLeft className="text-producer-blue" />
             {lang.operations.back}
           </button>
@@ -236,10 +251,7 @@ export const CreateGroup = observer((props: { destroy: () => unknown }) => {
         </div>
 
         <div className="flex-col flex-center flex-1 h-0 p-10">
-          <div
-            className="flex-col justify-center overflow-auto w-[800px] flex-1"
-            ref={scrollBox}
-          >
+          <div className="flex-col justify-center overflow-auto w-[800px] flex-1" ref={scrollBox}>
             <div className="flex-col items-stretch bg-white px-22 py-10 max-h-[650px] flex-1 text-gray-4a">
               {state.step === 0 && (<>
                 <div className="text-18 font-medium -ml-9">
@@ -247,15 +259,17 @@ export const CreateGroup = observer((props: { destroy: () => unknown }) => {
                 </div>
 
                 <div className="mt-6 text-14 text-gray-4a">
-                  {lang.createGroup.selectTemplateTip}
+                  {!props.type && lang.createGroup.selectTemplateTip}
+                  {props.type === lang.createGroup.linkGroupTemplateTip}
                 </div>
 
                 <div className="flex justify-center gap-x-8 mt-12">
-                  {([
-                    ['placeholder', null, SeedNoopenIcon],
-                    ['epub', GROUP_TEMPLATE_TYPE.EPUB, NotebookIcon],
-                    ['placeholder', null, SeedNoopenIcon],
-                  ] as const).map(([name, type, GroupIcon], i) => (
+                  {[
+                    ['placeholder', null, SeedNoopenIcon] as const,
+                    !props.type && ['epub', GROUP_TEMPLATE_TYPE.EPUB, NotebookIcon] as const,
+                    props.type === 'link_group' && ['epub_link', GROUP_TEMPLATE_TYPE.EPUB_LINK, NotebookIcon] as const,
+                    ['placeholder', null, SeedNoopenIcon] as const,
+                  ].filter(<T extends unknown>(v: T | boolean): v is T => !!v).map(([name, type, GroupIcon], i) => (
                     <div
                       className={classNames(
                         'relative flex flex-col flex-center w-45 px-3 py-4 border rounded-md select-none',
@@ -267,12 +281,7 @@ export const CreateGroup = observer((props: { destroy: () => unknown }) => {
                       onClick={() => type && handleChangeType(type)}
                       key={i}
                     >
-                      <GroupIcon
-                        className="w-14 text-black"
-                        style={{
-                          strokeWidth: 2,
-                        }}
-                      />
+                      <GroupIcon className="w-14 text-black" style={{ strokeWidth: 2 }} />
                       {name === 'placeholder' && (
                         <div className="mt-2 text-16 text-gray-9c">
                           {lang.createGroup.NA}
@@ -286,13 +295,19 @@ export const CreateGroup = observer((props: { destroy: () => unknown }) => {
                           Epub
                         </div>
                       </>)}
+                      {name === 'epub_link' && (<>
+                        <div className="text-16 text-black">
+                          {lang.createGroup.linkGroup}
+                        </div>
+                        <div className="text-14 text-gray-6f">
+                          Epub_Link
+                        </div>
+                      </>)}
 
                       {state.type === type && (
                         <div
                           className="absolute right-[-1px] top-[-1px] w-10 h-10"
-                          style={{
-                            backgroundImage: 'linear-gradient(-135deg, black 50%, transparent 50%)',
-                          }}
+                          style={{ backgroundImage: 'linear-gradient(-135deg, black 50%, transparent 50%)' }}
                         >
                           <Check className="absolute right-[3px] top-[2px] text-gray-f7 text-18" />
                         </div>
@@ -346,9 +361,7 @@ export const CreateGroup = observer((props: { destroy: () => unknown }) => {
                       {state.authType === authType && (
                         <div
                           className="absolute right-[-1px] top-[-1px] w-10 h-10"
-                          style={{
-                            backgroundImage: 'linear-gradient(-135deg, black 50%, transparent 50%)',
-                          }}
+                          style={{ backgroundImage: 'linear-gradient(-135deg, black 50%, transparent 50%)' }}
                         >
                           <Check className="absolute right-[3px] top-[2px] text-gray-f7 text-18" />
                         </div>
@@ -381,9 +394,7 @@ export const CreateGroup = observer((props: { destroy: () => unknown }) => {
                       <div>
                         {lang.createGroup.readonlyDesc1(
                           <Tooltip
-                            classes={{
-                              tooltip: 'bg-white text-black shadow-1',
-                            }}
+                            classes={{ tooltip: 'bg-white text-black shadow-1' }}
                             title={lang.createGroup.readonlyTip}
                           >
                             <span className="text-producer-blue">
@@ -474,11 +485,7 @@ export const CreateGroup = observer((props: { destroy: () => unknown }) => {
                 >
                   {lang.operations.prevStep}
                 </Button>
-                <StepBox
-                  className=""
-                  total={TOTAL_STEPS}
-                  value={state.step}
-                />
+                <StepBox className="" total={TOTAL_STEPS} value={state.step} />
                 <Button
                   className="rounded text-16 py-[6px] px-7"
                   onClick={handleNextStep}
@@ -486,10 +493,7 @@ export const CreateGroup = observer((props: { destroy: () => unknown }) => {
                 >
                   {state.step === TOTAL_STEPS - 1 && lang.createGroup.createGroup}
                   {state.creating && (
-                    <CircularProgress
-                      className="ml-2 -mr-2 text-inherit"
-                      size={16}
-                    />
+                    <CircularProgress className="ml-2 -mr-2 text-inherit" size={16} />
                   )}
                   {state.step !== TOTAL_STEPS - 1 && lang.operations.nextStep}
                 </Button>

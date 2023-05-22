@@ -68,7 +68,7 @@ export const BookCoverImg = observer((props: BookCoverImgProps) => {
     state.dispose();
   }, []);
 
-  const { children, ...rest } = props;
+  const { children, groupId, bookId, ...rest } = props;
 
   if (children) {
     return children(state.url);

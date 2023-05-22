@@ -4,6 +4,7 @@ export enum GROUP_TEMPLATE_TYPE {
   // POST = 'group_post',
   // NOTE = 'group_note',
   EPUB = 'group_epub',
+  EPUB_LINK = 'group_epub_link',
 }
 
 /** 群组 config */

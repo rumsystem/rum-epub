@@ -61,7 +61,7 @@ export const GroupInfo = observer((props: { destroy: () => unknown } & Props) =>
       open={state.open}
       onClose={handleClose}
     >
-      <div className="bg-white rounded-0 p-8">
+      <div className="bg-white rounded-0 p-6">
         <div className="pt-2 px-6 pb-5">
           <div className="text-18 font-bold text-gray-700 text-center pb-5">
             {lang.group.groupInfo}

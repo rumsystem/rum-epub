@@ -6,10 +6,7 @@ import { Tooltip } from '@mui/material';
 import { Check, ChevronRight } from '@mui/icons-material';
 
 import { lang } from '~/utils';
-import {
-  i18n, AllLanguages, nodeService, dbService, dialogService,
-  updateService, profileService,
-} from '~/service';
+import { i18n, AllLanguages, nodeService, dbService, dialogService, updateService } from '~/service';
 import { nodeInfoModal, myLibrary } from '~/standaloneModals';
 import { myLibraryState } from '~/standaloneModals/myLibrary/state';
 import IconLangLocal from '~/assets/lang_local.svg';
@@ -30,7 +27,7 @@ export const TitleBar = observer((props: Props) => {
         {
           content: `${lang.titleBar.about} ...`,
           action: () => {
-            // TODO: 关于页面
+            shell.openExternal('https://github.com/rumsystem/rum-epub');
           },
         },
         {
@@ -104,42 +101,21 @@ export const TitleBar = observer((props: Props) => {
     },
   ].filter(<T extends unknown>(v: false | T): v is T => !!v);
   const menuRight = [
-    // {
-    //   // TODO: 发现
-    //   text: (
-    //     <div className="text-bright-orange">
-    //       发现内容
-    //     </div>
-    //   ),
-    //   action: () => myLibrary(),
-    // },
     !!nodeService.state.pollingStarted && {
       content: (
         <div className="flex flex-center gap-x-2">
-          {/* <div
-            className="w-8 h-8 rounded-full bg-contain"
-            style={{
-              backgroundImage: `url("${profileService.state.profileImage}")`,
-            }}
-          /> */}
-          {profileService.state.profileName}
+          {nodeService.state.nodeInfo.node_publickey.substring(0, 6)}
           <ChevronRight className="rotate-90 text-bright-orange -mx-1" />
         </div>
       ),
       children: [
-        // {
-        //   content: lang.titleBar.editProfile,
-        //   action: () => editProfile(),
-        // },
-        // {
-        //   content: lang.titleBar.editWallet,
-        //   action: () => editProfile(),
-        // },
+        {
+          content: lang.node.refresh,
+          action: () => getCurrentWindow().reload(),
+        },
         !!nodeService.state.nodeInfo.node_publickey && {
           content: lang.titleBar.nodeAndNetwork,
-          action: () => {
-            nodeInfoModal();
-          },
+          action: () => nodeInfoModal(),
         },
         // {
         //   content: `${lang.titleBar.exportKey} ...`,
@@ -173,9 +149,7 @@ export const TitleBar = observer((props: Props) => {
             />
             English
           </>),
-          action: () => {
-            i18n.switchLang('en' as AllLanguages);
-          },
+          action: () => i18n.switchLang('en' as AllLanguages),
         },
         {
           content: (<>
@@ -188,9 +162,7 @@ export const TitleBar = observer((props: Props) => {
             />
             简体中文
           </>),
-          action: () => {
-            i18n.switchLang('cn' as AllLanguages);
-          },
+          action: () => i18n.switchLang('cn' as AllLanguages),
         },
       ],
     },
@@ -209,14 +181,6 @@ export const TitleBar = observer((props: Props) => {
         <TitleBarMenu items={menuLeft} />
       </div>
       <div className="flex items-stertch">
-        <button
-          className="px-4 mx-1 cursor-pointer flex items-center focus:bg-gray-4a text-12"
-          onClick={() => {
-            getCurrentWindow().reload();
-          }}
-        >
-          {lang.node.refresh}
-        </button>
         {/* {nodeStore.connected && nodeStore.mode === 'EXTERNAL' && (
           <div className="mr-6 cursor-pointer flex items-center text-white opacity-70 text-12 w-[auto] mt-[2px]">
             <div className="w-2 h-2 bg-emerald-300 rounded-full mr-2" />

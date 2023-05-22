@@ -3,7 +3,7 @@ import classNames from 'classnames';
 import { action } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import { NavItem } from 'epubjs';
-import { Divider, MenuItem, Popover, Tooltip } from '@mui/material';
+import { Button, Divider, MenuItem, Popover, Tooltip } from '@mui/material';
 import ListUlIcon from 'boxicons/svg/regular/bx-list-ul.svg?fill-icon';
 import { readerSettingsService } from '~/service';
 import { lang, modifierKeys } from '~/utils';
@@ -19,7 +19,7 @@ export const EpubChaptersButton = observer((props: Props) => {
   const state = useLocalObservable(() => ({
     open: false,
   }));
-  const buttonRef = React.useRef<HTMLDivElement>(null);
+  const buttonRef = React.useRef<HTMLButtonElement>(null);
   const chaptersBox = React.useRef<HTMLDivElement>(null);
 
   const handleChapterClick = (href: string) => {
@@ -63,13 +63,14 @@ export const EpubChaptersButton = observer((props: Props) => {
 
   return (<>
     <Tooltip title={lang.epub.chapterSelect}>
-      <div
+      <Button
         className={classNames(
-          'flex flex-center cursor-pointer',
+          'flex flex-center p-0 w-8 h-8 min-w-0',
           props.className,
         )}
         onClick={handleOpen}
         ref={buttonRef}
+        variant="text"
       >
         <ListUlIcon
           className={classNames(
@@ -78,7 +79,7 @@ export const EpubChaptersButton = observer((props: Props) => {
             readerSettingsService.state.dark && 'text-gray-af',
           )}
         />
-      </div>
+      </Button>
     </Tooltip>
 
     <Popover

@@ -10,29 +10,35 @@ import { Dialog, Button } from '~/components';
 import { tooltipService, nodeService, bookService } from '~/service';
 import { sleep, runLoading, lang } from '~/utils';
 
-export const JoinGroup = observer((props: { destroy: () => unknown }) => {
+export interface Props {
+  seed?: string
+}
+
+export interface InternalProps {
+  destroy: () => unknown
+  rs: (v?: string) => unknown
+}
+
+export const JoinGroup = observer((props: Props & InternalProps) => {
   const state = useLocalObservable(() => ({
     open: true,
     loading: false,
     done: false,
     loadingSeed: false,
-    // seed: null as any,
-    seedString: '',
+    seedString: props.seed ?? '',
   }));
 
   const submit = () => {
-    if (state.loading) {
-      return;
-    }
-
+    if (state.loading) { return; }
     runInAction(() => { state.done = false; });
     runLoading(
       (l) => { state.loading = l; },
       async () => {
         try {
           const group = await nodeService.joinGroup(state.seedString);
-          bookService.openBook(group.group_id, '');
+          bookService.openBook({ groupId: group.group_id });
           runInAction(() => { state.done = true; });
+          props.rs(group.group_id);
           handleClose();
         } catch (err: any) {
           console.error(err);
@@ -64,9 +70,7 @@ export const JoinGroup = observer((props: { destroy: () => unknown }) => {
   };
 
   const handleSelectFile = async () => {
-    if (state.loading) {
-      return;
-    }
+    if (state.loading) { return; }
     runInAction(() => {
       state.loadingSeed = true;
     });
@@ -95,14 +99,12 @@ export const JoinGroup = observer((props: { destroy: () => unknown }) => {
 
   const handleClose = action(() => {
     state.open = false;
+    props.rs();
     setTimeout(props.destroy, 2000);
   });
 
   return (
-    <Dialog
-      open={state.open}
-      onClose={handleClose}
-    >
+    <Dialog open={state.open} onClose={handleClose}>
       <div className="bg-white rounded-0 text-center p-8 pb-4">
         <div className="w-72">
           <div className="text-18 font-bold text-gray-700">{lang.joinGroup.joinGroup}</div>

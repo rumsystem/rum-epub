@@ -13,10 +13,10 @@ module.exports = {
       },
       opacity: {
         ...Object.fromEntries(
-          Array(20)
+          Array(100)
             .fill(0)
-            .map((_v, i) => i * 5)
-            .map((v) => [`${v}`, `.${v}`]),
+            .map((_v, i) => i)
+            .map((v) => [`${v}`, `${v / 100}`]),
         ),
         '100': '1',
       },

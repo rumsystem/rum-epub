@@ -64,8 +64,7 @@ export const GroupPopup = observer((props: Props) => {
               </div>
             )}
             <div className="flex">
-              {bookService.state.groupMap.get(props.groupId)?.length ?? 0}
-              本书籍
+              {lang.epub.books(bookService.state.groupMap.get(props.groupId)?.length ?? 0)}
             </div>
 
             {/* <div className="flex items-center justify-center">

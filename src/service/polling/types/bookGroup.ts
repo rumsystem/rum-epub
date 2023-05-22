@@ -102,7 +102,7 @@ export type CoverSummaryActivity = TypeOf<typeof coverSummaryActivity>;
 export type CoverSummaryContent = TypeOf<typeof coverSummaryContent>;
 export type CoverSegmentActivity = TypeOf<typeof coverSegmentActivity>;
 
-export const activityChecker = {
+export const bookGroupActivityChecker = {
   isBookSummary: (v: IContentItem) => fp.pipe(
     bookSummaryActivity.decode(v.Data),
     either.chainW((u) => json.parse(u.object.content)),

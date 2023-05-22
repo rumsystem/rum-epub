@@ -221,7 +221,10 @@ export const MyLibrary = observer((props: { destroy: () => unknown }) => {
   });
 
   const handleOpenBook = action((v: GroupMapBookItem) => {
-    bookService.openBook(v.book.groupId, v.book.id);
+    bookService.openBook({
+      groupId: v.book.groupId,
+      bookId: v.book.id,
+    });
     handleClose();
   });
 

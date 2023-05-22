@@ -8,6 +8,7 @@ import { ipcRenderer } from 'electron';
 import { enumType, fallback, fallbackInterface } from '~/utils';
 import { identity, pipe } from 'fp-ts/lib/function';
 
+const CONFIG_FILE_NAME = 'nodeinfo.json';
 export enum NODE_TYPE {
   UNKNOWN = 'UNKNOWN',
   INTERNAL = 'INTERNAL',
@@ -39,7 +40,7 @@ export type NodeInfoStore = TypeOf<typeof nodeInfoStore>;
 
 const readConfigFile = TE.tryCatch(async () => {
   const userDataPath = await ipcRenderer.invoke('getUserDataPath');
-  const configPath = join(userDataPath, 'nodeinfo.json');
+  const configPath = join(userDataPath, CONFIG_FILE_NAME);
   const file = await fs.readFile(configPath);
   return file.toString();
 }, () => 'get config fail' as const);
@@ -67,8 +68,8 @@ export const getConfig = pipe(
 export const writeConfig = (config: NodeInfoStore) => TE.tryCatch(
   async () => {
     const userDataPath = await ipcRenderer.invoke('getUserDataPath');
-    const configPath = join(userDataPath, 'nodeinfo.json');
+    const configPath = join(userDataPath, CONFIG_FILE_NAME);
     await fs.writeFile(configPath, JSON.stringify(config));
   },
   identity,
-);
+)();

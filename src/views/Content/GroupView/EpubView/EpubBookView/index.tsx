@@ -6,7 +6,8 @@ import { observer, useLocalObservable } from 'mobx-react-lite';
 import Epub, { Book, Contents, Location, NavItem } from 'epubjs';
 import Section from 'epubjs/types/section';
 import { Annotation } from 'epubjs/types/annotations';
-import { CircularProgress, ClickAwayListener, Tooltip } from '@mui/material';
+import { BiCommentDetail } from 'react-icons/bi';
+import { Button, CircularProgress, ClickAwayListener, Tooltip } from '@mui/material';
 import { ChevronLeft, ChevronRight } from '@mui/icons-material';
 import FullscreenIcon from 'boxicons/svg/regular/bx-fullscreen.svg?fill-icon';
 import ExitFullscreenIcon from 'boxicons/svg/regular/bx-exit-fullscreen.svg?fill-icon';
@@ -18,9 +19,12 @@ import {
   readerSettingsService,
   readerThemes,
   dbService,
+  nodeService,
+  dialogService,
 } from '~/service';
 import { addLinkOpen, lang, modifierKeys } from '~/utils';
 import { BookCoverImgTooltip } from '~/components';
+import { createPost, groupLink } from '~/standaloneModals';
 
 import MarkerIcon from '~/assets/icon_marker.svg?fill';
 
@@ -139,6 +143,21 @@ export const EpubBookView = observer((props: Props) => {
     } catch (e) {}
   };
 
+  const chapterSearch = (chapters: Array<NavItem>, targetHref: string): Array<NavItem> | undefined => {
+    for (const v of chapters) {
+      const href = v.href.replace(/#.*/, '');
+      if (targetHref === href) {
+        return [v];
+      }
+      if (v.subitems) {
+        const childMatch = chapterSearch(v.subitems, targetHref);
+        if (childMatch) {
+          return [v, ...childMatch];
+        }
+      }
+    }
+  };
+
   const handleAddHighlight = () => {
     if (!state.highlightButton || !state.book) {
       return;
@@ -148,9 +167,10 @@ export const EpubBookView = observer((props: Props) => {
       return;
     }
 
+    bookService.highlight.save(bookService.state.current.groupId, state.bookId, state.highlightButton.range);
     highLightRange({
       groupId: bookService.state.current.groupId,
-      bookTrx: state.bookId,
+      bookId: state.bookId,
       cfiRange: state.highlightButton.range,
       book: state.book,
     });
@@ -159,6 +179,111 @@ export const EpubBookView = observer((props: Props) => {
     if (iframe) {
       iframe.contentWindow?.getSelection()?.removeAllRanges();
     }
+  };
+
+  const handlePostHighlight = async () => {
+    if (!state.highlightButton || !state.book) {
+      return;
+    }
+
+    const cfiRange = state.highlightButton.range;
+    const range = await state.book.getRange(cfiRange);
+    const text = range.toString();
+
+    const chapters = chapterSearch(state.chapters, state.currentHref);
+    const iframe: HTMLIFrameElement = (state.book as any).rendition?.manager?.views?._views?.[0]?.iframe;
+    if (iframe) {
+      iframe.contentWindow?.getSelection()?.removeAllRanges();
+    }
+
+    const linkedGroupId = nodeService.state.groupLink[bookService.state.current.groupId];
+    if (!linkedGroupId) {
+      dialogService.open({
+        content: lang.linkGroup.noCommentSeednetLinked,
+        confirm: lang.linkGroup.goLink,
+      }).then((v) => v === 'confirm' && groupLink({ groupId: bookService.state.current.groupId }));
+      return;
+    }
+    const post = await createPost({
+      groupId: linkedGroupId,
+      bookGroupId: bookService.state.current.groupId,
+      bookId: bookService.state.current.bookId,
+      ...chapters ? {
+        chapter: chapters.map((v) => v.label.trim()).join(' -> '),
+        chapterId: chapters.at(-1)!.href,
+      } : {},
+      quote: text,
+      quoteRange: cfiRange,
+    });
+    if (post) {
+      bookService.openBook({
+        groupId: bookService.state.current.groupId,
+        linkGroupId: linkedGroupId,
+      });
+    }
+  };
+
+  const handlePostComment = async () => {
+    const groupId = nodeService.state.groupLink[bookService.state.current.groupId];
+    const group = nodeService.state.groupMap[groupId];
+    if (!group) {
+      dialogService.open({
+        content: lang.linkGroup.noCommentSeednetLinked,
+        confirm: lang.linkGroup.goLink,
+      }).then((v) => v === 'confirm' && groupLink({ groupId: bookService.state.current.groupId }));
+      return;
+    }
+
+    const chapterSearch = (chapters: Array<NavItem>, targetHref: string): Array<NavItem> | undefined => {
+      for (const v of chapters) {
+        const href = v.href.replace(/#.*/, '');
+        if (targetHref === href) {
+          return [v];
+        }
+        if (v.subitems) {
+          const childMatch = chapterSearch(v.subitems, targetHref);
+          if (childMatch) {
+            return [v, ...childMatch];
+          }
+        }
+      }
+    };
+
+    const chapters = chapterSearch(state.chapters, state.currentHref);
+    const post = await createPost({
+      bookGroupId: bookService.state.current.groupId,
+      groupId,
+      bookId: bookService.state.current.bookId,
+      ...chapters ? {
+        chapter: chapters.map((v) => v.label.trim()).join(' -> '),
+        chapterId: chapters.at(-1)!.href,
+      } : {},
+    });
+    if (post) {
+      bookService.openBook({
+        groupId: bookService.state.current.groupId,
+        linkGroupId: groupId,
+      });
+    }
+  };
+
+  const reApplyAnnotation = () => {
+    const book = state.book;
+    if (!book) { return; }
+    const annotations: Array<Annotation> = Object.values((book.rendition.annotations as any)._annotations);
+    const highlights = annotations.filter((v) => v.type === 'highlight');
+    highlights.forEach((v) => {
+      book.rendition.annotations.remove(v.cfiRange, v.type);
+    });
+    highlights.forEach((v) => {
+      highLightRange({
+        groupId: bookService.state.current.groupId,
+        bookId: state.bookId,
+        cfiRange: v.cfiRange,
+        book,
+        temp: bookService.state.current.href === v.cfiRange,
+      });
+    });
   };
 
   const loadBook = async () => {
@@ -193,17 +318,30 @@ export const EpubBookView = observer((props: Props) => {
       minSpreadWidth: 950,
     });
 
-    const readingProgress = await bookService.readingProgress.get(groupId, bookId);
-    rendition.display(readingProgress?.readingProgress ?? undefined);
+    if (bookService.state.current.href) {
+      rendition.display(bookService.state.current.href);
+    } else {
+      const readingProgress = await bookService.readingProgress.get(groupId, bookId);
+      rendition.display(readingProgress?.readingProgress ?? undefined);
+    }
 
     bookService.highlight.get(
       groupId,
       bookId,
     ).then((highlights) => {
+      if (bookService.state.current.href.startsWith('epubcfi(')) {
+        highLightRange({
+          book,
+          bookId: state.bookId,
+          cfiRange: bookService.state.current.href,
+          groupId,
+          temp: true,
+        });
+      }
       highlights.forEach((v) => {
         highLightRange({
           book,
-          bookTrx: state.bookId,
+          bookId: state.bookId,
           cfiRange: v.cfiRange,
           groupId,
         });
@@ -281,6 +419,7 @@ export const EpubBookView = observer((props: Props) => {
 
     rendition.hooks.content.register(() => {
       readerSettingsService.injectCSS(rendition);
+      reApplyAnnotation();
       rendition.views().forEach((v: any) => {
         const document = v.document as Document;
         document.addEventListener('selectionchange', () => {
@@ -386,7 +525,7 @@ export const EpubBookView = observer((props: Props) => {
       >
         <div
           className={classNames(
-            'flex justify-between items-center flex-none gap-x-4 px-6 h-[40px]',
+            'flex justify-between items-center flex-none gap-x-4 px-4 h-[40px] border-b',
             !readerSettingsService.state.dark && 'bg-white',
             readerSettingsService.state.dark && 'bg-gray-2c',
           )}
@@ -419,25 +558,36 @@ export const EpubBookView = observer((props: Props) => {
 
           <div className="flex items-center gap-x-1">
             <EpubChaptersButton
-              className="px-2"
               chapters={state.chapters}
               current={state.currentHref}
               onChapterClick={handleJumpToChapter}
             />
-            <EpubAllHighlightButton
-              className="px-2"
-              book={state.book}
-            />
+            <EpubAllHighlightButton book={state.book} />
             <EpubSettings
-              className="px-2"
               book={state.book}
               bookTrx={state.bookId}
             />
-            <EpubShortCutPopover className="px-2" />
+            <Tooltip title="评论">
+              <Button
+                className="flex flex-center p-0 w-8 h-8 min-w-0"
+                onClick={handlePostComment}
+                variant="text"
+              >
+                <BiCommentDetail
+                  className={classNames(
+                    'text-20 -mb-[2px]',
+                    !readerSettingsService.state.dark && 'text-black',
+                    readerSettingsService.state.dark && 'text-gray-af',
+                  )}
+                />
+              </Button>
+            </Tooltip>
+            <EpubShortCutPopover />
             <Tooltip title={lang.epub.toggleFullscreen}>
-              <div
-                className="px-2 flex flex-center cursor-pointer"
+              <Button
+                className="flex flex-center p-0 w-8 h-8 min-w-0"
                 onClick={handleToggleFullScreen}
+                variant="text"
               >
                 <ExitFullscreenIcon
                   className={classNames(
@@ -455,7 +605,7 @@ export const EpubBookView = observer((props: Props) => {
                     readerSettingsService.state.dark && 'text-gray-af',
                   )}
                 />
-              </div>
+              </Button>
             </Tooltip>
           </div>
         </div>
@@ -574,18 +724,30 @@ export const EpubBookView = observer((props: Props) => {
 
         <ClickAwayListener onClickAway={action(() => { state.highlightButton = null; })}>
           <div
-            className={classNames(
-              'fixed bg-white rounded shadow-4 p-[6px] cursor-pointer',
-              !state.highlightButton && 'hidden',
-            )}
+            className="fixed flex bg-white rounded shadow-4 px-px"
             style={{
               left: `${state.highlightButton?.left ?? 0}px`,
               top: `${state.highlightButton?.top ?? 0}px`,
             }}
-            onClick={handleAddHighlight}
           >
-            <MarkerIcon className="text-producer-blue" />
-            {/* <EditAltIcon className="text-producer-blue" /> */}
+            <div
+              className={classNames(
+                'p-[6px] cursor-pointer',
+                !state.highlightButton && 'hidden',
+              )}
+              onClick={handleAddHighlight}
+            >
+              <MarkerIcon className="text-producer-blue" />
+            </div>
+            <div
+              className={classNames(
+                'p-[6px] cursor-pointer',
+                !state.highlightButton && 'hidden',
+              )}
+              onClick={handlePostHighlight}
+            >
+              <BiCommentDetail className="text-20 -mb-[2px] text-producer-blue" />
+            </div>
           </div>
         </ClickAwayListener>
       </div>

@@ -2,7 +2,7 @@ import React from 'react';
 import classNames from 'classnames';
 import { action } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
-import { Popover, Tooltip } from '@mui/material';
+import { Button, Popover, Tooltip } from '@mui/material';
 import KeyboardIcon from 'boxicons/svg/solid/bxs-keyboard.svg?fill-icon';
 import { readerSettingsService } from '~/service';
 import { lang } from '~/utils';
@@ -26,17 +26,18 @@ export const EpubShortCutPopover = observer((props: Props) => {
     state.open = false;
   });
 
-  const buttonRef = React.useRef<HTMLDivElement>(null);
+  const buttonRef = React.useRef<HTMLButtonElement>(null);
 
   return (<>
     <Tooltip title={lang.epubShortCut.shortCut}>
-      <div
+      <Button
         className={classNames(
-          'flex flex-center cursor-pointer',
+          'flex flex-center p-0 w-8 h-8 min-w-0',
           props.className,
         )}
         onClick={handleOpen}
         ref={buttonRef}
+        variant="text"
       >
         <KeyboardIcon
           className={classNames(
@@ -45,7 +46,7 @@ export const EpubShortCutPopover = observer((props: Props) => {
             readerSettingsService.state.dark && 'text-gray-af',
           )}
         />
-      </div>
+      </Button>
     </Tooltip>
 
     <Popover

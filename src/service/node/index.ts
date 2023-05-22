@@ -1,5 +1,4 @@
 import { action, observable, reaction, runInAction } from 'mobx';
-import { json, either, function as fp } from 'fp-ts';
 import {
   fetchMyGroups, createGroup as createGroupApi, joinGroup as joinGroupApi,
   leaveGroup as leaveGroupApi, fetchMyNodeInfo, fetchNetwork,
@@ -11,7 +10,10 @@ import { PollingTask, sleep } from '~/utils';
 import { dbService } from '~/service/db';
 import { busService } from '~/service/bus';
 import { GROUP_TEMPLATE_TYPE } from '~/utils/constant';
-import { getConfig, NodeInfoStore, NODE_TYPE, writeConfig } from './helper';
+import {
+  getConfig, NodeInfoStore, NODE_TYPE, writeConfig,
+  getGroupLinkConfig, writeGroupLinkConfig,
+} from './helper';
 
 export { NODE_TYPE } from './helper';
 export type { NodeInfoStore } from './helper';
@@ -21,6 +23,7 @@ export const GROUP_JOIN_ORDER_STORAGE_KEY = 'GROUP_JOIN_ORDER_STORAGE_KEY';
 
 const state = observable({
   groups: [] as Array<IGroup>,
+  groupLink: {} as Record<string, string>,
   nodeInfoConfig: null as null | NodeInfoStore,
   nodeInfo: {
     node_id: '',
@@ -42,8 +45,6 @@ const state = observable({
   allowListMap: new Map<string, Array<IAllowOrDenyListItem >>(),
   denyListMap: new Map<string, Array<IAllowOrDenyListItem>>(),
   configMap: new Map<string, Record<string, string | boolean | number>>(),
-
-  groupJoinOrder: [] as Array<string>,
 
   get groupMap() {
     return Object.fromEntries(this.groups.map((v) => [v.group_id, v])) as Record<string, IGroup | undefined>;
@@ -77,12 +78,6 @@ const updateGroups = async () => {
     return 0;
   });
   runInAction(() => {
-    groups.forEach((v) => {
-      if (!state.groupJoinOrder.includes(v.group_id)) {
-        state.groupJoinOrder.push(v.group_id);
-      }
-    });
-    state.groupJoinOrder = state.groupJoinOrder.filter((v) => groups.some((u) => u.group_id === v));
     state.groups = groups;
   });
 };
@@ -218,6 +213,12 @@ export const leaveGroup = async (group: string | IGroup) => {
 
   await leaveGroupApi(groupId);
   runInAction(() => {
+    delete state.groupLink[groupId];
+    Object.entries(state.groupLink)
+      .filter(([_, v]) => v === groupId)
+      .forEach(([k]) => {
+        delete state.groupLink[k];
+      });
     state.groups.splice(
       state.groups.findIndex((v) => v.group_id === groupId),
       1,
@@ -239,18 +240,13 @@ export const syncGroup = (_group: string | IGroup) => {
 };
 
 const init = action(() => {
-  state.groupJoinOrder = fp.pipe(
-    json.parse(localStorage.getItem(GROUP_JOIN_ORDER_STORAGE_KEY) ?? ''),
-    either.map((v) => (Array.isArray(v) ? v as Array<string> : [])),
-    either.getOrElse(() => [] as Array<string>),
-  );
-
+  getGroupLinkConfig().then(action((data) => {
+    Object.assign(state.groupLink, data);
+  }));
   const disposes = [
     reaction(
-      () => JSON.stringify(state.groupJoinOrder),
-      action(() => {
-        localStorage.setItem(GROUP_JOIN_ORDER_STORAGE_KEY, JSON.stringify(state.groupJoinOrder));
-      }),
+      () => JSON.stringify(state.groupLink),
+      () => writeGroupLinkConfig(state.groupLink),
     ),
   ];
 
@@ -271,7 +267,7 @@ const saveNodeConfig = async () => {
   if (!state.nodeInfoConfig) {
     return;
   }
-  await writeConfig(state.nodeInfoConfig)();
+  await writeConfig(state.nodeInfoConfig);
 };
 
 const resetNodeConfig = async () => {

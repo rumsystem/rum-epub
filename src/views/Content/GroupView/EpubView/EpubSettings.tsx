@@ -4,6 +4,7 @@ import { action } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import { Book } from 'epubjs';
 import {
+  Button,
   FormControl,
   FormControlLabel,
   Input,
@@ -40,7 +41,7 @@ export const EpubSettings = observer((props: Props) => {
     },
   }));
 
-  const buttonRef = React.useRef<HTMLDivElement>(null);
+  const buttonRef = React.useRef<HTMLButtonElement>(null);
 
   const handleChangeFontSize = action((v: number, commit: boolean) => {
     readerSettingsService.state.fontSize = v;
@@ -116,7 +117,7 @@ export const EpubSettings = observer((props: Props) => {
     highlights.forEach((v) => {
       highLightRange({
         groupId: bookService.state.current.groupId,
-        bookTrx: props.bookTrx,
+        bookId: props.bookTrx,
         cfiRange: v.cfiRange,
         book,
       });
@@ -125,13 +126,14 @@ export const EpubSettings = observer((props: Props) => {
 
   return (<>
     <Tooltip title={lang.epubSettings.displaySetting}>
-      <div
+      <Button
         className={classNames(
-          'flex flex-center cursor-pointer',
+          'flex flex-center p-0 w-8 h-8 min-w-0',
           props.className,
         )}
         onClick={handleOpen}
         ref={buttonRef}
+        variant="text"
       >
         <SliderAltIcon
           className={classNames(
@@ -140,7 +142,7 @@ export const EpubSettings = observer((props: Props) => {
             readerSettingsService.state.dark && 'text-gray-af',
           )}
         />
-      </div>
+      </Button>
     </Tooltip>
 
     <Popover
