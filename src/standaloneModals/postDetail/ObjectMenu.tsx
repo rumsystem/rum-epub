@@ -1,12 +1,12 @@
 import { Menu, MenuItem } from '@mui/material';
 import { MdInfoOutline } from 'react-icons/md';
 import { trxInfo } from '~/standaloneModals/trxInfo';
-import { CommentRaw, PostRaw } from '~/service';
+import { Comment, Post } from '~/service';
 import { lang } from '~/utils';
 
 interface Props {
   anchor?: HTMLElement | null
-  object: PostRaw | CommentRaw
+  object: Post | Comment
   open?: boolean
   onClose: () => unknown
 }

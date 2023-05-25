@@ -115,9 +115,6 @@ export const readerThemes: Record<string, Record<string, Record<string, string>>
       background: '#f7f7f7',
       color: '#333333',
     },
-    '.rum-annotation-hl': {
-      fill: 'rgba(95, 192, 233, 0.3) !important',
-    },
   },
   light: {
     '::selection': {
@@ -157,25 +154,6 @@ export const readerThemes: Record<string, Record<string, Record<string, string>>
     a: {
       color: '#5299e0',
     },
-  },
-};
-
-export const highlightTheme = {
-  'white': {
-    fill: '#5fc0e9',
-    'fill-opacity': '30%',
-  },
-  'light': {
-    fill: '#5fc0e9',
-    'fill-opacity': '30%',
-  },
-  'dark': {
-    fill: '#5fc0e9',
-    'fill-opacity': '40%',
-  },
-  'black': {
-    fill: '#5fc0e9',
-    'fill-opacity': '40%',
   },
 };
 

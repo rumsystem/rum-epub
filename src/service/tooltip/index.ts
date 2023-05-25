@@ -1,6 +1,6 @@
 import { action, observable } from 'mobx';
 
-type TooltipType = 'default' | 'error';
+type TooltipType = 'default' | 'error' | 'warning';
 
 export interface TooltipItem {
   id: number

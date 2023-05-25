@@ -8,10 +8,12 @@ on:
 jobs:
   release:
     runs-on: ${{ matrix.os }}
+    continue-on-error: true
 
     strategy:
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
+
 
     steps:
       - name: Checkout

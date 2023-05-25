@@ -4,28 +4,20 @@ import { action } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import { Book } from 'epubjs';
 import {
-  Button,
-  FormControl,
-  FormControlLabel,
-  Input,
-  Popover,
-  Radio,
-  RadioGroup,
-  Slider,
-  Tooltip,
+  Button, FormControl, FormControlLabel, Input, Popover, Radio,
+  RadioGroup, Slider, Tooltip,
 } from '@mui/material';
 import { Help } from '@mui/icons-material';
-import { Annotation } from 'epubjs/types/annotations';
 import SliderAltIcon from 'boxicons/svg/regular/bx-slider-alt.svg?fill-icon';
 
-import { readerSettingsService, ReaderThemes, bookService } from '~/service';
-import { highLightRange } from './helper';
+import { readerSettingsService, ReaderThemes } from '~/service';
 import { lang } from '~/utils';
 
 interface Props {
   className?: string
   book?: Book | null
   bookTrx: string
+  onSettingChange: () => unknown
 }
 
 export const EpubSettings = observer((props: Props) => {
@@ -98,31 +90,10 @@ export const EpubSettings = observer((props: Props) => {
       .some(([k, v]) => readerSettingsService.state[k as keyof typeof readerSettingsService.state] !== v);
     if (changed) {
       setTimeout(() => {
-        handleRerender();
+        props.onSettingChange();
       }, 300);
     }
   });
-
-  const handleRerender = () => {
-    const book = props.book;
-    if (!book) {
-      return;
-    }
-
-    const annotations: Array<Annotation> = Object.values((book.rendition.annotations as any)._annotations);
-    const highlights = annotations.filter((v) => v.type === 'highlight');
-    highlights.forEach((v) => {
-      book.rendition.annotations.remove(v.cfiRange, v.type);
-    });
-    highlights.forEach((v) => {
-      highLightRange({
-        groupId: bookService.state.current.groupId,
-        bookId: props.bookTrx,
-        cfiRange: v.cfiRange,
-        book,
-      });
-    });
-  };
 
   return (<>
     <Tooltip title={lang.epubSettings.displaySetting}>

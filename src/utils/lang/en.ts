@@ -78,6 +78,8 @@ export const content: Content = {
     postNotFound: 'Post cannot be found',
     latest: 'Latest',
     hot: 'Hot',
+    emptyPostTip: 'post cannot be empty',
+    writePost: 'Post Thoughts',
   },
   notification: {
     comment: 'Comment your post',
@@ -138,10 +140,14 @@ export const content: Content = {
   },
   epubHighlights: {
     all: 'All Highlights',
-    list: 'Highlight List',
+    title: 'Highlight List',
     search: 'Search',
+    noSearchItem: 'No Search Results',
     noItem: 'No highlights',
     confirmDelete: 'Are you sure to delete this highlight?',
+    mark: 'Mark',
+    marked: 'Marked',
+    noPostsYet: 'No Post Yet',
   },
   epubMetadata: {
     subTitle: 'Sub Title:',

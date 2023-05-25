@@ -144,7 +144,7 @@ export const EpubGroupView = observer((props: { className?: string }) => {
                     {metadata?.metadata.author}
                     {metadata?.metadata.translator && ` ${lang.epub.translatorTag}${metadata?.metadata.translator}`}
                   </div>
-                  <div className="text-12 text-gray-88 cursor-pointer overflow-hidden mt-1 truncate-3">
+                  <div className="text-12 text-gray-88 cursor-pointer overflow-hidden mt-1 line-clamp-3">
                     {RemoveMarkdown(metadata?.metadata.description ?? '')}
                   </div>
                   <div className="grow" />

@@ -1,7 +1,7 @@
 import Dexie from 'dexie';
 import {
   BookBuffer, BookMetadata, BookSummary, BookSegment, CoverBuffer,
-  CoverSummary, CoverSegment, Database, EmptyTrxItem, PendingTrxItem, PostRaw, CommentRaw, Notification, Profile, Counter,
+  CoverSummary, CoverSegment, Database, EmptyTrxItem, PendingTrxItem, Post, Comment, Notification, Profile, Counter,
 } from './database';
 import { getHotCount, notNullFilter } from '~/utils';
 
@@ -191,8 +191,8 @@ interface GetPostOption {
   id: string
 }
 interface GetPost {
-  (param: GetPostOption): Promise<PostRaw | undefined>
-  (param: Array<GetPostOption>): Promise<Array<PostRaw>>
+  (param: GetPostOption): Promise<Post | undefined>
+  (param: Array<GetPostOption>): Promise<Array<Post>>
 }
 
 const getPost: GetPost = async (param): Promise<any> => {
@@ -205,7 +205,7 @@ const getPost: GetPost = async (param): Promise<any> => {
   return Array.isArray(param) ? posts : posts.at(0);
 };
 
-const putPost = async (posts: Array<PostRaw>) => {
+const putPost = async (posts: Array<Post>) => {
   const db = dbService.db;
   await db.post.bulkPut(posts);
 };
@@ -218,6 +218,7 @@ interface ListPostParams {
   userAddress?: string
   search?: string
   order: 'hot' | 'time'
+  quote?: boolean
 }
 
 const listPost = async (param: ListPostParams) => {
@@ -235,6 +236,7 @@ const listPost = async (param: ListPostParams) => {
       [param.groupId, param.bookId, param.userAddress, Dexie.maxKey].filter((v) => v),
     )
     .reverse()
+    .filter((v) => !!v.quoteRange)
     .offset(param.offset)
     .limit(param.limit)
     .toArray();
@@ -311,7 +313,7 @@ const putCounter = async (counters: Array<Counter>) => {
 };
 
 interface UpdateObjectCounterParams {
-  object: PostRaw | CommentRaw
+  object: Post | Comment
   likeCount?: number
   dislikeCount?: number
   commentCount?: number
@@ -412,8 +414,8 @@ interface GetCommentOption {
 }
 
 interface GetComment {
-  (param: GetCommentOption): Promise<CommentRaw | undefined>
-  (param: Array<GetCommentOption>): Promise<Array<CommentRaw>>
+  (param: GetCommentOption): Promise<Comment | undefined>
+  (param: Array<GetCommentOption>): Promise<Array<Comment>>
 }
 
 const getComment: GetComment = async (param): Promise<any> => {
@@ -426,7 +428,7 @@ const getComment: GetComment = async (param): Promise<any> => {
   return Array.isArray(param) ? comments : comments.at(0);
 };
 
-const putComment = async (comments: Array<CommentRaw>) => {
+const putComment = async (comments: Array<Comment>) => {
   const db = dbService.db;
   await db.comment.bulkPut(comments);
 };

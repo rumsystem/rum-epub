@@ -13,6 +13,7 @@ import { ManageGroup } from './manageGroup/ManageGroup';
 import { MyLibrary } from './myLibrary/MyLibrary';
 import { NotificationModal } from './notificationModal/NotificationModal';
 import { PostDetail } from './postDetail/PostDetail';
+import { QuoteDetail } from './quoteDetail/QuoteDetail';
 import { ReplyComment } from './replyComment/ReplyComment';
 import { ShareGroup } from './shareGroup/ShareGroup';
 import { TrxInfo } from './trxInfo/TrxInfo';
@@ -33,6 +34,7 @@ export const ModalView = observer(() => (<>
       {v.name === 'myLibrary' && (<MyLibrary {...v.props} />)}
       {v.name === 'notificationModal' && (<NotificationModal {...v.props} />)}
       {v.name === 'postDetail' && (<PostDetail {...v.props} />)}
+      {v.name === 'quoteDetail' && (<QuoteDetail {...v.props} />)}
       {v.name === 'replyComment' && (<ReplyComment {...v.props} />)}
       {v.name === 'shareGroup' && (<ShareGroup {...v.props} />)}
       {v.name === 'trxInfo' && (<TrxInfo {...v.props} />)}

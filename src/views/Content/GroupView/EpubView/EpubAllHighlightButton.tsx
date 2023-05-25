@@ -3,14 +3,15 @@ import classNames from 'classnames';
 import { action, reaction, runInAction } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import escapeStringRegexp from 'escape-string-regexp';
-import { Popover, Tooltip, Pagination, Input, Button } from '@mui/material';
 import { Book } from 'epubjs';
-import { Annotation } from 'epubjs/types/annotations';
-import TrashIcon from 'boxicons/svg/regular/bx-trash.svg?fill';
+import { Popover, Tooltip, Pagination, Button, TextField, IconButton } from '@mui/material';
+import { BiCommentDetail } from 'react-icons/bi';
+import TrashIcon from 'boxicons/svg/regular/bx-trash.svg?fill-icon';
 
 import MarkerIcon from '~/assets/icon_marker.svg?fill';
 import { lang, modifierKeys, splitByHighlightText } from '~/utils';
-import { bookService, readerSettingsService } from '~/service';
+import { HighlightItem, bookService, dialogService, nodeService, readerSettingsService } from '~/service';
+import { createPost, groupLink } from '~/standaloneModals';
 
 interface Props {
   className?: string
@@ -18,69 +19,75 @@ interface Props {
   renderBox?: HTMLElement | null
 }
 
-interface ArrItem { a: Annotation, text: string }
-
 const PAGE_SIZE = 5;
 
 export const EpubAllHighlightButton = observer((props: Props) => {
   const state = useLocalObservable(() => ({
     open: false,
 
-    arr: [] as Array<ArrItem>,
     search: '',
     currentPage: 1,
 
     get list() {
       if (!this.search) {
-        return this.arr;
+        return bookService.state.highlight.local;
       }
       const regexp = new RegExp(escapeStringRegexp(this.search), 'i');
-      return this.arr.filter((v) => regexp.test(v.text));
+      return bookService.state.highlight.local.filter((v) => regexp.test(v.text));
     },
   }));
   const buttonRef = React.useRef<HTMLButtonElement>(null);
 
-  const handleOpen = action(async () => {
+  const handleOpen = action(() => {
     state.open = true;
     state.currentPage = 1;
-    const book = props.book;
-    if (!book) {
-      return;
-    }
-
-    const annotations: Array<Annotation> = Object.values((book.rendition.annotations as any)._annotations);
-
-    const arr = await Promise.all(
-      annotations
-        .filter((v) => v.cfiRange !== bookService.state.current.href)
-        .map(async (v) => {
-          const range = await book.getRange(v.cfiRange);
-          const text = range.toString();
-          return {
-            a: v,
-            text,
-          };
-        }),
-    );
-
-    runInAction(() => {
-      state.arr = arr;
-    });
   });
 
   const handleClose = action(() => {
     state.open = false;
   });
 
-  const handleJumpTo = (a: Annotation) => {
+  const handleJumpTo = (a: HighlightItem) => {
     props.book?.rendition.display(a.cfiRange);
     handleClose();
   };
 
-  const handleRemove = action((v: ArrItem) => {
-    props.book?.rendition.annotations.remove(v.a.cfiRange, 'highlight');
-    state.arr.splice(state.arr.indexOf(v), 1);
-  });
+  const handleRemove = async (v: HighlightItem) => {
+    const result = await dialogService.open({
+      content: lang.epubHighlights.confirmDelete,
+    });
+    if (result !== 'confirm') { return; }
+    runInAction(() => {
+      props.book?.rendition.annotations.remove(v.cfiRange, 'highlight');
+      bookService.state.highlight.local.splice(bookService.state.highlight.local.indexOf(v), 1);
+      bookService.highlight.delete(v.groupId, v.bookId, v.cfiRange);
+    });
+  };
+
+  const handlePostHighlight = async (highlightItem: HighlightItem) => {
+    const linkedGroupId = nodeService.state.groupLink[highlightItem.groupId];
+    if (!linkedGroupId) {
+      dialogService.open({
+        content: lang.linkGroup.noCommentSeednetLinked,
+        confirm: lang.linkGroup.goLink,
+      }).then((v) => v === 'confirm' && groupLink({ groupId: highlightItem.groupId }));
+      return;
+    }
+    handleClose();
+    const post = await createPost({
+      groupId: linkedGroupId,
+      bookGroupId: bookService.state.current.groupId,
+      bookId: bookService.state.current.bookId,
+      quote: highlightItem.text,
+      quoteRange: highlightItem.cfiRange,
+    });
+    if (post) {
+      bookService.openBook({
+        groupId: bookService.state.current.groupId,
+        linkGroupId: linkedGroupId,
+      });
+    }
+  };
 
   React.useEffect(() => {
     const handleKeydown = (e: KeyboardEvent) => {
@@ -133,35 +140,32 @@ export const EpubAllHighlightButton = observer((props: Props) => {
       classes={{ paper: 'mt-2' }}
       open={state.open}
       anchorEl={buttonRef.current}
-      anchorOrigin={{
-        horizontal: 'center',
-        vertical: 'bottom',
-      }}
-      transformOrigin={{
-        horizontal: 'center',
-        vertical: 'top',
-      }}
+      anchorOrigin={{ horizontal: 'center', vertical: 'bottom' }}
+      transformOrigin={{ horizontal: 'center', vertical: 'top' }}
       onClose={handleClose}
       keepMounted
     >
       <div className="p-4 w-[600px]">
         <div className="text-center font-medium text-18">
-          {lang.epubHighlights.list}
+          {lang.epubHighlights.title}
         </div>
-        {!!state.arr.length && (
+        {!!bookService.state.highlight.local.length && (
           <div className="flex flex-center p-4 pb-0">
-            <Input
+            <TextField
               className="flex-1"
+              inputProps={{ className: 'text-14 ' }}
               value={state.search}
               onChange={action((e) => { state.search = e.target.value; })}
               placeholder={lang.epubHighlights.search}
+              size="small"
             />
           </div>
         )}
         <div className="mt-4 overflow-y-auto max-h-[650px] divide-y border-y">
-          {!state.arr.length && (
+          {!state.list.length && (
             <div className="flex flex-center p-4">
-              {lang.epubHighlights.noItem}
+              {!!state.search && lang.epubHighlights.noSearchItem}
+              {!state.search && lang.epubHighlights.noItem}
             </div>
           )}
           {state.list.slice((state.currentPage - 1) * PAGE_SIZE, state.currentPage * PAGE_SIZE).map((v, i) => (
@@ -171,9 +175,9 @@ export const EpubAllHighlightButton = observer((props: Props) => {
             >
               <div
                 className="flex-1 px-3 py-2 hover:text-producer-blue"
-                onClick={() => handleJumpTo(v.a)}
+                onClick={() => handleJumpTo(v)}
               >
-                <div className="overflow-hidden truncate-4">
+                <div className="overflow-hidden line-clamp-4">
                   {!state.search && v.text}
                   {!!state.search && splitByHighlightText(v.text, state.search).map((v, i) => (
                     <span
@@ -185,11 +189,19 @@ export const EpubAllHighlightButton = observer((props: Props) => {
                   ))}
                 </div>
               </div>
-              <div
-                className="flex flex-center flex-none p-2 text-gray-af hover:text-producer-blue opacity-0 group-hover:opacity-100"
-                onClick={() => handleRemove(v)}
-              >
-                <TrashIcon />
+              <div className="hidden group-hover:flex items-center flex-none">
+                <IconButton
+                  className="flex flex-center flex-none p-2 text-gray-af hover:text-producer-blue"
+                  onClick={() => handlePostHighlight(v)}
+                >
+                  <BiCommentDetail className="text-20 -mb-[2px]" />
+                </IconButton>
+                <IconButton
+                  className="flex flex-center flex-none p-2 text-gray-af hover:text-red-500"
+                  onClick={() => handleRemove(v)}
+                >
+                  <TrashIcon className="text-20" />
+                </IconButton>
               </div>
             </div>
           ))}

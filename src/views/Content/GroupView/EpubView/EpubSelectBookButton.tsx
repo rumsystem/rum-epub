@@ -113,7 +113,7 @@ export const EpubSelectBookButton = observer((props: Props) => {
                   )}
                 </BookCoverImg>
                 <div className="flex-col flex-1">
-                  <div className="truncate-2">
+                  <div className="line-clamp-2">
                     {v.book.title}
                   </div>
                   <div className="text-gray-af">

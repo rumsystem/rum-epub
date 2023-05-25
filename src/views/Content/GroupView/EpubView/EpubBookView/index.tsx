@@ -1,5 +1,5 @@
 import { posix } from 'path';
-import React from 'react';
+import { useEffect, useRef } from 'react';
 import classNames from 'classnames';
 import { action, observable, reaction, runInAction } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
@@ -13,14 +13,8 @@ import FullscreenIcon from 'boxicons/svg/regular/bx-fullscreen.svg?fill-icon';
 import ExitFullscreenIcon from 'boxicons/svg/regular/bx-exit-fullscreen.svg?fill-icon';
 
 import {
-  bookService,
-  linkTheme,
-  progressBarTheme,
-  readerSettingsService,
-  readerThemes,
-  dbService,
-  nodeService,
-  dialogService,
+  bookService, linkTheme, progressBarTheme, readerSettingsService,
+  readerThemes, dbService, nodeService, dialogService, HighlightItem, Post,
 } from '~/service';
 import { addLinkOpen, lang, modifierKeys } from '~/utils';
 import { BookCoverImgTooltip } from '~/components';
@@ -33,7 +27,8 @@ import { EpubAllHighlightButton } from '../EpubAllHighlightButton';
 import { EpubChaptersButton } from '../EpubChaptersButton';
 import { EpubSelectBookButton } from '../EpubSelectBookButton';
 import { EpubSettings } from '../EpubSettings';
-import { highLightRange } from '../helper';
+import { cfiRangeOverlap, chapterSearch, highLightRange } from '../helper';
+import { lcsLength } from '~/utils/lcs';
 
 interface Props {
   className?: string
@@ -57,7 +52,6 @@ export const EpubBookView = observer((props: Props) => {
     // other states
     highlightButton: null as null | { range: string, top: number, left: number },
     mousePosition: { x: 0, y: 0 },
-    renderBox: React.createRef<HTMLDivElement>(),
     get bookId() {
       return bookService.state.current.bookId;
     },
@@ -89,6 +83,13 @@ export const EpubBookView = observer((props: Props) => {
       return readerThemes[readerSettingsService.state.theme];
     },
   }));
+  const renderBox = useRef<HTMLDivElement>(null);
+
+  // const highlightState = useLocalObservable(() => ({
+  //   items: [],
+  //   temp: [],
+  //   post: [],
+  // } as HighlightContextType));
 
   const handlePrev = () => {
     if (state.atStart) { return; }
@@ -134,45 +135,40 @@ export const EpubBookView = observer((props: Props) => {
 
   const handleResize = () => {
     const isRenditionReady = !!(state.book?.rendition as any)?.manager;
-    if (!isRenditionReady || !state.renderBox.current) {
+    if (!isRenditionReady || !renderBox.current) {
       return;
     }
-    const rect = state.renderBox.current.getBoundingClientRect();
+    const rect = renderBox.current.getBoundingClientRect();
     try {
       state.book!.rendition.resize(rect.width, rect.height);
     } catch (e) {}
   };
 
-  const chapterSearch = (chapters: Array<NavItem>, targetHref: string): Array<NavItem> | undefined => {
-    for (const v of chapters) {
-      const href = v.href.replace(/#.*/, '');
-      if (targetHref === href) {
-        return [v];
-      }
-      if (v.subitems) {
-        const childMatch = chapterSearch(v.subitems, targetHref);
-        if (childMatch) {
-          return [v, ...childMatch];
-        }
-      }
-    }
-  };
-
-  const handleAddHighlight = () => {
-    if (!state.highlightButton || !state.book) {
-      return;
-    }
+  const handleAddHighlight = async () => {
+    if (!state.highlightButton || !state.book) { return; }
+    const cfiRange = state.highlightButton.range;
     const annotations: Array<Annotation> = Object.values((state.book.rendition.annotations as any)._annotations);
-    if (annotations.some((v) => v.cfiRange === state.highlightButton!.range)) {
-      return;
-    }
-
-    bookService.highlight.save(bookService.state.current.groupId, state.bookId, state.highlightButton.range);
+    const highlightState = bookService.state.highlight;
+    const rangeExisted = annotations.some((v) => v.cfiRange === cfiRange)
+      || highlightState.local.some((v) => v.cfiRange === cfiRange);
+    if (rangeExisted) { return; }
+    const text = (await state.book.getRange(cfiRange)).toString();
+    const item: HighlightItem = {
+      groupId: bookService.state.current.groupId,
+      bookId: state.bookId,
+      cfiRange,
+      text,
+    };
+    bookService.highlight.save(item);
     highLightRange({
       groupId: bookService.state.current.groupId,
       bookId: state.bookId,
-      cfiRange: state.highlightButton.range,
+      cfiRange,
       book: state.book,
+      onReapplyAnnotation: reApplyAnnotation,
+    });
+    runInAction(() => {
+      highlightState.local.push(item);
     });
 
     const iframe: HTMLIFrameElement = (state.book as any).rendition?.manager?.views?._views?.[0]?.iframe;
@@ -269,29 +265,135 @@ export const EpubBookView = observer((props: Props) => {
 
   const reApplyAnnotation = () => {
     const book = state.book;
+    const groupId = bookService.state.current.groupId;
     if (!book) { return; }
     const annotations: Array<Annotation> = Object.values((book.rendition.annotations as any)._annotations);
-    const highlights = annotations.filter((v) => v.type === 'highlight');
+    // const highlights = annotations.filter((v) => v.type === 'highlight');
+    const highlights = annotations;
     highlights.forEach((v) => {
       book.rendition.annotations.remove(v.cfiRange, v.type);
     });
-    highlights.forEach((v) => {
+    const highlightState = bookService.state.highlight;
+    const commonParams = {
+      book,
+      bookId: state.bookId,
+      groupId,
+      onReapplyAnnotation: reApplyAnnotation,
+    };
+
+    highlightState.local.forEach((v) => {
       highLightRange({
-        groupId: bookService.state.current.groupId,
-        bookId: state.bookId,
+        ...commonParams,
         cfiRange: v.cfiRange,
-        book,
-        temp: bookService.state.current.href === v.cfiRange,
       });
     });
+    highlightState.temp.forEach((v) => {
+      highLightRange({
+        ...commonParams,
+        cfiRange: v,
+        temp: true,
+      });
+    });
+    highlightState.post.forEach((v) => {
+      highLightRange({
+        ...commonParams,
+        cfiRange: v.quoteRange,
+        post: v,
+      });
+    });
+  };
+
+  const loadHighlights = async () => {
+    const { groupId, bookId } = bookService.state.current;
+    const newState = observable({
+      local: [],
+      temp: [],
+      post: [],
+    } as typeof bookService.state.highlight);
+    runInAction(() => {
+      bookService.state.highlight = newState;
+    });
+
+    const loadSavedHighlights = async () => {
+      const highlights = await bookService.highlight.get(
+        groupId,
+        bookId,
+      );
+      if (bookService.state.highlight !== newState) { return; }
+      const highlightState = bookService.state.highlight;
+      runInAction(() => {
+        if (bookService.state.current.href.startsWith('epubcfi(')) {
+          highlightState.temp.push(bookService.state.current.href);
+        }
+        highlights.forEach((v) => {
+          highlightState.local.push(v);
+        });
+      });
+    };
+
+    const loadLinkGroupHighlights = async () => {
+      const linkGroupId = nodeService.state.groupLink[groupId];
+      if (!linkGroupId) { return; }
+      const items = await dbService.listPost({
+        groupId: linkGroupId,
+        limit: 200,
+        offset: 0,
+        order: 'hot',
+        bookId,
+        quote: true,
+      });
+      if (bookService.state.highlight !== newState) { return; }
+      const highlightState = bookService.state.highlight;
+      const list: Array<Post & { children?: Array<Post> }> = [];
+      items.forEach((post: Post & { children?: Array<Post> }) => {
+        let overlapped = false;
+        for (const item of list) {
+          const overlap = cfiRangeOverlap(post.quoteRange, item.quoteRange);
+          if (!overlap) { continue; }
+          const overlapSize = lcsLength(post.quote, item.quote);
+          const minLength = Math.min(post.quote.length, item.quote.length);
+          const percentage = minLength ? overlapSize / minLength : 1;
+          if (percentage > 0.8) {
+            if (post.quote.length > item.quote.length) {
+              list.splice(list.indexOf(item), 1);
+              delete item.children;
+              list.push(post);
+              post.children ??= [];
+              post.children.push(item);
+              // swap
+            } else {
+              item.children ??= [];
+              item.children.push(post);
+            }
+            overlapped = true;
+            break;
+          }
+        }
+        if (!overlapped) {
+          list.push(post);
+        }
+      });
+      if (!list.length) { return; }
+      runInAction(() => {
+        list.forEach((v) => {
+          highlightState.post.push(v);
+        });
+      });
+    };
+
+    await Promise.all([
+      loadSavedHighlights(),
+      loadLinkGroupHighlights(),
+    ]);
+
+    reApplyAnnotation();
   };
 
   const loadBook = async () => {
     const { groupId, bookId } = bookService.state.current;
     const bookBuffer = await dbService.getBookBuffer(groupId, bookId);
     if (!bookBuffer) { return; }
-    const renderBox = state.renderBox.current;
-    if (!renderBox) { return; }
+    if (!renderBox.current) { return; }
     const book = Epub(bookBuffer.file.buffer);
     runInAction(() => {
       state.book = book;
@@ -309,7 +411,7 @@ export const EpubBookView = observer((props: Props) => {
       state.spineLoaded = true;
     }));
     (window as any).book = book;
-    const rendition = book.renderTo(renderBox, {
+    const rendition = book.renderTo(renderBox.current, {
       width: '100%',
       height: '100%',
       // flow: 'scrolled-doc',
@@ -325,28 +427,7 @@ export const EpubBookView = observer((props: Props) => {
       rendition.display(readingProgress?.readingProgress ?? undefined);
     }
 
-    bookService.highlight.get(
-      groupId,
-      bookId,
-    ).then((highlights) => {
-      if (bookService.state.current.href.startsWith('epubcfi(')) {
-        highLightRange({
-          book,
-          bookId: state.bookId,
-          cfiRange: bookService.state.current.href,
-          groupId,
-          temp: true,
-        });
-      }
-      highlights.forEach((v) => {
-        highLightRange({
-          book,
-          bookId: state.bookId,
-          cfiRange: v.cfiRange,
-          groupId,
-        });
-      });
-    });
+    loadHighlights();
 
     book.loaded.navigation.then(action((navigation) => {
       const navPath = book.packaging.navPath || book.packaging.ncxPath;
@@ -442,7 +523,7 @@ export const EpubBookView = observer((props: Props) => {
     }));
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     const handleKeydown = (e: KeyboardEvent) => {
       const targetTagName = (e.target as HTMLElement)?.tagName.toLowerCase();
       if (['textarea', 'input'].includes(targetTagName)) {
@@ -481,7 +562,7 @@ export const EpubBookView = observer((props: Props) => {
     window.addEventListener('mousemove', handleMouseMove);
 
     const ro = new ResizeObserver(handleResize);
-    ro.observe(state.renderBox.current!);
+    ro.observe(renderBox.current!);
 
     const disposes = [
       () => ro.disconnect(),
@@ -566,6 +647,7 @@ export const EpubBookView = observer((props: Props) => {
             <EpubSettings
               book={state.book}
               bookTrx={state.bookId}
+              onSettingChange={() => reApplyAnnotation()}
             />
             <Tooltip title="评论">
               <Button
@@ -653,8 +735,11 @@ export const EpubBookView = observer((props: Props) => {
               />
             </div>
             <div
-              className="flex flex-1 w-0 h-full max-w-[1750px]"
-              ref={state.renderBox}
+              className={classNames(
+                'flex flex-1 w-0 h-full max-w-[1750px] epub-highlight-box',
+                `theme-${readerSettingsService.state.theme}`,
+              )}
+              ref={renderBox}
             />
             <div
               className="flex flex-center w-16 cursor-pointer group"

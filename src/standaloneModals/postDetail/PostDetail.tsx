@@ -8,7 +8,7 @@ import { Feedback } from '@mui/icons-material';
 import { RiMoreFill, RiThumbUpFill, RiThumbUpLine } from 'react-icons/ri';
 import { FaRegComment } from 'react-icons/fa';
 
-import { CommentRaw, PostRaw, bookService, linkGroupService } from '~/service';
+import { Comment, Post, bookService, linkGroupService } from '~/service';
 import { lang, runLoading } from '~/utils';
 import { Ago, BookCoverImg, ContentSyncStatus, Scrollable, UserAvatar, UserName } from '~/components';
 
@@ -28,8 +28,8 @@ export const PostDetail = observer((props: InternalProps & Props) => {
   const state = useLocalObservable(() => ({
     open: true,
     menu: false,
-    post: null as null | PostRaw,
-    comments: [] as Array<CommentRaw>,
+    post: null as null | Post,
+    comments: [] as Array<Comment>,
     loading: false,
   }));
   const contextValue = useLocalObservable(() => ({ commentId: props.locateComment ?? '' }));
@@ -87,7 +87,7 @@ export const PostDetail = observer((props: InternalProps & Props) => {
             </div>
           )}
           {!!post && (
-            <div className="flex-col gap-4 py-5 pl-5 pr-6 bg-white">
+            <div className="flex-col gap-4 py-5 pl-5 pr-7 bg-white">
               <div className="flex gap-3">
                 <UserAvatar groupId={post.groupId} userAddress={post.userAddress} size={44} />
                 <div className="flex-col gap-3 mt-1 flex-1">
@@ -175,7 +175,7 @@ export const PostDetail = observer((props: InternalProps & Props) => {
                         <div
                           className={classNames(
                             'pl-2 border-l-[3px]',
-                            'text-12 text-black/40 truncate-3',
+                            'text-12 text-black/40 line-clamp-3',
                             !!book && 'hover:text-link-blue cursor-pointer',
                           )}
                           onClick={() => book && bookService.openBook({

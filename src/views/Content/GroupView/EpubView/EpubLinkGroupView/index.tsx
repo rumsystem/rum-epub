@@ -183,7 +183,7 @@ export const EpubLinkGroupView = observer((props: { className?: string }) => {
           )}
 
           {!state.loading && !state.posts.length && !linkGroupService.state.post.userAddress && (
-            <div className="flex flex-center p-12 text-black/70">
+            <div className="flex flex-center p-12 text-black/50">
               {lang.linkGroup.noPostYet}
             </div>
           )}

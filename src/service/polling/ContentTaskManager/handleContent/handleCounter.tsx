@@ -1,6 +1,6 @@
 import { utils } from 'rum-sdk-browser';
 import type { IContentItem } from '~/apis';
-import { CommentRaw, Counter, dbService, Notification, PendingTrxItem, PostRaw } from '~/service/db';
+import { Comment, Counter, dbService, Notification, PendingTrxItem, Post } from '~/service/db';
 import { getHotCount, parseTime } from '~/utils';
 import { nodeService } from '~/service/node';
 import { linkGroupService } from '~/service/linkGroup';
@@ -46,8 +46,8 @@ export const handleCounter = async (options: IOptions) => {
         })),
       );
 
-      const postsToPutMap = new Map<string, PostRaw>();
-      const commentsToPutMap = new Map<string, CommentRaw>();
+      const postsToPutMap = new Map<string, Post>();
+      const commentsToPutMap = new Map<string, Comment>();
       const countersToPut: Array<Counter> = [];
       const countersToAdd: Array<Counter> = [];
       const notifications: Array<Notification> = [];

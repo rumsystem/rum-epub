@@ -3,7 +3,7 @@ import classNames from 'classnames';
 import { runInAction } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import { Button } from '@mui/material';
-import { CommentRaw, Notification, PostRaw, linkGroupService } from '~/service';
+import { Comment, Notification, Post, linkGroupService } from '~/service';
 import { lang, runLoading } from '~/utils';
 import { Ago, UserAvatar, UserName } from '~/components';
 import { postDetail } from '../postDetail';
@@ -15,8 +15,8 @@ export const NotificationItem = observer((props: Props) => {
   const state = useLocalObservable(() => ({
     open: true,
     loading: true,
-    post: null as null | PostRaw,
-    comment: null as null | CommentRaw,
+    post: null as null | Post,
+    comment: null as null | Comment,
   }));
 
 

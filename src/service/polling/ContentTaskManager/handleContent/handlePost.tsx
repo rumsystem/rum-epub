@@ -1,10 +1,10 @@
 import { utils } from 'rum-sdk-browser';
 import { runInAction } from 'mobx';
 import type { IContentItem } from '~/apis';
-import { dbService, PostRaw } from '~/service/db';
+import { dbService, Post } from '~/service/db';
+import { linkGroupService } from '~/service/linkGroup';
 import { parseTime } from '~/utils';
 import { PostType } from '../../types';
-import { linkGroupService } from '~/service/linkGroup';
 
 interface IOptions {
   groupId: string
@@ -25,7 +25,7 @@ export const handlePost = async (options: IOptions) => {
       }));
 
       const posts = await dbService.getPost(items.map((v) => ({ groupId, id: v.activity.object.id })));
-      const postToPut: Array<PostRaw> = [];
+      const postToPut: Array<Post> = [];
       for (const item of items) {
         const object = item.activity.object;
         const id = object.id;

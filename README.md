@@ -1,28 +1,15 @@
-# Rum Desktop App
-
+# Rumbrary
 [中文说明](README_cn.md)
 
+An Epub book library client built upon quorum fullnode.
+
 ## Requirements
-- node 14-lts or greater
-- go latest version
+- node 16-lts or greater
 - yarn `npm install yarn -g`
 
 ## Start
 Clone this repo and cd into it
 ```sh
 yarn install
-yarn build:quorum
 yarn start
 ```
-
-## Docs
-[https://docs.prsdev.club/#/rum-app/](https://docs.prsdev.club/#/rum-app/)
-
-## how i18n works
-[i18n.md](docs/i18n.md)
-
-## Configure eslint
-[lint.md](docs/lint.md)
-
-## Tests
-[test.md](docs/test.md)

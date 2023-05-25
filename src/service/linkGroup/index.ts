@@ -5,7 +5,7 @@ import { utils } from 'rum-sdk-browser';
 import { postContent } from '~/apis';
 import { getHotCount, runLoading, sleep } from '~/utils';
 import type { CommentType, CounterType, PostType, ProfileType } from '../polling';
-import { CommentRaw, Counter, Notification, PostRaw, Profile, dbService } from '../db';
+import { Comment, Counter, Notification, Post, Profile, dbService } from '../db';
 import { nodeService } from '../node';
 import { bookService } from '../book';
 
@@ -17,7 +17,7 @@ export const state = observable({
     limit: 20 as const,
     done: false,
     loading: false,
-    map: new Map<string, PostRaw>(),
+    map: new Map<string, Post>(),
     groupId: '',
     bookId: '',
     userAddress: '',
@@ -25,7 +25,7 @@ export const state = observable({
     order: 'time' as 'hot' | 'time',
   },
   comment: {
-    map: new Map<string, CommentRaw>(),
+    map: new Map<string, Comment>(),
   },
   profile: {
     mapByAddress: new Map<string, Profile | null>(),
@@ -132,7 +132,7 @@ const post = {
     const res = await postContent(activity, params.groupId);
 
     if (res) {
-      const post: PostRaw = {
+      const post: Post = {
         trxId: res.trx_id,
         id: activity.object.id,
         title: '',
@@ -172,7 +172,7 @@ const post = {
     return post;
   },
 
-  updateIfInStore: action((posts: Array<PostRaw>) => {
+  updateIfInStore: action((posts: Array<Post>) => {
     posts.forEach((post) => {
       const postInStore = linkGroupService.state.post.map.get(post.id);
       if (postInStore && postInStore.groupId === post.groupId) {
@@ -237,9 +237,9 @@ const comment = {
   create: async (params: {
     groupId: string
     content: string
-    post: PostRaw
+    post: Post
     /** reply to comment */
-    comment?: CommentRaw
+    comment?: Comment
   }) => {
     const group = nodeService.state.groups.find((v) => v.group_id === params.groupId);
     if (!group) { throw new Error('group not found'); }
@@ -260,7 +260,7 @@ const comment = {
     const res = await postContent(activity, params.groupId);
 
     if (res) {
-      const comment: CommentRaw = {
+      const comment: Comment = {
         trxId: res.trx_id,
         id: activity.object.id,
         title: '',
@@ -304,7 +304,7 @@ const comment = {
       return state.comment.map.get(comment.id);
     }
   },
-  updateIfInStore: action((comments: Array<CommentRaw>) => {
+  updateIfInStore: action((comments: Array<Comment>) => {
     comments.forEach((comment) => {
       const commentInStore = linkGroupService.state.comment.map.get(comment.id);
       if (commentInStore && commentInStore.groupId === comment.groupId) {
@@ -427,7 +427,7 @@ const comment = {
 };
 
 const counter = {
-  update: async (item: PostRaw | CommentRaw, type: Counter['type']) => {
+  update: async (item: Post | Comment, type: Counter['type']) => {
     const loadingKey = `${item.groupId}-${item.id}`;
     if (state.counter.loadingMap.get(loadingKey)) { return; }
     const isPost = !('postId' in item);

@@ -78,6 +78,8 @@ export const content = {
     postNotFound: '找不到内容',
     latest: '最新',
     hot: '最热',
+    emptyPostTip: '内容不能为空',
+    writePost: '写想法',
   },
   notification: {
     comment: '回复了你的内容',
@@ -138,10 +140,14 @@ export const content = {
   },
   epubHighlights: {
     all: '所有标注',
-    list: '标注列表',
+    title: '标注列表',
     search: '搜索',
+    noSearchItem: '无搜索结果',
     noItem: '暂无标注',
     confirmDelete: '确定要移除这段标记吗？',
+    mark: '划线',
+    marked: '已划线',
+    noPostsYet: '还没有人发布想法',
   },
   epubMetadata: {
     subTitle: '副标题：',

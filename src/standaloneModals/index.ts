@@ -15,6 +15,8 @@ export * from './mixinOAuth';
 export * from './myLibrary';
 export * from './nodeInfo';
 export * from './notificationModal';
+export * from './postDetail';
+export * from './quoteDetail';
 export * from './replyComment';
 export * from './shareGroup';
 export * from './trxInfo';

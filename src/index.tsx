@@ -7,6 +7,7 @@ import css from './styles/tailwind-base.sass?inline';
 import './styles/tailwind.sass';
 import './styles/App.global.css';
 import './styles/rendered-markdown.sass';
+import './styles/annotation-theme.sass';
 import 'react-image-crop/dist/ReactCrop.css';
 
 ipcRenderer.setMaxListeners(20);

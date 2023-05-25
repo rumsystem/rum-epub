@@ -6,7 +6,7 @@ import { utils } from 'rum-sdk-browser';
 import { CircularProgress, TextField } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 
-import { CommentRaw, linkGroupService, nodeService, PostRaw } from '~/service';
+import { Comment, linkGroupService, nodeService, Post, tooltipService } from '~/service';
 import { lang, notNullFilter, runLoading, sleep } from '~/utils';
 import { replyComment } from '~/standaloneModals';
 import { UserAvatar } from '~/components';
@@ -14,7 +14,7 @@ import { CommentItem } from './CommentItem';
 
 interface Props {
   className?: string
-  post: PostRaw
+  post: Post
   open: boolean
 }
 
@@ -60,13 +60,21 @@ export const PostCommentSection = observer((props: Props) => {
   };
 
   const handlePostComment = () => {
+    const content = state.input.trim();
+    if (!content) {
+      tooltipService.show({
+        content: lang.linkGroup.emptyPostTip,
+        type: 'warning',
+      });
+      return;
+    }
     runLoading(
       (l) => { state.submitting = l; },
       async () => {
         const comment = await linkGroupService.comment.create({
           groupId: props.post.groupId,
           post: props.post,
-          content: state.input,
+          content,
         });
         if (comment) {
           runInAction(() => {
@@ -78,7 +86,7 @@ export const PostCommentSection = observer((props: Props) => {
     );
   };
 
-  const handleReplyComment = async (comment: CommentRaw) => {
+  const handleReplyComment = async (comment: Comment) => {
     const newComment = await replyComment({ post: props.post, comment });
     if (newComment) {
       state.commentIds.unshift(newComment.id);

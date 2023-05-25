@@ -4,7 +4,7 @@ import { observer, useLocalObservable } from 'mobx-react-lite';
 import { Button, Dialog, MenuItem, Select, SelectChangeEvent, TextField } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 import { utils } from 'rum-sdk-browser';
-import { PostRaw, bookService, linkGroupService, nodeService } from '~/service';
+import { Post, bookService, linkGroupService, nodeService, tooltipService } from '~/service';
 import { lang, runLoading } from '~/utils';
 import { BookCoverImg, UserAvatar, UserName } from '~/components';
 import { AiFillCloseCircle } from 'react-icons/ai';
@@ -20,7 +20,7 @@ export interface Props {
 }
 export interface InternalProps {
   destroy: () => unknown
-  rs: (post?: PostRaw) => unknown
+  rs: (post?: Post) => unknown
 }
 export const CreatePost = observer((props: InternalProps & Props) => {
   const state = useLocalObservable(() => ({
@@ -40,13 +40,21 @@ export const CreatePost = observer((props: InternalProps & Props) => {
   });
 
   const handleSubmit = () => {
+    const content = state.content.trim();
+    if (!content) {
+      tooltipService.show({
+        content: lang.linkGroup.emptyPostTip,
+        type: 'warning',
+      });
+      return;
+    }
     runLoading(
       (l) => { state.loading = l; },
       async () => {
         const post = await linkGroupService.post.create({
           groupId: props.groupId,
           bookId: state.bookId || props.bookId,
-          content: state.content,
+          content,
           ...props.chapter && props.chapterId ? {
             chapter: props.chapter,
             chapterId: props.chapterId,
@@ -194,7 +202,7 @@ export const CreatePost = observer((props: InternalProps & Props) => {
             )}
 
             {!!props.quote && !!props.quoteRange && (
-              <div className="truncate-3 ml-14 mt-1 text-12 text-black/40 border-l-[3px] pl-2">
+              <div className="line-clamp-3 ml-14 mt-1 text-12 text-black/40 border-l-[3px] pl-2">
                 {props.quote}
               </div>
             )}

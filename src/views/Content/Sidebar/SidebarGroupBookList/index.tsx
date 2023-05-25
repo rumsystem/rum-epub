@@ -286,7 +286,7 @@ export const SidebarGroupBookList = observer((props: Props) => {
       {props.booksOnly && props.viewMode === 'grid' && renderGridBooks(applyFilterAndSort(bookService.state.groups.flatMap((v) => v.books)))}
     </div>
 
-    {!props.booksOnly && state.notLinkedGroup.length && (
+    {!props.booksOnly && !!state.notLinkedGroup.length && (
       <div>
         <div className="flex px-3 py-2">
           {lang.linkGroup.notLinkedSeednet}

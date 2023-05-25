@@ -2,7 +2,7 @@ import { either, function as fp, taskEither } from 'fp-ts';
 import { action, observable, runInAction, when } from 'mobx';
 import { formatISO } from 'date-fns';
 import { v4 } from 'uuid';
-import { BookMetadata, BookSummary, CoverBuffer, dbService } from '~/service/db';
+import { BookMetadata, BookSummary, CoverBuffer, HighlightItem, Post, dbService } from '~/service/db';
 import { nodeService } from '~/service/node';
 import type {
   BookMetadataActivity, BookSummaryActivity, BookSummaryContent, BookSegmentActivity,
@@ -81,6 +81,11 @@ const state = observable({
   upload: {
     jobs: [] as Array<UploadJob>,
     coverJobs: [] as Array<CoverUploadJob>,
+  },
+  highlight: {
+    local: [] as Array<HighlightItem>,
+    temp: [] as Array<string>,
+    post: [] as Array<Post & { children?: Array<Post> }>,
   },
 });
 
@@ -531,12 +536,8 @@ const highlight = {
     return items;
   },
 
-  save: async (groupId: string, bookId: string, cfiRange: string) => {
-    await dbService.db.highlights.put({
-      groupId,
-      bookId,
-      cfiRange,
-    });
+  save: async (item: HighlightItem) => {
+    await dbService.db.highlights.put(item);
   },
 
   delete: async (groupId: string, bookId: string, cfiRange: string) => {

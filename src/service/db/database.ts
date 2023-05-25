@@ -98,6 +98,7 @@ export interface HighlightItem {
   groupId: string
   bookId: string
   cfiRange: string
+  text: string
 }
 
 export interface ReadingProgress {
@@ -149,7 +150,7 @@ export interface EmptyTrxItem {
   lastChecked: number
 }
 
-export interface PostRaw {
+export interface Post {
   id: string
   trxId: string
   groupId: string
@@ -178,11 +179,7 @@ export interface PostRaw {
   disliked: boolean
 }
 
-export interface Post extends PostRaw {
-  user: Profile
-}
-
-export interface CommentRaw {
+export interface Comment {
   id: string
   trxId: string
   groupId: string
@@ -207,9 +204,6 @@ export interface CommentRaw {
   dislikeCount: number
   liked: boolean
   disliked: boolean
-}
-export interface Comment extends CommentRaw {
-  user: Profile
 }
 
 export interface Counter {
@@ -264,8 +258,8 @@ export class Database extends Dexie {
   public readingProgress: Dexie.Table<ReadingProgress, number>;
   public bookMetadata: Dexie.Table<BookMetadata, number>;
 
-  public post: Dexie.Table<PostRaw, number>;
-  public comment: Dexie.Table<CommentRaw, number>;
+  public post: Dexie.Table<Post, number>;
+  public comment: Dexie.Table<Comment, number>;
   public counter: Dexie.Table<Counter, number>;
   public profile: Dexie.Table<Profile, number>;
   public notification: Dexie.Table<Notification, number>;

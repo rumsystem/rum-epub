@@ -7,7 +7,7 @@ import { Feedback } from '@mui/icons-material';
 import { RiMoreFill, RiThumbUpFill, RiThumbUpLine } from 'react-icons/ri';
 import { FaComment, FaRegComment } from 'react-icons/fa';
 
-import { bookService, linkGroupService, PostRaw } from '~/service';
+import { bookService, linkGroupService, Post } from '~/service';
 import { UserAvatar, UserName, ContentSyncStatus, Ago, BookCoverImg } from '~/components';
 import { lang } from '~/utils';
 import { ObjectMenu } from '../ObjectMenu';
@@ -15,7 +15,7 @@ import { PostCommentSection } from './PostCommentSection';
 
 interface Props {
   className?: string
-  post: PostRaw
+  post: Post
 }
 
 export const PostItem = observer((props: Props) => {
@@ -130,7 +130,7 @@ export const PostItem = observer((props: Props) => {
                 <div
                   className={classNames(
                     'pl-2 border-l-[3px]',
-                    'text-12 text-black/40 truncate-3',
+                    'text-12 text-black/40 line-clamp-3',
                     !!book && 'hover:text-link-blue cursor-pointer',
                   )}
                   onClick={() => book && bookService.openBook({

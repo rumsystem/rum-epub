@@ -1,7 +1,7 @@
 import { utils } from 'rum-sdk-browser';
 import { runInAction } from 'mobx';
 import type { IContentItem } from '~/apis';
-import { CommentRaw, dbService, Notification, PendingTrxItem, PostRaw } from '~/service/db';
+import { Comment, dbService, Notification, PendingTrxItem, Post } from '~/service/db';
 import { getHotCount, parseTime } from '~/utils';
 import { nodeService } from '~/service/node';
 import { linkGroupService } from '~/service/linkGroup';
@@ -36,8 +36,8 @@ export const handleComment = async (options: IOptions) => {
         ...comments.map((v) => v.postId).filter((v) => v),
       ]));
       const posts = await dbService.getPost(postIds.map((v) => ({ groupId, id: v })));
-      const commentToPut: Map<string, CommentRaw> = new Map();
-      const commentToAdd: Map<string, CommentRaw> = new Map();
+      const commentToPut: Map<string, Comment> = new Map();
+      const commentToAdd: Map<string, Comment> = new Map();
       const pendingTrxToAdd: Array<PendingTrxItem> = [];
       const pendingTrxToDelete: Array<Pick<PendingTrxItem, 'groupId' | 'trxId'>> = [];
 
@@ -118,7 +118,7 @@ export const handleComment = async (options: IOptions) => {
       }
 
       // update post summary
-      const postToPutMap = new Map<string, PostRaw>();
+      const postToPutMap = new Map<string, Post>();
       for (const [_, comment] of commentToAdd) {
         const post = postToPutMap.get(comment.postId) || posts.find((u) => comment.postId === u.id);
         if (post) {

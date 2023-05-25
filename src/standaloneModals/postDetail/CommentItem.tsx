@@ -8,7 +8,7 @@ import { Button } from '@mui/material';
 import { RiMoreFill, RiThumbUpFill, RiThumbUpLine } from 'react-icons/ri';
 import { FaRegComment } from 'react-icons/fa';
 
-import { CommentRaw, linkGroupService } from '~/service';
+import { Comment, linkGroupService } from '~/service';
 import { Ago, ContentSyncStatus, UserAvatar, UserName } from '~/components';
 import { lang } from '~/utils';
 import { ObjectMenu } from './ObjectMenu';
@@ -16,8 +16,8 @@ import { locateCommentContext } from './locateComment';
 
 interface Props {
   className?: string
-  comment: CommentRaw
-  replyTo?: CommentRaw
+  comment: Comment
+  replyTo?: Comment
   onReplyClick?: () => unknown
   onReplyToClick?: () => unknown
 }

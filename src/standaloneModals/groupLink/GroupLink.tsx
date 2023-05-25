@@ -45,9 +45,14 @@ export const GroupLink = observer((props: { destroy: () => unknown } & Props) =>
 
   const handleJoinGroup = async () => {
     const groupId = await joinGroup({});
-    if (groupId) {
-      doLink(groupId);
+    if (!groupId) {
+      return;
     }
+    const group = nodeService.state.groupMap[groupId];
+    if (group?.app_key !== GROUP_TEMPLATE_TYPE.EPUB_LINK) {
+      return;
+    }
+    doLink(groupId);
   };
 
   const handleLink = () => {

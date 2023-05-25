@@ -5,17 +5,17 @@ import { utils } from 'rum-sdk-browser';
 import { Dialog, TextField } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 
-import { CommentRaw, PostRaw, linkGroupService, nodeService } from '~/service';
+import { Comment, Post, linkGroupService, nodeService, tooltipService } from '~/service';
 import { lang, runLoading } from '~/utils';
 import { Ago, UserAvatar, UserName } from '~/components';
 
 export interface Props {
-  post: PostRaw
-  comment: CommentRaw
+  post: Post
+  comment: Comment
 }
 export interface InternalProps {
   destroy: () => unknown
-  rs: (post?: CommentRaw) => unknown
+  rs: (post?: Comment) => unknown
 }
 export const ReplyComment = observer((props: InternalProps & Props) => {
   const state = useLocalObservable(() => ({
@@ -33,6 +33,14 @@ export const ReplyComment = observer((props: InternalProps & Props) => {
   });
 
   const handleSubmit = () => {
+    const content = state.content.trim();
+    if (!content) {
+      tooltipService.show({
+        content: lang.linkGroup.emptyPostTip,
+        type: 'warning',
+      });
+      return;
+    }
     runLoading(
       (l) => { state.loading = l; },
       async () => {
@@ -40,7 +48,7 @@ export const ReplyComment = observer((props: InternalProps & Props) => {
           groupId: props.comment.groupId,
           post: props.post,
           comment: props.comment,
-          content: state.content,
+          content,
         });
         props.rs(comment);
         handleClose();
