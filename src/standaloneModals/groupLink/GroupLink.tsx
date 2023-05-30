@@ -63,15 +63,15 @@ export const GroupLink = observer((props: { destroy: () => unknown } & Props) =>
     }
   };
 
-  const doLink = (groupId: string) => {
+  const doLink = (linkGroupId: string) => {
     tooltipService.show({
       content: lang.linkGroup.linked,
     });
     runInAction(() => {
-      nodeService.state.groupLink[props.groupId] = groupId;
+      nodeService.state.groupLink[props.groupId] = linkGroupId;
       bookService.openBook({
         groupId: props.groupId,
-        linkGroupId: groupId,
+        linkGroupId,
       });
     });
   };

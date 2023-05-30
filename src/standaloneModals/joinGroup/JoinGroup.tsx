@@ -9,6 +9,7 @@ import { GoChevronRight } from 'react-icons/go';
 import { Dialog, Button } from '~/components';
 import { tooltipService, nodeService, bookService } from '~/service';
 import { sleep, runLoading, lang } from '~/utils';
+import { GROUP_TEMPLATE_TYPE } from '~/utils/constant';
 
 export interface Props {
   seed?: string
@@ -36,7 +37,12 @@ export const JoinGroup = observer((props: Props & InternalProps) => {
       async () => {
         try {
           const group = await nodeService.joinGroup(state.seedString);
-          bookService.openBook({ groupId: group.group_id });
+          if (group.app_key === GROUP_TEMPLATE_TYPE.EPUB) {
+            bookService.openBook({ groupId: group.group_id });
+          }
+          if (group.app_key === GROUP_TEMPLATE_TYPE.EPUB_LINK) {
+            bookService.openBook({ linkGroupId: group.group_id });
+          }
           runInAction(() => { state.done = true; });
           props.rs(group.group_id);
           handleClose();

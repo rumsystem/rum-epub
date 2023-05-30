@@ -11,7 +11,6 @@ import IconSeednetManage from '~/assets/icon_seednet_manage.svg';
 import { IGroup } from '~/apis';
 import { lang } from '~/utils';
 import { nodeService, dialogService, loadingService, tooltipService, bookService } from '~/service';
-import { UploadBookButton } from '~/components';
 import {
   editEpubCover,
   uploadBook,
@@ -213,20 +212,14 @@ export const GroupMenu = observer((props: Props) => {
           </div>
         </MenuItem>
       )}
-      {isGroupOwner && (
-        <UploadBookButton>
-          {() => (
-            <MenuItem onClick={() => { uploadBook({ groupId: props.group.group_id }); handleMenuClose(); }}>
-              <div className="flex items-center text-gray-600 leading-none pl-1 py-2">
-                <span className="flex items-center w-7 flex-none">
-                  <UploadIcon className="text-18" />
-                </span>
-                <span className="font-bold text-14">{lang.epubUpload.uploadBook}</span>
-              </div>
-            </MenuItem>
-          )}
-        </UploadBookButton>
-      )}
+      <MenuItem onClick={() => { uploadBook({ groupId: props.group.group_id }); handleMenuClose(); }}>
+        <div className="flex items-center text-gray-600 leading-none pl-1 py-2">
+          <span className="flex items-center w-7 flex-none">
+            <UploadIcon className="text-18" />
+          </span>
+          <span className="font-bold text-14">{lang.epubUpload.uploadBook}</span>
+        </div>
+      </MenuItem>
       {isGroupOwner && !!state.currentBookId && (
         <MenuItem onClick={handleEditMetadata}>
           <div className="flex items-center text-gray-600 leading-none pl-1 py-2">
