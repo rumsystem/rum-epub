@@ -53,3 +53,4 @@ jobs:
             release/Rumbrary-*.exe
             release/latest.yml
             release/latest-mac.yml
+            release/latest-linux.yml
