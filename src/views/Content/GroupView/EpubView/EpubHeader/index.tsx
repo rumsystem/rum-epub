@@ -82,7 +82,7 @@ export const EpubHeader = observer(() => {
               fontSize={20}
               groupId={bookService.state.current.groupId}
             />
-            <div className="font-bold text-18 tracking-wider truncate max-w-[220px]">
+            <div className="font-bold text-18 tracking-wide truncate max-w-[220px]">
               <span
                 className="text-gray-1e cursor-pointer"
                 onClick={() => groupInfo({ groupId: state.group!.group_id })}

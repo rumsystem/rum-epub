@@ -80,7 +80,7 @@ export const NotificationItem = observer((props: Props) => {
       {!!object && (
         <div className="pl-10 pt-1 -ml-2">
           <Button
-            className="text-12 px-2 font-default font-normal text-black/40 leading-normal"
+            className="text-12 px-2 font-default font-normal text-black/40 leading-normal min-w-0"
             variant="text"
             size="small"
             onClick={() => postDetail({

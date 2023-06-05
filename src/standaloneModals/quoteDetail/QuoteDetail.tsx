@@ -114,7 +114,7 @@ export const QuoteDetail = observer((props: InternalProps & SelfProps) => {
 
           <div className="flex items-center mb-4 gap-2">
             <Button
-              className="flex items-center gap-[6px] px-2 py-[2px] text-14 text-black/50 hover:text-black/80 min-w-0"
+              className="flex items-center gap-[6px] px-2 py-[2px] text-14 text-black/50 hover:text-black/80 min-w-0 normal-case"
               variant="text"
               size="small"
               onClick={() => {
@@ -126,7 +126,7 @@ export const QuoteDetail = observer((props: InternalProps & SelfProps) => {
               {lang.copy}
             </Button>
             <Button
-              className="flex items-center gap-[6px] px-2 py-[2px] text-14 text-black/50 hover:text-black/80 min-w-0"
+              className="flex items-center gap-[6px] px-2 py-[2px] text-14 text-black/50 hover:text-black/80 min-w-0 normal-case"
               variant="text"
               size="small"
               onClick={handleCreatePost}
@@ -135,7 +135,7 @@ export const QuoteDetail = observer((props: InternalProps & SelfProps) => {
               {lang.linkGroup.writePost}
             </Button>
             <Button
-              className="flex items-center gap-[6px] px-2 py-[2px] text-14 text-black/50 hover:text-black/80 min-w-0"
+              className="flex items-center gap-[6px] px-2 py-[2px] text-14 text-black/50 hover:text-black/80 min-w-0 normal-case"
               variant="text"
               size="small"
               onClick={handleToggleHighlight}
@@ -177,7 +177,7 @@ export const QuoteDetail = observer((props: InternalProps & SelfProps) => {
 
               <div className="flex items-center -ml-2">
                 <Button
-                  className="flex items-center gap-[6px] px-2 py-[2px] text-12 text-black/50 hover:text-black/80 min-w-0"
+                  className="flex items-center gap-[6px] px-2 py-[2px] text-12 text-black/50 hover:text-black/80 min-w-0 normal-case"
                   variant="text"
                   size="small"
                   onClick={() => linkGroupService.counter.update(v, v.liked ? 'undolike' : 'like')}
@@ -190,7 +190,7 @@ export const QuoteDetail = observer((props: InternalProps & SelfProps) => {
                   {!v.likeCount && lang.linkGroup.like}
                 </Button>
                 <Button
-                  className="flex items-center gap-[6px] px-2 py-[2px] text-12 text-black/50 hover:text-black/80 min-w-0"
+                  className="flex items-center gap-[6px] px-2 py-[2px] text-12 text-black/50 hover:text-black/80 min-w-0 normal-case"
                   variant="text"
                   size="small"
                   onClick={() => postDetail({ groupId: v.groupId, postId: v.id })}

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { observer, useLocalObservable } from 'mobx-react-lite';
-import { reaction, runInAction } from 'mobx';
+import { action, reaction, runInAction } from 'mobx';
 import { bookService } from '~/service';
 
 interface BookCoverImgProps extends Omit<React.DetailedHTMLProps<React.ImgHTMLAttributes<HTMLImageElement>, HTMLImageElement>, 'children'> {
@@ -35,13 +35,23 @@ export const BookCoverImg = observer((props: BookCoverImgProps) => {
     });
   };
 
+  const clearUrl = action(() => {
+    if (state.url) {
+      state.url = '';
+    }
+  });
+
   const createUrl = () => {
     state.dispose();
     const file = bookService.state.groupMap.get(props.groupId ?? '')
       ?.find((v) => v.book.id === props.bookId)
       ?.cover?.file;
 
-    if (!file) { return; }
+
+    if (!file) {
+      clearUrl();
+      return;
+    }
 
     const item = cacheMap.get(file);
     if (item) {

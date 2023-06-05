@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { CSSProperties } from 'react';
 import classNames from 'classnames';
 import { action } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
@@ -9,6 +9,7 @@ interface Props {
   direction?: 'vertical' | 'horizontal'
   children?: React.ReactNode
   className?: string
+  style?: CSSProperties
   wrapperClassName?: string
   trackClassName?: string
   thumbClassName?: string
@@ -251,9 +252,11 @@ export const Scrollable = observer((props: Props) => {
   return (
     <div
       className={classNames(
-        'scrollable relative flex overflow-hidden',
+        'scrollable flex overflow-hidden',
+        !props.className?.includes('absolute') && 'relative',
         props.className,
       )}
+      style={props.style}
       onMouseEnter={action(() => { if (props.autoHideMode) { state.hide = false; } })}
       onMouseLeave={action(() => { if (props.autoHideMode) { state.hide = true; } })}
     >

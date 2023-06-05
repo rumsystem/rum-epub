@@ -3,10 +3,12 @@ import classNames from 'classnames';
 import { action } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import { NavItem } from 'epubjs';
+import scrollIntoView from 'scroll-into-view-if-needed';
 import { Button, Divider, MenuItem, Popover, Tooltip } from '@mui/material';
 import ListUlIcon from 'boxicons/svg/regular/bx-list-ul.svg?fill-icon';
 import { readerSettingsService } from '~/service';
 import { lang, modifierKeys } from '~/utils';
+import { Scrollable } from '~/components';
 
 interface Props {
   className?: string
@@ -31,13 +33,11 @@ export const EpubChaptersButton = observer((props: Props) => {
     state.open = true;
     window.setTimeout(() => {
       const current = chaptersBox.current!.querySelector('.current-chapter') as HTMLDivElement | undefined;
-      if (!current) {
-        return;
-      }
-      chaptersBox.current!.scrollTo({
-        top: Math.max(current.offsetTop - 200, 0),
+      if (!current) { return; }
+      scrollIntoView(current, {
+        block: 'center',
       });
-    });
+    }, 1);
   });
 
   const handleClose = action(() => {
@@ -99,24 +99,27 @@ export const EpubChaptersButton = observer((props: Props) => {
       PaperProps={{
         ref: chaptersBox,
       }}
+      transitionDuration={200}
     >
-      <div
+      <Scrollable
         className="max-w-[600px] min-w-[250px]"
         style={{ maxHeight: `${Math.max(300, window.innerHeight - 300)}px` }}
       >
-        <div className="flex flex-center text-20 text-gray-70 py-4">
-          {lang.epub.toc}
+        <div>
+          <div className="flex flex-center text-20 text-black/90 py-4">
+            {lang.epub.toc}
+          </div>
+          {!!props.chapters.length && (
+            <Divider className="!my-0 mx-4" />
+          )}
+          <EpubChapters
+            chapters={props.chapters}
+            current={props.current}
+            onClick={handleChapterClick}
+          />
+          <div className="h-4" />
         </div>
-        {!!props.chapters.length && (
-          <Divider className="!my-0 mx-4" />
-        )}
-        <EpubChapters
-          chapters={props.chapters}
-          current={props.current}
-          onClick={handleChapterClick}
-        />
-        <div className="h-4" />
-      </div>
+      </Scrollable>
     </Popover>
   </>);
 });
@@ -144,8 +147,8 @@ const EpubChapters = (props: EpubChaptersProps) => (
         <div key={v.id}>
           <MenuItem
             className={classNames(
-              'pr-4 py-2 text-producer-blue',
-              isCurrent && 'current-chapter font-bold',
+              'pr-4 py-2 text-black/60',
+              isCurrent && 'current-chapter font-bold text-black/90',
               !isCurrent && 'text-gray-88',
             )}
             style={{

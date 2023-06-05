@@ -94,30 +94,33 @@ export const EpubShortCutPopover = observer((props: Props) => {
             },
             {
               text: lang.epubShortCut.toggleToc,
-              shortcut: ['Shift+C'],
+              shortcut: ['Shift + C'],
             },
             {
               text: lang.epubShortCut.toggleHighlighs,
-              shortcut: ['Shift+N'],
+              shortcut: ['Shift + N'],
             },
             {
               text: lang.epubShortCut.backToPrevPos,
-              shortcut: ['Shift+B'],
+              shortcut: ['Shift + B'],
             },
           ].map((v, i) => (
             <div className="flex justify-between items-center py-2 px-2 gap-x-8" key={i}>
-              <div className="text-16">
+              <div className="text-14">
                 {v.text}
               </div>
-              <div className="text-14 flex items-center gap-x-2 leading-relaxed">
+              <div className="text-12 flex items-center gap-x-2 leading-relaxed">
                 {v.shortcut.flatMap((v, i) => [
                   (
-                    <ShortCutItem key={i}>
+                    <div
+                      className="flex flex-center bg-gray-62 text-white leading-snug rounded px-[10px] py-1 min-w-[36px]"
+                      key={i}
+                    >
                       {v}
-                    </ShortCutItem>
+                    </div>
                   ),
                   (
-                    <span className="text-13" key={`${i}-or`}>
+                    <span className="text-12" key={`${i}-or`}>
                       or
                     </span>
                   ),
@@ -130,10 +133,3 @@ export const EpubShortCutPopover = observer((props: Props) => {
     </Popover>
   </>);
 });
-
-
-const ShortCutItem = (props: { children: React.ReactNode }) => (
-  <div className="flex flex-center bg-gray-62 text-white rounded px-[10px] py-1 min-w-[36px]">
-    {props.children}
-  </div>
-);

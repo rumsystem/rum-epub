@@ -356,6 +356,8 @@ export const content = {
     myLib: '我的内容库：',
     books: '书籍',
     sort: '排序',
+    filterBook: '筛选书籍',
+    openBook: '阅读',
     recentAdd: '按最新上架',
     recentOpen: '按最近浏览',
     coverMode: '封面模式',

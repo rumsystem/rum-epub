@@ -117,30 +117,32 @@ export const EpubLinkGroupView = observer((props: { className?: string }) => {
         <div className="p-8">
           <div className="absolute left-1/2 -translate-x-1/2 h-0 w-full mx-auto px-8">
             <div className="relative max-w-[740px] mx-auto">
-              <div className="flex-col absolute -left-4 -translate-x-full bg-white p-3 gap-2">
-                <button
-                  className={classNames(
-                    'flex items-center gap-1 text-left',
-                    state.sort !== 'time' && 'text-black/30',
-                    state.sort === 'time' && 'font-bold !border-black/25 text-black/80',
-                  )}
-                  onClick={() => handleSetSort('time')}
-                >
-                  <BiTime />
-                  {lang.linkGroup.latest}
-                </button>
-                <button
-                  className={classNames(
-                    'flex items-center gap-1 text-left',
-                    state.sort !== 'hot' && 'text-black/30',
-                    state.sort === 'hot' && 'font-bold !border-black/25 text-black/80',
-                  )}
-                  onClick={() => handleSetSort('hot')}
-                >
-                  <AiOutlineFire />
-                  {lang.linkGroup.hot}
-                </button>
-              </div>
+              {!linkGroupService.state.post.userAddress && (
+                <div className="flex-col absolute -left-4 -translate-x-full bg-white p-3 gap-2">
+                  <button
+                    className={classNames(
+                      'flex items-center gap-1 text-left',
+                      state.sort !== 'time' && 'text-black/30',
+                      state.sort === 'time' && 'font-bold !border-black/25 text-black/80',
+                    )}
+                    onClick={() => handleSetSort('time')}
+                  >
+                    <BiTime />
+                    {lang.linkGroup.latest}
+                  </button>
+                  <button
+                    className={classNames(
+                      'flex items-center gap-1 text-left',
+                      state.sort !== 'hot' && 'text-black/30',
+                      state.sort === 'hot' && 'font-bold !border-black/25 text-black/80',
+                    )}
+                    onClick={() => handleSetSort('hot')}
+                  >
+                    <AiOutlineFire />
+                    {lang.linkGroup.hot}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 

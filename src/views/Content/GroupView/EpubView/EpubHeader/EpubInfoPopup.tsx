@@ -75,7 +75,7 @@ export const EpubInfoPopup = observer((props: Props) => {
           />
         </div>
         <div className="flex bg-gray-33 p-6 gap-x-10">
-          <div className="flex-none">
+          <div className="w-[270px] flex-none">
             <div>
               <BookCoverImg
                 groupId={props.groupId}
@@ -136,7 +136,7 @@ export const EpubInfoPopup = observer((props: Props) => {
             </div>
           </div>
 
-          <div className="relative w-[250px] flex-1 self-stretch flex-col overflow-hidden flex-col -mr-4">
+          <div className="w-[250px] flex-col relative flex-none self-stretch overflow-hidden flex-col -mr-4">
             <div className="absolute inset-0">
               <Scrollable className="w-full h-full" light>
                 <div className="overflow-hidden pr-4">
@@ -146,7 +146,7 @@ export const EpubInfoPopup = observer((props: Props) => {
             </div>
           </div>
 
-          <div className="w-[250px] flex-1 leading-relaxed">
+          <div className="w-[250px] flex-none leading-relaxed">
             {[
               { text: lang.epubMetadata.subTitle, value: metadata?.subTitle },
               { text: lang.epubMetadata.isbn, value: metadata?.isbn },
@@ -163,8 +163,8 @@ export const EpubInfoPopup = observer((props: Props) => {
               // { text: lang.epubMetadata.tags, value: '加缪, 哲学 暂时不做不显示' },
             ].map((v, i) => (
               <div key={i}>
-                <span className="text-gray-af">{v.text}</span>
-                <span className="text-white">{v.value}</span>
+                <span className="text-gray-af">{v.text} </span>
+                <span className="text-white break-all">{v.value}</span>
               </div>
             ))}
           </div>

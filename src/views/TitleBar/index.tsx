@@ -132,6 +132,7 @@ export const TitleBar = observer((props: Props) => {
         <Tooltip
           placement="bottom"
           title={lang.titleBar.switchLang}
+          disableInteractive
         >
           <img src={IconLangLocal} alt="" />
         </Tooltip>

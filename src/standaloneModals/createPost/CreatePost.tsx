@@ -1,13 +1,12 @@
 import { useMemo } from 'react';
 import { action } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
-import { Button, Dialog, MenuItem, Select, SelectChangeEvent, TextField } from '@mui/material';
+import { Dialog, MenuItem, Select, SelectChangeEvent, TextField } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 import { utils } from 'rum-sdk-browser';
 import { Post, bookService, linkGroupService, nodeService, tooltipService } from '~/service';
 import { lang, runLoading } from '~/utils';
 import { BookCoverImg, UserAvatar, UserName } from '~/components';
-import { AiFillCloseCircle } from 'react-icons/ai';
 
 export interface Props {
   groupId: string
@@ -185,7 +184,7 @@ export const CreatePost = observer((props: InternalProps & Props) => {
               </div>
             </div>
 
-            {!state.noChapter && !!props.chapter && !!props.chapterId && (
+            {/* {!state.noChapter && !!props.chapter && !!props.chapterId && (
               <div className="ml-14">
                 <Button
                   className="px-1 py-px mt-1 -ml-1 text-12"
@@ -199,7 +198,7 @@ export const CreatePost = observer((props: InternalProps & Props) => {
                   {lang.linkGroup.noChapter}
                 </Button>
               </div>
-            )}
+            )} */}
 
             {!!props.quote && !!props.quoteRange && (
               <div className="line-clamp-3 ml-14 mt-1 text-12 text-black/40 border-l-[3px] pl-2">

@@ -147,7 +147,7 @@ export const PostItem = observer((props: Props) => {
 
           <div className="flex items-center gap-2 relative -left-2">
             <Button
-              className="flex items-center gap-[6px] px-2 py-[2px] text-12 text-black/50 hover:text-black/80 min-w-0"
+              className="flex items-center gap-[6px] px-2 py-[2px] text-12 text-black/50 hover:text-black/80 min-w-0 normal-case"
               variant="text"
               size="small"
               onClick={() => linkGroupService.counter.update(post, post.liked ? 'undolike' : 'like')}
@@ -161,7 +161,7 @@ export const PostItem = observer((props: Props) => {
             </Button>
 
             <Button
-              className="flex items-center gap-[6px] px-2 py-[2px] text-12 text-black/50 hover:text-black/80 min-w-0"
+              className="flex items-center gap-[6px] px-2 py-[2px] text-12 text-black/50 hover:text-black/80 min-w-0 normal-case"
               variant="text"
               size="small"
               onClick={action(() => { state.commentOpen = !state.commentOpen; })}

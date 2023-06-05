@@ -10,9 +10,9 @@ import {
   Fade,
   FormControl,
   FormControlLabel,
+  Input,
   InputLabel,
   MenuItem,
-  OutlinedInput,
   Select,
   SelectChangeEvent,
   Tooltip,
@@ -20,7 +20,6 @@ import {
 import { ChevronLeft, Close, EditOutlined, Search } from '@mui/icons-material';
 import GridAltIcon from 'boxicons/svg/regular/bx-grid-alt.svg?fill-icon';
 import ListUlIcon from 'boxicons/svg/regular/bx-list-ul.svg?fill-icon';
-import TrashIcon from 'boxicons/svg/regular/bx-trash.svg?fill-icon';
 
 import IconFold from '~/assets/fold.svg?react';
 import IconLib from '~/assets/icon_lib.svg?fill';
@@ -39,6 +38,7 @@ import { editEpubCover } from '../editEpupCover';
 import { editEpubMetadata } from '../editEpubMetadata';
 import { myLibraryState } from './state';
 import RemoveMarkdown from 'remove-markdown';
+import { AiOutlineRead } from 'react-icons/ai';
 
 export const MyLibrary = observer((props: { destroy: () => unknown }) => {
   const state = useLocalObservable(() => ({
@@ -47,7 +47,7 @@ export const MyLibrary = observer((props: { destroy: () => unknown }) => {
     sidebarCollapsed: false,
     languageFilter: [] as Array<string>,
     subjectFilter: [] as Array<string>,
-    nameFilter: '',
+    inputFilter: '',
     viewMode: 'grid' as 'grid' | 'list',
     sort: 'added' as 'added' | 'opened',
     selectedBook: null as null | GroupMapBookItem,
@@ -76,9 +76,10 @@ export const MyLibrary = observer((props: { destroy: () => unknown }) => {
         const subjectMatch = this.subjectFilter.length
           ? metadata && metadata.subjects.some((v) => this.subjectFilter.some((u) => u === v))
           : true;
-        const words = state.nameFilter.split(' ').map((v) => v.toLowerCase());
+        const words = state.inputFilter.split(' ').map((v) => v.toLowerCase());
         const nameFilter = words.every((word) => v.book.title.toLowerCase().includes(word));
-        return languageMatch && nameFilter && subjectMatch;
+        const authorFilter = words.every((word) => v.metadata?.metadata.author.toLowerCase().includes(word));
+        return languageMatch && (nameFilter || authorFilter) && subjectMatch;
       });
       if (this.sort === 'added') {
         filteredBooks.sort((a, b) => b.book.timestamp - a.book.timestamp);
@@ -156,18 +157,18 @@ export const MyLibrary = observer((props: { destroy: () => unknown }) => {
         width: 80,
         accessor: () => '暂无',
       },
-      {
-        Header: lang.myLib.oparation,
-        width: 80,
-        accessor: (row: GroupMapBookItem) => (
-          <div className="flex flex-center">
-            <TrashIcon
-              className="text-20 text-[#5fc0e9] cursor-pointer"
-              onClick={() => handleLeaveGroup(row.book.groupId)}
-            />
-          </div>
-        ),
-      },
+      // {
+      //   Header: lang.myLib.oparation,
+      //   width: 80,
+      //   accessor: (row: GroupMapBookItem) => (
+      //     <div className="flex flex-center">
+      //       <TrashIcon
+      //         className="text-20 text-[#5fc0e9] cursor-pointer"
+      //         onClick={() => handleLeaveGroup(row.book.groupId)}
+      //       />
+      //     </div>
+      //   ),
+      // },
     ],
     [],
   );
@@ -228,7 +229,7 @@ export const MyLibrary = observer((props: { destroy: () => unknown }) => {
     handleClose();
   });
 
-  const handleLeaveGroup = async (groupId: string) => {
+  const _handleLeaveGroup = async (groupId: string) => {
     const result = await dialogService.open({
       content: lang.myLib.leaveGroup,
       danger: true,
@@ -268,7 +269,7 @@ export const MyLibrary = observer((props: { destroy: () => unknown }) => {
   }, []);
 
   return (
-    <Fade in={state.open} timeout={300} mountOnEnter unmountOnExit>
+    <Fade in={state.open} timeout={300} mountOnEnter unmountOnExit easing="cubic-bezier(0.37, 0, 0.63, 1)">
       <div className="flex items-stretch fixed inset-0 top-[40px] bg-gray-f7 z-50">
         <div className="relative">
           <div
@@ -365,12 +366,16 @@ export const MyLibrary = observer((props: { destroy: () => unknown }) => {
                   {lang.myLib.books}
                 </span>
               </span>
-              <OutlinedInput
+              <Input
+                className="-mb-1"
                 size="small"
-                value={state.nameFilter}
-                onChange={action((e) => { state.nameFilter = e.target.value; })}
-                endAdornment={<Search className="text-gray-4a" />}
+                value={state.inputFilter}
+                placeholder={lang.myLib.filterBook}
+                onChange={action((e) => { state.inputFilter = e.target.value; })}
+                endAdornment={<Search className="text-gray-4a -mt-[2px]" />}
               />
+            </div>
+            <div className="flex gap-x-4">
               <FormControl size="small" variant="standard">
                 <InputLabel
                   className="text-14"
@@ -390,8 +395,6 @@ export const MyLibrary = observer((props: { destroy: () => unknown }) => {
                   <MenuItem value="opened">{lang.myLib.recentOpen}</MenuItem>
                 </Select>
               </FormControl>
-            </div>
-            <div className="flex gap-x-4">
               <button
                 className={classNames(
                   'flex flex-center gap-x-1 p-1 border-b-2',
@@ -438,7 +441,7 @@ export const MyLibrary = observer((props: { destroy: () => unknown }) => {
             </div>
           )}
           {!state.loading && !!state.books.length && (
-            <div className="flex items-stretch flex-1 h-0">
+            <div className="flex items-stretch flex-1 h-0 relative">
               {state.viewMode === 'grid' && (
                 <Scrollable className="flex-1">
                   <div
@@ -458,15 +461,26 @@ export const MyLibrary = observer((props: { destroy: () => unknown }) => {
                               className={classNames(
                                 'relative group w-[150px] h-[200px] cursor-pointer',
                                 'from-black/10 via-black/20 to-black/40 bg-gradient-to-b bg-cover bg-center',
+                                'outline outline-1 outline-black/30',
                               )}
-                              style={{ backgroundImage: `url("${src}")` }}
+                              style={{ backgroundImage: src ? `url("${src}")` : '' }}
                               onClick={(e) => e.target === e.currentTarget && handleOpenDetailView(v)}
                             >
-                              <div
+                              {/* <div
                                 className="absolute hidden right-0 top-0 p-1 group-hover:block bg-white/50 hover:bg-white/75"
                                 onClick={() => handleLeaveGroup(v.book.groupId)}
                               >
                                 <TrashIcon className="text-20 text-[#5fc0e9]" />
+                              </div> */}
+                              <div
+                                className={classNames(
+                                  'flex flex-center gap-[3px] absolute bottom-0 left-0 right-0 opacity-0 group-hover:opacity-100 z-20',
+                                  'cursor-pointer text-white text-12 text-center py-[6px] bg-black/40 hover:bg-black/50',
+                                )}
+                                onClick={() => handleOpenBook(v)}
+                              >
+                                <AiOutlineRead className="text-16 -mb-[2px]" />
+                                {lang.myLib.openBook}
                               </div>
                             </div>
                           )}
@@ -558,7 +572,7 @@ export const MyLibrary = observer((props: { destroy: () => unknown }) => {
                 </div>
               )}
               {!!state.selectedBook && (
-                <Scrollable className="bg-gray-33 w-[350px] relative" light>
+                <Scrollable className="bg-gray-33 w-[350px] absolute right-0 h-full z-20" light>
                   <button
                     className="absolute right-0 top-0 p-2"
                     onClick={action(() => { state.selectedBook = null; })}
@@ -570,12 +584,23 @@ export const MyLibrary = observer((props: { destroy: () => unknown }) => {
                       {(src) => (
                         <div
                           className={classNames(
-                            'w-[270px] h-[360px] cursor-pointer border-2 border-gray-f2',
+                            'relative w-[270px] h-[360px] cursor-pointer border-2 border-gray-f2 group',
                             'from-white/60 via-white/45 to-white/20 bg-gradient-to-b bg-cover bg-center',
                           )}
-                          style={{ backgroundImage: `url("${src}")` }}
-                          onClick={() => state.selectedBook && handleOpenBook(state.selectedBook)}
-                        />
+                          style={{ backgroundImage: src ? `url("${src}")` : '' }}
+                          onClick={(e) => e.target === e.currentTarget && state.selectedBook && handleOpenBook(state.selectedBook)}
+                        >
+                          <div
+                            className={classNames(
+                              'flex flex-center gap-1 absolute bottom-0 left-0 right-0 opacity-0 group-hover:opacity-100 z-20',
+                              'cursor-pointer text-white text-center py-2 bg-black/40 hover:bg-black/50',
+                            )}
+                            onClick={() => state.selectedBook && handleOpenBook(state.selectedBook)}
+                          >
+                            <AiOutlineRead className="text-20 -mb-[2px]" />
+                            {lang.myLib.openBook}
+                          </div>
+                        </div>
                       )}
                     </BookCoverImg>
                     <div className="flex justify-between text-bright-orange mt-5">
