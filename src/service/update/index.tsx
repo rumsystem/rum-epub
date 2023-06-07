@@ -10,6 +10,7 @@ const state = observable({
   manuallyChecking: false,
   updating: false,
   progress: null as null | ProgressInfo,
+  updateDownloadedOpen: false,
 });
 
 const actions: any = {
@@ -31,6 +32,8 @@ const actions: any = {
     state.progress = progress;
   }),
   'update-downloaded': async (data: UpdateInfo) => {
+    if (state.updateDownloadedOpen) { return; }
+    state.updateDownloadedOpen = true;
     const releaseNotes = typeof data.releaseNotes === 'string'
       ? data.releaseNotes
       : '';
@@ -54,6 +57,7 @@ const actions: any = {
       confirm: lang.update.reloadForUpdate,
       cancel: lang.update.doItLater,
     });
+    state.updateDownloadedOpen = false;
     if (result === 'confirm') {
       ipcRenderer.send('rum-updater', {
         action: 'install',
