@@ -4,7 +4,7 @@ import { v4 } from 'uuid';
 import { utils } from 'rum-sdk-browser';
 import { postContent } from '~/apis';
 import { getHotCount, runLoading, sleep } from '~/utils';
-import type { CommentType, CounterType, PostType, ProfileType } from '../polling';
+import type { CommentType, CounterType, PostDeleteType, PostType, ProfileType } from '../polling';
 import { Comment, Counter, Notification, Post, Profile, dbService } from '../db';
 import { nodeService } from '../node';
 import { bookService } from '../book';
@@ -106,7 +106,9 @@ const post = {
   create: async (params: {
     groupId: string
     content: string
+    bookName?: string
     bookId?: string
+    author?: string
     chapter?: string
     chapterId?: string
     quote?: string
@@ -120,11 +122,17 @@ const post = {
       object: {
         type: 'Note',
         id: v4(),
+        quote: {
+          type: 'Quote',
+          book: params.bookName,
+          bookId: params.bookId,
+          author: params.author,
+          chapter: params.chapter,
+          chapterId: params.chapterId,
+          content: params.quote,
+          range: params.quoteRange,
+        },
         content: params.content,
-        bookId: params.bookId,
-        chapterId: params.chapterId,
-        quote: params.quote,
-        quoteRange: params.quoteRange,
       },
       published: formatISO(new Date()),
     };
@@ -136,7 +144,9 @@ const post = {
         trxId: res.trx_id,
         id: activity.object.id,
         title: '',
+        bookName: params.bookName ?? '',
         bookId: params.bookId ?? '',
+        bookAuthor: params.author ?? '',
         chapter: params.chapter ?? '',
         chapterId: params.chapterId ?? '',
         quote: params.quote ?? '',
@@ -154,6 +164,7 @@ const post = {
         liked: false,
         status: 'pending',
         images: [],
+        deleted: 0,
       };
       await dbService.putPost([post]);
       runInAction(() => {
@@ -161,6 +172,28 @@ const post = {
       });
       return state.post.map.get(post.id);
     }
+  },
+
+  delete: async (groupId: string, postId: string) => {
+    const activity: PostDeleteType = {
+      type: 'Delete',
+      object: {
+        type: 'Note',
+        id: postId,
+      },
+      published: formatISO(new Date()),
+    };
+    await postContent(activity, groupId);
+    await dbService.deletePost(groupId, postId);
+    runInAction(() => {
+      if (state.post.groupId === groupId) {
+        const index = state.post.ids.indexOf(postId);
+        if (index !== -1) {
+          state.post.ids.splice(index, 1);
+          state.post.offset -= 1;
+        }
+      }
+    });
   },
 
   get: async (groupId: string, id: string) => {

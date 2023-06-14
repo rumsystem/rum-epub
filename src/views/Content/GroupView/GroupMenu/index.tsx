@@ -169,7 +169,7 @@ export const GroupMenu = observer((props: Props) => {
           <div className="flex items-center w-7 flex-none">
             <MdInfoOutline className="text-18" />
           </div>
-          <span className="font-bold text-14">{lang.group.info}</span>
+          <span className="font-bold text-14">{lang.group.trxInfo}</span>
         </div>
       </MenuItem>
       {!linkGroup && (

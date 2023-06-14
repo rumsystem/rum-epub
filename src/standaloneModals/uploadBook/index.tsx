@@ -1,5 +1,5 @@
 import { modalService } from '../modal';
-import { Props } from './UploadBook';
+import type { Props } from './UploadBook';
 
 export const uploadBook = (props: Props) => {
   const item = modalService.createModal();

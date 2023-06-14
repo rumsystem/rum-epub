@@ -1,5 +1,5 @@
 import { modalService } from '../modal';
-import { Props } from './EditProfile';
+import type { Props } from './EditProfile';
 
 export const editProfile = (props?: Props) => {
   const item = modalService.createModal();

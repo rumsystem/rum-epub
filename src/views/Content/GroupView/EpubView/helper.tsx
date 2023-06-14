@@ -11,10 +11,11 @@ interface HighLightRangeParams {
   temp?: boolean
   post?: Post & { children?: Array<Post> }
   onReapplyAnnotation: () => unknown
+  onReloadHighlights: () => unknown
 }
 
 export const highLightRange = (params: HighLightRangeParams) => {
-  const { post, book, bookId, cfiRange, groupId, onReapplyAnnotation, temp } = params;
+  const { post, book, bookId, cfiRange, groupId, onReapplyAnnotation, onReloadHighlights, temp } = params;
   const type = post ? 'underline' : 'highlight';
   book.rendition.annotations[type](
     cfiRange,
@@ -26,13 +27,13 @@ export const highLightRange = (params: HighLightRangeParams) => {
         return;
       }
       if (post) {
-        quoteDetail({ post, groupId, onReapplyAnnotation });
+        quoteDetail({ post, groupId, onReapplyAnnotation, onReloadHighlights });
         return;
       }
       const range = await book.getRange(cfiRange);
       const text = range.toString();
 
-      quoteDetail({ range: cfiRange, text, bookId, groupId, onReapplyAnnotation });
+      quoteDetail({ range: cfiRange, text, bookId, groupId, onReapplyAnnotation, onReloadHighlights });
     },
     'rum-annotation-hl',
     {

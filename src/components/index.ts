@@ -9,6 +9,7 @@ export * from './ImageEditor';
 export * from './Loading';
 export * from './LoadingDetector';
 export * from './MiddleTruncate';
+export * from './ObjectMenu';
 export * from './PasswordInput';
 export * from './Scrollable';
 export * from './SearchInput';

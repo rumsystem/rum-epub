@@ -1,5 +1,5 @@
 import { modalService } from '../modal';
-import { Props } from './EditEpubMetadata';
+import type { Props } from './EditEpubMetadata';
 
 export const editEpubMetadata = (props: Props) => {
   const item = modalService.createModal();

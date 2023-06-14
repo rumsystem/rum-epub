@@ -1,5 +1,5 @@
 import { modalService } from '../modal';
-import { InternalProps, Props } from './PostDetail';
+import type { InternalProps, Props } from './PostDetail';
 
 export const postDetail = (props: Props) => {
   const item = modalService.createModal();

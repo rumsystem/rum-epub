@@ -57,7 +57,7 @@ const ConfirmDialog = observer((props: { item: DialogItem }) => {
       <DialogActions className="flex justify-end items-center py-3 px-6">
         {!props.item.hideCancel && (
           <Button
-            className="block bg-white cursor-pointer min-w-[70px]"
+            className="block bg-white cursor-pointer min-w-[70px] normal-case"
             color="inherit"
             data-test-id={props.item.cancelTestId}
             onClick={handleClose}
@@ -67,8 +67,8 @@ const ConfirmDialog = observer((props: { item: DialogItem }) => {
         )}
         <Button
           className={classNames(
-            'min-w-[70px]',
-            props.item.danger && 'bg-red-400',
+            'min-w-[70px] normal-case',
+            props.item.danger && 'bg-red-400 hover:bg-red-400/80',
           )}
           onClick={handleConfirm}
           data-test-id={props.item.confirmTestId}

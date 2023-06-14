@@ -68,31 +68,31 @@ export const GroupInfo = observer((props: { destroy: () => unknown } & Props) =>
           </div>
           <div className="p-6 text-gray-88 text-13 border border-gray-d8 rounded-0 shadow">
             <div className="flex items-center">
-              <span className={width}>{lang.group.name}：</span>
+              <span className={width}>{lang.group.name}:&nbsp;</span>
               <span className="text-gray-4a opacity-90">
                 {group?.group_name}
               </span>
             </div>
             <div className="mt-4 flex items-center">
-              <span className={width}>ID：</span>
+              <span className={width}>ID:&nbsp;</span>
               <span className="text-gray-4a opacity-90">
                 {group?.group_id}
               </span>
             </div>
             <div className="mt-4 flex items-center">
-              <span className={width}>{lang.group.owner}：</span>
+              <span className={width}>{lang.group.owner}:&nbsp;</span>
               <div className="text-gray-4a opacity-90">
                 {group?.owner_pubkey}
               </div>
             </div>
             {/* <div className="mt-4 flex items-center">
-              <span className={width}>{lang.group.highestBlockId}：</span>
+              <span className={width}>{lang.group.highestBlockId}:&nbsp;</span>
               <span className="text-gray-4a opacity-90">
                 {group?.currt_top_block}
               </span>
             </div> */}
             {/* <div className="mt-4 flex items-center">
-              <span className={width}>{lang.owner}：</span>
+              <span className={width}>{lang.owner}:&nbsp;</span>
               {!state.loading && (
                 <div
                   className="opacity-90 cursor-pointer text-blue-500"
@@ -105,20 +105,20 @@ export const GroupInfo = observer((props: { destroy: () => unknown } & Props) =>
               )}
             </div> */}
             <div className="mt-4 flex items-center">
-              <span className={width}>{lang.group.highestHeight}：</span>
+              <span className={width}>{lang.group.highestHeight}:&nbsp;</span>
               <span className="text-gray-4a opacity-90">
                 {group?.currt_top_block}
               </span>
             </div>
             <div className="mt-4 flex items-center">
-              <span className={width}>{lang.group.lastUpdated}：</span>
+              <span className={width}>{lang.group.lastUpdated}:&nbsp;</span>
               <span className="text-gray-4a opacity-90">
                 {ago(group?.last_updated ?? 0)}
               </span>
             </div>
             {/* TODO: group status */}
             {/* <div className="mt-4 flex items-center">
-              <span className={width}>{lang.group.status}：</span>
+              <span className={width}>{lang.group.status}:&nbsp;</span>
               <span className="text-gray-4a opacity-90">
                 <Tooltip title={group?.group_status} placement="right">
                   <span>

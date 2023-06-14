@@ -1,7 +1,7 @@
 import { createPromise } from '~/utils';
 import { Comment } from '~/service';
 import { modalService } from '../modal';
-import { InternalProps, Props } from './ReplyComment';
+import type { InternalProps, Props } from './ReplyComment';
 
 export const replyComment = (props: Props) => {
   const item = modalService.createModal();

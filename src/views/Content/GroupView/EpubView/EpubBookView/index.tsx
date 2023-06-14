@@ -14,11 +14,11 @@ import ExitFullscreenIcon from 'boxicons/svg/regular/bx-exit-fullscreen.svg?fill
 
 import {
   bookService, linkTheme, progressBarTheme, readerSettingsService,
-  readerThemes, dbService, nodeService, dialogService, HighlightItem, Post,
+  readerThemes, dbService, nodeService, dialogService, HighlightItem, Post, linkGroupService,
 } from '~/service';
 import { addLinkOpen, lang, modifierKeys } from '~/utils';
 import { BookCoverImgTooltip } from '~/components';
-import { createPost, groupLink } from '~/standaloneModals';
+import { createPost, groupLink, quoteDetail } from '~/standaloneModals';
 
 import MarkerIcon from '~/assets/icon_marker.svg?fill';
 
@@ -160,21 +160,43 @@ export const EpubBookView = observer((props: Props) => {
       text,
     };
     bookService.highlight.save(item);
+    runInAction(() => {
+      state.highlightButton = null;
+      highlightState.local.push(item);
+    });
     highLightRange({
       groupId: bookService.state.current.groupId,
       bookId: state.bookId,
       cfiRange,
       book: state.book,
       onReapplyAnnotation: reApplyAnnotation,
-    });
-    runInAction(() => {
-      highlightState.local.push(item);
+      onReloadHighlights: loadHighlights,
     });
 
     const iframe: HTMLIFrameElement = (state.book as any).rendition?.manager?.views?._views?.[0]?.iframe;
     if (iframe) {
       iframe.contentWindow?.getSelection()?.removeAllRanges();
     }
+
+    const linkedGroupId = nodeService.state.groupLink[bookService.state.current.groupId];
+    if (!linkedGroupId) {
+      return;
+    }
+    const chapters = chapterSearch(state.chapters, state.currentHref);
+    // create an empty post if there's a linkGroup attached
+    await linkGroupService.post.create({
+      groupId: linkedGroupId,
+      bookName: state.bookData?.book.title ?? '',
+      bookId: state.bookId,
+      content: '',
+      ...chapters ? {
+        chapter: chapters.map((v) => v.label.trim()).join(' -> '),
+        chapterId: chapters.at(-1)!.href,
+      } : {},
+      quote: text,
+      quoteRange: cfiRange,
+    });
+    loadHighlights();
   };
 
   const handlePostHighlight = async () => {
@@ -182,6 +204,8 @@ export const EpubBookView = observer((props: Props) => {
       return;
     }
 
+    const bookGroupId = bookService.state.current.groupId;
+    const bookId = bookService.state.current.bookId;
     const cfiRange = state.highlightButton.range;
     const range = await state.book.getRange(cfiRange);
     const text = range.toString();
@@ -192,8 +216,8 @@ export const EpubBookView = observer((props: Props) => {
       iframe.contentWindow?.getSelection()?.removeAllRanges();
     }
 
-    const linkedGroupId = nodeService.state.groupLink[bookService.state.current.groupId];
-    if (!linkedGroupId) {
+    const linkGroupId = nodeService.state.groupLink[bookService.state.current.groupId];
+    if (!linkGroupId) {
       dialogService.open({
         content: lang.linkGroup.noCommentSeednetLinked,
         confirm: lang.linkGroup.goLink,
@@ -201,9 +225,9 @@ export const EpubBookView = observer((props: Props) => {
       return;
     }
     const post = await createPost({
-      groupId: linkedGroupId,
-      bookGroupId: bookService.state.current.groupId,
-      bookId: bookService.state.current.bookId,
+      groupId: linkGroupId,
+      bookGroupId,
+      bookId,
       ...chapters ? {
         chapter: chapters.map((v) => v.label.trim()).join(' -> '),
         chapterId: chapters.at(-1)!.href,
@@ -212,10 +236,20 @@ export const EpubBookView = observer((props: Props) => {
       quoteRange: cfiRange,
     });
     if (post) {
-      bookService.openBook({
+      const item: HighlightItem = {
         groupId: bookService.state.current.groupId,
-        linkGroupId: linkedGroupId,
+        bookId: state.bookId,
+        cfiRange,
+        text,
+      };
+      quoteDetail({
+        post,
+        groupId: bookGroupId,
+        onReapplyAnnotation: reApplyAnnotation,
+        onReloadHighlights: loadHighlights,
       });
+      await bookService.highlight.save(item);
+      loadHighlights();
     }
   };
 
@@ -268,7 +302,6 @@ export const EpubBookView = observer((props: Props) => {
     const groupId = bookService.state.current.groupId;
     if (!book) { return; }
     const annotations: Array<Annotation> = Object.values((book.rendition.annotations as any)._annotations);
-    // const highlights = annotations.filter((v) => v.type === 'highlight');
     const highlights = annotations;
     highlights.forEach((v) => {
       book.rendition.annotations.remove(v.cfiRange, v.type);
@@ -279,8 +312,16 @@ export const EpubBookView = observer((props: Props) => {
       bookId: state.bookId,
       groupId,
       onReapplyAnnotation: reApplyAnnotation,
+      onReloadHighlights: loadHighlights,
     };
 
+    highlightState.post.forEach((v) => {
+      highLightRange({
+        ...commonParams,
+        cfiRange: v.quoteRange,
+        post: v,
+      });
+    });
     highlightState.local.forEach((v) => {
       highLightRange({
         ...commonParams,
@@ -292,13 +333,6 @@ export const EpubBookView = observer((props: Props) => {
         ...commonParams,
         cfiRange: v,
         temp: true,
-      });
-    });
-    highlightState.post.forEach((v) => {
-      highLightRange({
-        ...commonParams,
-        cfiRange: v.quoteRange,
-        post: v,
       });
     });
   };
@@ -649,7 +683,7 @@ export const EpubBookView = observer((props: Props) => {
               bookTrx={state.bookId}
               onSettingChange={() => reApplyAnnotation()}
             />
-            <Tooltip title="评论">
+            <Tooltip title={lang.linkGroup.comment}>
               <Button
                 className="flex flex-center p-0 w-8 h-8 min-w-0"
                 onClick={handlePostComment}
@@ -807,34 +841,32 @@ export const EpubBookView = observer((props: Props) => {
           </div>
         </div>
 
-        <ClickAwayListener onClickAway={action(() => { state.highlightButton = null; })}>
-          <div
-            className="fixed flex bg-white rounded shadow-4 px-px"
-            style={{
-              left: `${state.highlightButton?.left ?? 0}px`,
-              top: `${state.highlightButton?.top ?? 0}px`,
-            }}
-          >
+        {!!state.highlightButton && (
+          <ClickAwayListener onClickAway={action(() => { state.highlightButton = null; })}>
             <div
-              className={classNames(
-                'p-[6px] cursor-pointer',
-                !state.highlightButton && 'hidden',
-              )}
-              onClick={handleAddHighlight}
+              className="fixed flex bg-white rounded shadow-4 px-px"
+              style={{
+                left: `${state.highlightButton?.left ?? 0}px`,
+                top: `${state.highlightButton?.top ?? 0}px`,
+              }}
             >
-              <MarkerIcon className="text-producer-blue" />
+              <Tooltip title="highlight" disableInteractive arrow>
+                <div
+                  className="p-[6px] cursor-pointer"
+                  onClick={handleAddHighlight}
+                >
+                  <MarkerIcon className="text-black/50" />
+                </div>
+              </Tooltip>
+              <div
+                className="p-[6px] cursor-pointer"
+                onClick={handlePostHighlight}
+              >
+                <BiCommentDetail className="text-20 -mb-[2px] text-producer-blue" />
+              </div>
             </div>
-            <div
-              className={classNames(
-                'p-[6px] cursor-pointer',
-                !state.highlightButton && 'hidden',
-              )}
-              onClick={handlePostHighlight}
-            >
-              <BiCommentDetail className="text-20 -mb-[2px] text-producer-blue" />
-            </div>
-          </div>
-        </ClickAwayListener>
+          </ClickAwayListener>
+        )}
       </div>
     </div>
   );

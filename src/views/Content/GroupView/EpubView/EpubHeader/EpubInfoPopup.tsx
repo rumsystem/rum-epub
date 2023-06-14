@@ -5,7 +5,7 @@ import { observer, useLocalObservable } from 'mobx-react-lite';
 import DOMPurify from 'dompurify';
 import { Popover, PopoverProps } from '@mui/material';
 import { Close, EditOutlined } from '@mui/icons-material';
-import { bookService } from '~/service';
+import { bookService, i18n } from '~/service';
 import { editEpubMetadata, editEpubCover } from '~/standaloneModals';
 import { lang } from '~/utils';
 import { BookCoverImg, Scrollable } from '~/components';
@@ -66,7 +66,9 @@ export const EpubInfoPopup = observer((props: Props) => {
       <div className="text-white">
         <div className="flex flex-center relative bg-black h-11">
           <span className="text-18">
-            《{title}》
+            {i18n.state.lang === 'cn' && '《'}
+            {title}
+            {i18n.state.lang === 'cn' && '》'}
           </span>
 
           <Close

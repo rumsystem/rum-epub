@@ -1,9 +1,11 @@
+import { useMemo, useRef, useState } from 'react';
 import classNames from 'classnames';
 import { action, runInAction } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
+import { utils } from 'rum-sdk-browser';
 
 import { Button, Dialog } from '@mui/material';
-import { RiThumbUpFill, RiThumbUpLine } from 'react-icons/ri';
+import { RiMoreFill, RiThumbUpFill, RiThumbUpLine } from 'react-icons/ri';
 import { FaRegComment } from 'react-icons/fa';
 import { FiCopy } from 'react-icons/fi';
 import { BiCommentDetail } from 'react-icons/bi';
@@ -11,7 +13,7 @@ import { BiCommentDetail } from 'react-icons/bi';
 import MarkerIcon from '~/assets/icon_marker.svg?fill';
 import { HighlightItem, Post, bookService, dialogService, linkGroupService, nodeService, tooltipService } from '~/service';
 import { lang, notNullFilter, setClipboard } from '~/utils';
-import { Ago, Scrollable, UserAvatar, UserName } from '~/components';
+import { Ago, Scrollable, UserAvatar, UserName, ObjectMenu } from '~/components';
 
 import { postDetail } from '../postDetail';
 import { createPost } from '../createPost';
@@ -19,18 +21,21 @@ import { groupLink } from '../groupLink';
 
 export interface PropsPost {
   post: Post & { children?: Array<Post> }
+  /** bookGroupId */
   groupId: string
 }
 
 export interface PropsRange {
   range: string
   text: string
+  /** bookGroupId */
   groupId: string
   bookId: string
 }
 
 export interface ReapplyAnnotationProps {
   onReapplyAnnotation: () => unknown
+  onReloadHighlights: () => unknown
 }
 
 export type Props = (PropsPost | PropsRange) & ReapplyAnnotationProps;
@@ -42,6 +47,14 @@ export interface InternalProps {
 export const QuoteDetail = observer((props: InternalProps & SelfProps) => {
   const state = useLocalObservable(() => ({
     open: true,
+    deletedPostIds: new Set<string>(),
+    get posts() {
+      const arr = [props.post, ...props.post?.children ?? []]
+        .filter(notNullFilter)
+        .filter((v) => !this.deletedPostIds.has(v.id));
+      arr.sort((a, b) => (b.content ? 1 : 0) - (a.content ? 1 : 0));
+      return arr;
+    },
   }));
 
   const bookId = props.post?.bookId || props.bookId!;
@@ -78,6 +91,11 @@ export const QuoteDetail = observer((props: InternalProps & SelfProps) => {
     });
   };
 
+  const handleDeletePost = action((post: Post) => {
+    state.deletedPostIds.add(post.id);
+    props.onReloadHighlights();
+  });
+
   const handleToggleHighlight = async () => {
     if (!highlighted) {
       const item: HighlightItem = {
@@ -102,7 +120,15 @@ export const QuoteDetail = observer((props: InternalProps & SelfProps) => {
     props.onReapplyAnnotation();
   };
 
-  const posts = [...props.post?.children ?? [], props.post].filter(notNullFilter);
+  const group = nodeService.state.groups.find((v) => v.group_id === props.post?.groupId);
+  const myUserAddress = useMemo(() => {
+    if (!group?.user_pubkey) { return ''; }
+    try {
+      return utils.pubkeyToAddress(group?.user_pubkey);
+    } catch (e) {
+      return '';
+    }
+  }, [group?.user_pubkey]);
 
   return (
     <Dialog maxWidth={false} open={state.open} onClose={handleClose}>
@@ -148,13 +174,13 @@ export const QuoteDetail = observer((props: InternalProps & SelfProps) => {
             </Button>
           </div>
 
-          {!posts.length && (
+          {!state.posts.length && (
             <div className="flex flex-center text-black/30">
               {lang.epubHighlights.noPostsYet}
             </div>
           )}
 
-          {posts.map((v) => (
+          {state.posts.map((v) => (
             <div
               className="flex-col gap-y-2 border py-3 px-4 rounded"
               key={v.id}
@@ -162,18 +188,30 @@ export const QuoteDetail = observer((props: InternalProps & SelfProps) => {
               <div className="flex items-center gap-2 -ml-px">
                 <UserAvatar groupId={v.groupId} userAddress={v.userAddress} size={32} />
                 <div className="flex items-center gap-3 relative">
-                  <span className="font-bold text-black/60">
+                  <span
+                    className={classNames(
+                      'font-bold text-black/60',
+                      v.userAddress === myUserAddress && 'bg-black/60 px-[6px] rounded text-white',
+                    )}
+                  >
                     <UserName groupId={v.groupId} userAddress={v.userAddress} />
                   </span>
                   <span className="text-black/40 text-12">
                     <Ago timestamp={v.timestamp} />
                   </span>
+                  {!v.content && (
+                    <span className="text-12 text-black/40">
+                      {lang.linkGroup.marked}
+                    </span>
+                  )}
                 </div>
               </div>
 
-              <div className="text-black/80">
-                {v.content}
-              </div>
+              {!!v.content && (
+                <div className="text-black/80">
+                  {v.content}
+                </div>
+              )}
 
               <div className="flex items-center -ml-2">
                 <Button
@@ -200,6 +238,13 @@ export const QuoteDetail = observer((props: InternalProps & SelfProps) => {
                   </div>
                   {v.commentCount || lang.linkGroup.comment}
                 </Button>
+
+                {v.status === 'synced' && (
+                  <MenuButton
+                    post={v}
+                    onDelete={() => handleDeletePost(v)}
+                  />
+                )}
               </div>
             </div>
           ))}
@@ -208,3 +253,27 @@ export const QuoteDetail = observer((props: InternalProps & SelfProps) => {
     </Dialog>
   );
 });
+
+const MenuButton = (props: { post: Post, onDelete: () => unknown }) => {
+  const [open, setOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  return (<>
+    <Button
+      className="flex items-center gap-[6px] px-2 py-[2px] text-black/50 hover:text-black/80 min-w-0"
+      variant="text"
+      size="small"
+      ref={menuButtonRef}
+      onClick={() => setOpen((v) => !v)}
+    >
+      <RiMoreFill className="text-20" />
+    </Button>
+
+    <ObjectMenu
+      open={open}
+      anchor={menuButtonRef.current}
+      object={props.post}
+      onClose={() => setOpen(false)}
+      onDelete={props.onDelete}
+    />
+  </>);
+};

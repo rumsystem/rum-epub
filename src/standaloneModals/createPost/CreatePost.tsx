@@ -40,7 +40,7 @@ export const CreatePost = observer((props: InternalProps & Props) => {
 
   const handleSubmit = () => {
     const content = state.content.trim();
-    if (!content) {
+    if (!content && !props.quote) {
       tooltipService.show({
         content: lang.linkGroup.emptyPostTip,
         type: 'warning',
@@ -50,8 +50,11 @@ export const CreatePost = observer((props: InternalProps & Props) => {
     runLoading(
       (l) => { state.loading = l; },
       async () => {
+        const book = bookService.state.groupMap.get(props.bookGroupId ?? '')?.find((v) => v.book.id === props.bookId);
         const post = await linkGroupService.post.create({
           groupId: props.groupId,
+          bookName: book?.book.title ?? '',
+          author: book?.metadata?.metadata.author ?? '',
           bookId: state.bookId || props.bookId,
           content,
           ...props.chapter && props.chapterId ? {
@@ -86,7 +89,7 @@ export const CreatePost = observer((props: InternalProps & Props) => {
         {!props.bookId && (
           <div className="flex-col gap-1">
             <div className="text-black/80">
-              选择书籍
+              {lang.linkGroup.selectBook}
             </div>
             <Select
               className="w-[500px]"
@@ -97,7 +100,9 @@ export const CreatePost = observer((props: InternalProps & Props) => {
                 return (
                   <div className="flex items-center gap-2 text-14">
                     {!book && (
-                      <div className="flex items-center h-8">无</div>
+                      <div className="flex items-center h-8">
+                        {lang.linkGroup.empty}
+                      </div>
                     )}
                     {!!book && (<>
                       <BookCoverImg
@@ -119,7 +124,9 @@ export const CreatePost = observer((props: InternalProps & Props) => {
               size="small"
             >
               <MenuItem className="text-14" value="">
-                <div className="flex items-center h-8">无</div>
+                <div className="flex items-center h-8">
+                  {lang.linkGroup.empty}
+                </div>
               </MenuItem>
 
               {books.map((v) => (

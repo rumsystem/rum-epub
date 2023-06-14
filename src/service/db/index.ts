@@ -223,24 +223,37 @@ interface ListPostParams {
 
 const listPost = async (param: ListPostParams) => {
   const db = dbService.db;
+  const conditions = [
+    ['groupId', param.groupId],
+    ['deleted', 0],
+    param.bookId ? ['bookId', param.bookId] : [],
+    param.userAddress ? ['userAddress', param.userAddress] : [],
+  ].filter((v) => v.length);
   const where = [
-    'groupId',
-    param.bookId ? 'bookId' : '',
-    param.userAddress ? 'userAddress' : '',
+    ...conditions.map((v) => v[0]),
     param.order === 'hot' ? 'hotCount' : 'timestamp',
-  ].filter((v) => v).join('+');
+  ].join('+');
+  const whereParams = conditions.map((v) => v[1]);
   const posts = await db.post
     .where(`[${where}]`)
     .between(
-      [param.groupId, param.bookId, param.userAddress, Dexie.minKey].filter((v) => v),
-      [param.groupId, param.bookId, param.userAddress, Dexie.maxKey].filter((v) => v),
+      [...whereParams, Dexie.minKey],
+      [...whereParams, Dexie.maxKey],
     )
     .reverse()
-    .filter((v) => !!v.quoteRange)
     .offset(param.offset)
     .limit(param.limit)
     .toArray();
   return posts;
+};
+
+const deletePost = async (groupId: string, postId: string | Array<string>) => {
+  const postIds = Array.isArray(postId) ? postId : [postId];
+  const db = dbService.db;
+  await db.post
+    .where('[groupId+id]')
+    .anyOf(postIds.map((id) => [groupId, id]))
+    .modify({ deleted: 1 });
 };
 
 interface GetProfileByTrxId {
@@ -559,6 +572,7 @@ export const dbService = {
   getPost,
   putPost,
   listPost,
+  deletePost,
 
   getProfile,
   putProfile,

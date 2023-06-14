@@ -53,16 +53,29 @@ export const handlePost = async (options: IOptions) => {
         const images = item.activity.object.image
           ? [item.activity.object.image].flatMap((v) => v)
           : [];
+
+        const quoteObject = typeof object.quote === 'object' ? object.quote : null;
+
+        const bookName = quoteObject?.book ?? '';
+        const bookAuthor = quoteObject?.author ?? '';
+        const bookId = quoteObject?.bookId ?? object.bookId ?? '';
+        const chapter = quoteObject?.chapter ?? object.chapter ?? '';
+        const chapterId = quoteObject?.chapterId ?? object.chapterId ?? '';
+        const quote = (typeof object.quote === 'object' ? quoteObject?.content : object.quote) ?? '';
+        const quoteRange = quoteObject?.range ?? object.quoteRange ?? '';
+
         postToPut.push({
           id,
           groupId,
           trxId: item.content.TrxId,
           timestamp,
-          bookId: object.bookId ?? '',
-          chapter: object.chapter ?? '',
-          chapterId: object.chapterId ?? '',
-          quote: object.quote ?? '',
-          quoteRange: object.quoteRange ?? '',
+          bookName,
+          bookId,
+          bookAuthor,
+          chapter,
+          chapterId,
+          quote,
+          quoteRange,
           content: object.content,
           title: object.name ?? '',
           commentCount: 0,
@@ -75,6 +88,7 @@ export const handlePost = async (options: IOptions) => {
           userAddress,
           liked: false,
           disliked: false,
+          deleted: 0,
         });
       }
 

@@ -20,7 +20,7 @@ import PermissionWriteIcon from '~/assets/permission/write.svg?react';
 import PermissionReadOnlyIcon from '~/assets/permission/readonly.svg?react';
 import SeedNoopenIcon from '~/assets/icon_seed_noopen.svg?react';
 
-import { dialogService, bookService, escService, nodeService, tooltipService } from '~/service';
+import { dialogService, bookService, escService, nodeService, tooltipService, i18n } from '~/service';
 import { lang, runLoading } from '~/utils';
 import { GROUP_CONFIG_KEY, GROUP_TEMPLATE_TYPE } from '~/utils/constant';
 import { AuthType, changeGroupConfig, updateFollowingRule } from '~/apis';
@@ -99,7 +99,11 @@ export const CreateGroup = observer((props: Props & InternalProps) => {
         : lang.createGroup.confirmCreateEpubSeednet,
       content: (
         <div className="text-center">
-          <p className="mb-4">《{state.name}》</p>
+          <p className="mb-4">
+            {i18n.state.lang === 'cn' && '《'}
+            {state.name}
+            {i18n.state.lang === 'cn' && '》'}
+          </p>
           <p className="text-14">
             {lang.createGroup.confirmCreateTip}
           </p>

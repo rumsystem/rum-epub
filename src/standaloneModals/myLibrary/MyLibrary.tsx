@@ -28,6 +28,7 @@ import {
   bookService,
   dialogService,
   escService,
+  i18n,
   loadingService,
   nodeService,
   tooltipService,
@@ -155,7 +156,7 @@ export const MyLibrary = observer((props: { destroy: () => unknown }) => {
       {
         Header: lang.myLib.rating,
         width: 80,
-        accessor: () => '暂无',
+        accessor: () => lang.myLib.na,
       },
       // {
       //   Header: lang.myLib.oparation,
@@ -629,7 +630,9 @@ export const MyLibrary = observer((props: { destroy: () => unknown }) => {
                       className="text-center text-18 font-bold my-4"
                       onClick={() => state.selectedBook && handleOpenBook(state.selectedBook)}
                     >
-                      《{state.selectedBook.book.title}》
+                      {i18n.state.lang === 'cn' && '《'}
+                      {state.selectedBook.book.title}
+                      {i18n.state.lang === 'cn' && '》'}
                     </div>
                     <div className="">
                       {[

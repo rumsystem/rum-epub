@@ -1,5 +1,5 @@
 import { modalService } from '../modal';
-import { InternalProps, Props } from './NotificationModal';
+import type { InternalProps, Props } from './NotificationModal';
 
 export const notificationModal = (props: Props) => {
   const item = modalService.createModal();

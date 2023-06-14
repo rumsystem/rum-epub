@@ -8,8 +8,7 @@ import { RiMoreFill, RiThumbUpFill, RiThumbUpLine } from 'react-icons/ri';
 import { FaRegComment } from 'react-icons/fa';
 
 import { Comment, linkGroupService } from '~/service';
-import { Ago, ContentSyncStatus, UserAvatar, UserName } from '~/components';
-import { ObjectMenu } from '../../../ObjectMenu';
+import { Ago, ContentSyncStatus, UserAvatar, UserName, ObjectMenu } from '~/components';
 import { lang } from '~/utils';
 
 interface Props {
@@ -18,6 +17,7 @@ interface Props {
   replyTo?: Comment
   onReplyClick?: () => unknown
   onReplyToClick?: () => unknown
+  myUserAddress?: string
 }
 
 export const CommentItem = observer((props: Props) => {
@@ -43,7 +43,13 @@ export const CommentItem = observer((props: Props) => {
       <UserAvatar onClick={handleClickUser} groupId={comment.groupId} userAddress={comment.userAddress} size={36} />
       <div className="flex-col gap-1 mt-1 flex-1">
         <div className="flex items-center gap-3 relative">
-          <span className="text-black/60 font-bold" onClick={handleClickUser}>
+          <span
+            className={classNames(
+              'font-bold text-black/60',
+              comment.userAddress === props.myUserAddress && 'bg-black/60 px-[6px] rounded text-white',
+            )}
+            onClick={handleClickUser}
+          >
             <UserName groupId={comment.groupId} userAddress={comment.userAddress} />
           </span>
           <span className="text-black/40">

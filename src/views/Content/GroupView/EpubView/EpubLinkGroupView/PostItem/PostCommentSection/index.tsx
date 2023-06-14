@@ -156,6 +156,7 @@ export const PostCommentSection = observer((props: Props) => {
               <CommentItem
                 onReplyClick={() => handleReplyComment(comment)}
                 comment={comment}
+                myUserAddress={state.myUserAddress}
               />
               {!!state.comments.filter((u) => u.threadId === comment.id).length && (
                 <div className="flex-col mt-4 gap-4 ml-11 border-l-2 border-black/8 pl-2">
@@ -165,6 +166,7 @@ export const PostCommentSection = observer((props: Props) => {
                       onReplyClick={() => handleReplyComment(childComment)}
                       comment={childComment}
                       replyTo={state.comments.find((v) => v.id === childComment.replyTo)}
+                      myUserAddress={state.myUserAddress}
                     />
                   ))}
                 </div>

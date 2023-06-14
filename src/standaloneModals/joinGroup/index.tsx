@@ -1,6 +1,6 @@
 import { createPromise } from '~/utils';
 import { modalService } from '../modal';
-import { InternalProps, Props } from './JoinGroup';
+import type { InternalProps, Props } from './JoinGroup';
 
 export const joinGroup = (props?: Props) => {
   const item = modalService.createModal();

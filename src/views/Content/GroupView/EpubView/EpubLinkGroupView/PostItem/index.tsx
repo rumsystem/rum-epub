@@ -8,14 +8,15 @@ import { RiMoreFill, RiThumbUpFill, RiThumbUpLine } from 'react-icons/ri';
 import { FaComment, FaRegComment } from 'react-icons/fa';
 
 import { bookService, linkGroupService, Post } from '~/service';
-import { UserAvatar, UserName, ContentSyncStatus, Ago, BookCoverImg } from '~/components';
+import { UserAvatar, UserName, ContentSyncStatus, Ago, BookCoverImg, ObjectMenu } from '~/components';
 import { lang } from '~/utils';
-import { ObjectMenu } from '../ObjectMenu';
 import { PostCommentSection } from './PostCommentSection';
 
 interface Props {
   className?: string
   post: Post
+  myUserAddress?: string
+  onDelete?: () => unknown
 }
 
 export const PostItem = observer((props: Props) => {
@@ -36,6 +37,10 @@ export const PostItem = observer((props: Props) => {
     order: 'time',
   });
 
+  const handlePostDelete = () => {
+    props.onDelete?.();
+  };
+
   return (
     <div
       className={classNames(
@@ -47,7 +52,13 @@ export const PostItem = observer((props: Props) => {
         <UserAvatar onClick={handleClickUser} groupId={post.groupId} userAddress={post.userAddress} size={44} />
         <div className="flex-col gap-3 mt-1 flex-1">
           <div className="flex items-center gap-3 relative">
-            <span className="font-bold text-black/60" onClick={handleClickUser}>
+            <span
+              className={classNames(
+                'font-bold text-black/60',
+                post.userAddress === props.myUserAddress && 'bg-black/60 px-[6px] rounded text-white',
+              )}
+              onClick={handleClickUser}
+            >
               <UserName groupId={post.groupId} userAddress={post.userAddress} />
             </span>
             <span className="text-black/40">
@@ -55,10 +66,11 @@ export const PostItem = observer((props: Props) => {
             </span>
           </div>
 
-          <div className="-mt-1">
-            {post.content}
-            {!post.content && <span>&nbsp;</span>}
-          </div>
+          {!!post.content && (
+            <div className="-mt-1">
+              {post.content}
+            </div>
+          )}
 
           {!!post.bookId && (
             <div className="flex-col gap-2">
@@ -192,6 +204,7 @@ export const PostItem = observer((props: Props) => {
               anchor={menuButtonRef.current}
               object={post}
               onClose={action(() => { state.menu = false; })}
+              onDelete={handlePostDelete}
             />
           </div>
         </div>

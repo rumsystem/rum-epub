@@ -102,7 +102,7 @@ export const GroupPopup = observer((props: Props) => {
               }}
             >
               <MdInfoOutline className="text-18 text-gray-600 opacity-50  mr-3" />
-              <span>{lang.group.info}</span>
+              <span>{lang.group.trxInfo}</span>
             </div>
             <div
               className="flex items-center px-6 py-3 hover:bg-gray-ec cursor-pointer"

@@ -1,5 +1,5 @@
 import { modalService } from '../modal';
-import { Props } from './EditEpupCover';
+import type { Props } from './EditEpupCover';
 
 export const editEpubCover = (props: Props) => {
   if (!props.bookId) {

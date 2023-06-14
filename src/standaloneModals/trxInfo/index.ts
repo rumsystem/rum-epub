@@ -1,5 +1,5 @@
 import { modalService } from '../modal';
-import { InternalProps, Props } from './TrxInfo';
+import type { InternalProps, Props } from './TrxInfo';
 
 export const trxInfo = (props: Props) => {
   const item = modalService.createModal();

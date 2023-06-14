@@ -3,6 +3,7 @@ import { action, runInAction } from 'mobx';
 import { observer, useLocalObservable } from 'mobx-react-lite';
 import { Tooltip } from '@mui/material';
 import { RiCheckDoubleFill, RiCheckLine } from 'react-icons/ri';
+import { lang } from '~/utils';
 
 interface Props {
   className?: string
@@ -27,7 +28,7 @@ export const ContentSyncStatus = observer((props: Props) => {
 
   if (state.type === 'none') { return null; }
   return (
-    <Tooltip title={state.type === 'pending' ? '同步中' : '已同步'}>
+    <Tooltip title={state.type === 'pending' ? lang.trx.syncing : lang.trx.synced}>
       <div className={props.className}>
         {state.type === 'pending' && (
           <RiCheckLine className="text-18 text-black/50" />

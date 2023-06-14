@@ -10,10 +10,9 @@ import { FaRegComment } from 'react-icons/fa';
 
 import { Comment, Post, bookService, linkGroupService } from '~/service';
 import { lang, runLoading } from '~/utils';
-import { Ago, BookCoverImg, ContentSyncStatus, Scrollable, UserAvatar, UserName } from '~/components';
+import { Ago, BookCoverImg, ContentSyncStatus, Scrollable, UserAvatar, UserName, ObjectMenu } from '~/components';
 
 import { CommentSection } from './CommentSection';
-import { ObjectMenu } from './ObjectMenu';
 import { locateCommentContext } from './locateComment';
 
 export interface Props {
@@ -100,10 +99,11 @@ export const PostDetail = observer((props: InternalProps & Props) => {
                     </span>
                   </div>
 
-                  <div className="-mt-1">
-                    {post.content}
-                    {!post.content && <span>&nbsp;</span>}
-                  </div>
+                  {!!post.content && (
+                    <div className="-mt-1">
+                      {post.content}
+                    </div>
+                  )}
 
                   {!!post.bookId && (
                     <div className="flex-col gap-2">
@@ -237,6 +237,8 @@ export const PostDetail = observer((props: InternalProps & Props) => {
                       anchor={menuButtonRef.current}
                       object={post}
                       onClose={action(() => { state.menu = false; })}
+                      onDelete={handleClose}
+                      hideOpenPostDetail
                     />
                   </div>
                 </div>

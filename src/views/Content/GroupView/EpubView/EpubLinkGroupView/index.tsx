@@ -193,7 +193,11 @@ export const EpubLinkGroupView = observer((props: { className?: string }) => {
           {!!state.posts.length && (<>
             <div className="flex-col gap-4 justify-center items-stretch max-w-[740px] mx-auto">
               {state.posts.map((post) => (
-                <PostItem post={post} key={post.id} />
+                <PostItem
+                  post={post}
+                  key={post.id}
+                  myUserAddress={state.linkGroupUserAddress}
+                />
               ))}
             </div>
 

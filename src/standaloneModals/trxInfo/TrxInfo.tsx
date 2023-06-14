@@ -38,8 +38,7 @@ export const TrxInfo = observer((props: InternalProps & Props) => {
     } catch (err) {
       console.error(err);
       tooltipService.show({
-        // content: lang.failToLoad,
-        content: '加载trx失败',
+        content: lang.trx.failToLoadTrx,
         type: 'error',
       });
     }
@@ -64,39 +63,39 @@ export const TrxInfo = observer((props: InternalProps & Props) => {
               }}
             >
               {!!props.objectId && (<>
-                <div>Object ID：</div>
+                <div>Object ID:&nbsp;</div>
                 <div className="text-gray-4a truncate">
                   {props.objectId}
                 </div>
               </>)}
-              <div>Trx ID:</div>
+              <div>Trx ID:&nbsp;</div>
               <div className="text-gray-4a truncate">
                 {state.trx.TrxId}
               </div>
-              <div>{lang.trx.group} ID:</div>
+              <div>{lang.trx.group} ID:&nbsp;</div>
               <div className="text-gray-4a truncate">
                 {state.trx.GroupId}
               </div>
-              <div>{lang.trx.sender}:</div>
+              <div>{lang.trx.sender}:&nbsp;</div>
               <ValueColumn
                 className="text-gray-4a truncate"
                 value={state.trx.SenderPubkey}
               />
-              <div>{lang.trx.data}:</div>
+              <div>{lang.trx.data}:&nbsp;</div>
               <ValueColumn
                 className="text-gray-4a truncate"
                 value={state.trx.Data}
               />
-              <div>{lang.trx.sign}:</div>
+              <div>{lang.trx.sign}:&nbsp;</div>
               <ValueColumn
                 className="text-gray-4a truncate"
                 value={state.trx.SenderSign}
               />
-              <div>{lang.trx.timestamp}:</div>
+              <div>{lang.trx.timestamp}:&nbsp;</div>
               <div className="text-gray-4a truncate">
                 {state.trx.TimeStamp}
               </div>
-              <div>{lang.trx.version}:</div>
+              <div>{lang.trx.version}:&nbsp;</div>
               <div className="text-gray-4a truncate">
                 {state.trx.Version}
               </div>

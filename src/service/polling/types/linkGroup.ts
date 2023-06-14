@@ -45,21 +45,36 @@ export const postBaseType = intersection([
         content: string,
       }),
       partial({
+        quote: union([
+          string,
+          intersection([
+            type({
+              type: literal('Quote'),
+            }),
+            partial({
+              content: string,
+              url: string,
+              name: string,
+              book: string,
+              bookId: string,
+              author: string,
+              chapter: string,
+              chapterId: string,
+              range: string,
+            }),
+          ]),
+        ]),
+      }),
+      // old version trx
+      partial({
         bookId: string,
         chapter: string,
         chapterId: string,
-        quote: string,
         quoteRange: string,
       }),
       partial({
         name: string,
       }),
-      // partial({
-      //   object: type({
-      //     type: literal('Note'),
-      //     id: string,
-      //   }),
-      // }),
     ]),
   }),
   partial({
@@ -77,6 +92,19 @@ export const postExcludedType = type({
     }),
   }),
 });
+
+export const postDeleteType = intersection([
+  type({
+    type: literal('Delete'),
+    object: type({
+      type: literal('Note'),
+      id: string,
+    }),
+  }),
+  partial({
+    published: string,
+  }),
+]);
 
 export const postType = new Type<PostType>(
   'post type',
@@ -171,6 +199,7 @@ export const profileType = intersection([
 ]);
 
 export type PostType = TypeOf<typeof postBaseType>;
+export type PostDeleteType = TypeOf<typeof postDeleteType>;
 export type CommentType = TypeOf<typeof commentType>;
 export type NonUndoCounterType = TypeOf<typeof nonUndoCounterType>;
 export type UndoCounterType = TypeOf<typeof undoCounterType>;
@@ -180,6 +209,10 @@ export type ProfileType = TypeOf<typeof profileType>;
 export const linkGroupActivityChecker = {
   isPost: (v: IContentItem) => fp.pipe(
     postType.decode(v.Data),
+    either.fold(() => false, () => true),
+  ),
+  isPostDelete: (v: IContentItem) => fp.pipe(
+    postDeleteType.decode(v.Data),
     either.fold(() => false, () => true),
   ),
   isComment: (v: IContentItem) => fp.pipe(
