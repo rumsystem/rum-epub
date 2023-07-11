@@ -50,7 +50,7 @@ export const PostItem = observer((props: Props) => {
       )}
     >
       <div className="flex gap-3">
-        <UserAvatar onClick={handleClickUser} groupId={post.groupId} userAddress={post.userAddress} size={44} />
+        <UserAvatar className="flex-none" onClick={handleClickUser} groupId={post.groupId} userAddress={post.userAddress} size={44} />
         <div className="flex-col gap-3 mt-1 flex-1">
           <div className="flex items-center gap-3 relative">
             <span
@@ -68,7 +68,7 @@ export const PostItem = observer((props: Props) => {
           </div>
 
           {!!post.content && (
-            <div className="-mt-1">
+            <div className="-mt-1 break-all">
               {post.content}
             </div>
           )}

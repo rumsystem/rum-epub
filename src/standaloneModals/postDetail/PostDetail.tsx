@@ -88,7 +88,7 @@ export const PostDetail = observer((props: InternalProps & Props) => {
           {!!post && (
             <div className="flex-col gap-4 py-5 pl-5 pr-7 bg-white">
               <div className="flex gap-3">
-                <UserAvatar groupId={post.groupId} userAddress={post.userAddress} size={44} />
+                <UserAvatar className="flex-none" groupId={post.groupId} userAddress={post.userAddress} size={44} />
                 <div className="flex-col gap-3 mt-1 flex-1">
                   <div className="flex items-center gap-3 relative">
                     <span className="font-bold text-black/60">
@@ -100,7 +100,7 @@ export const PostDetail = observer((props: InternalProps & Props) => {
                   </div>
 
                   {!!post.content && (
-                    <div className="-mt-1">
+                    <div className="-mt-1 break-all">
                       {post.content}
                     </div>
                   )}
