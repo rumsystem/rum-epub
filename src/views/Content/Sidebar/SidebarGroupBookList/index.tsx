@@ -187,7 +187,8 @@ export const SidebarGroupBookList = observer((props: Props) => {
     <div className="divide-y border-y">
       {!props.booksOnly && orderedGroups.map((item) => {
         const isOwner = item.group.owner_pubkey === item.group.user_pubkey;
-        const linkGroupActive = bookService.state.current.linkGroupId === item.groupLink?.group_id;
+        const linkGroupActive = bookService.state.current.linkGroupId === item.groupLink?.group_id
+          && bookService.state.current.groupId === item.group.group_id;
         const active = bookService.state.current.groupId === item.group.group_id
           && !bookService.state.current.bookId
           && !linkGroupActive;

@@ -17,11 +17,9 @@ export const GroupLink = observer((props: { destroy: () => unknown } & Props) =>
   const state = useLocalObservable(() => ({
     open: true,
     selectedGroupId: '',
-    get notLinkedGroup() {
-      const linkedGroups = Object.values(nodeService.state.groupLink);
+    get linkGroups() {
       return nodeService.state.groups
-        .filter((v) => v.app_key === GROUP_TEMPLATE_TYPE.EPUB_LINK)
-        .filter((v) => !linkedGroups.includes(v.group_id));
+        .filter((v) => v.app_key === GROUP_TEMPLATE_TYPE.EPUB_LINK);
     },
   }));
 
@@ -139,13 +137,13 @@ export const GroupLink = observer((props: { destroy: () => unknown } & Props) =>
           onChange={action((e: SelectChangeEvent) => { state.selectedGroupId = e.target.value; })}
           size="small"
         >
-          {!state.notLinkedGroup.length && (
+          {!state.linkGroups.length && (
             <MenuItem className="text-14" value="">
               {lang.linkGroup.noSeednet}
             </MenuItem>
           )}
 
-          {state.notLinkedGroup.map((v) => (
+          {state.linkGroups.map((v) => (
             <MenuItem
               className="gap-2 text-14"
               key={v.group_id}

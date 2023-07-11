@@ -205,11 +205,11 @@ export default observer((props: Props) => {
       open={state.menu}
       onClose={handleMenuClose}
       anchorEl={menuButton.current}
-      PaperProps={{
+      slotProps={{ paper: {
         className: 'bg-gray-33 text-white font-medium mt-2',
         square: true,
         elevation: 2,
-      }}
+      } }}
       anchorOrigin={{
         horizontal: 'center',
         vertical: 'bottom',
