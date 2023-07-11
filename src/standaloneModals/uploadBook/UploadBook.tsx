@@ -108,13 +108,26 @@ export const UploadBook = observer((props: { destroy: () => unknown } & Props) =
   };
 
   const handleCancelJob = action(() => {
-    // bookService.upload.deleteJob(state.jobId);
-    // state.jobId = 0;
+    bookService.upload.deleteJob(state.jobId);
+    state.jobId = 0;
   });
 
   const handleBack = action(() => {
     state.jobId = 0;
   });
+
+  const handleDrop = async (e: React.DragEvent) => {
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      const fileBuffer = await new Promise<ArrayBuffer>((rs, rj) => {
+        const reader = new FileReader();
+        reader.readAsArrayBuffer(file);
+        reader.addEventListener('load', () => rs(reader.result as ArrayBuffer));
+        reader.addEventListener('error', (e) => rj(e));
+      });
+      setFile(file.name, Buffer.from(fileBuffer));
+    }
+  };
 
   const handleStartUpload = () => {
     bookService.upload.startJob(state.jobId);
@@ -151,7 +164,7 @@ export const UploadBook = observer((props: { destroy: () => unknown } & Props) =
                 'flex flex-center select-none mt-2 rounded-lg h-[200px] w-[500px]',
                 'outline outline-2 outline-dashed outline-gray-c4',
               )}
-              // onDrop={handleDrop}
+              onDrop={handleDrop}
               onDragOver={(e) => e.preventDefault()}
             >
               <span className="text-18 text-gray-9b">
