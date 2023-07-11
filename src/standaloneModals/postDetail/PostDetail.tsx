@@ -105,10 +105,10 @@ export const PostDetail = observer((props: InternalProps & Props) => {
                     </div>
                   )}
 
-                  {!!post.bookId && (
+                  {(!!post.bookId || !!post.bookName) && (
                     <div className="flex-col gap-2">
-                      {!!book && (
-                        <div className="flex gap-4 items-center">
+                      <div className="flex gap-4 items-center">
+                        {!!book && (
                           <BookCoverImg
                             bookId={book.book.id}
                             groupId={book.book.groupId}
@@ -120,65 +120,62 @@ export const PostDetail = observer((props: InternalProps & Props) => {
                               />
                             )}
                           </BookCoverImg>
+                        )}
 
-                          <div className="flex-col flex-1 justify-center items-stretch">
-                            <div className="flex items-stretch w-full cursor-pointer">
-                              <div className="flex-1 w-0 truncate">
-                                <span
-                                  className="group"
-                                  onClick={() => bookService.openBook({
-                                    groupId: bookService.state.current.groupId,
-                                    bookId: book.book.id,
-                                  })}
-                                >
-                                  <span className="font-medium text-14 text-black/80 group-hover:text-link-blue">
-                                    {book.book.title}
-                                  </span>
-                                  {' '}
-                                  <span className="text-12 text-black/40 group-hover:text-link-blue/60">
-                                    {book.metadata?.metadata.author}
-                                  </span>
+                        {!book && (
+                          <div className="rounded-6 w-10 h-10 flex-none overflow-hidden shadow-1 bg-gray-f7" />
+                        )}
+
+                        <div className="flex-col flex-1 justify-center items-stretch">
+                          <div className="flex items-stretch w-full cursor-pointer">
+                            <div className="flex-1 w-0 truncate">
+                              <span
+                                className="group"
+                                onClick={() => !!book && bookService.openBook({
+                                  groupId: bookService.state.current.groupId,
+                                  bookId: book.book.id,
+                                })}
+                              >
+                                <span className="font-medium text-14 text-black/80 group-hover:text-link-blue">
+                                  {book?.book.title || post.bookName}
                                 </span>
-                              </div>
+                                {' '}
+                                <span className="text-12 text-black/40 group-hover:text-link-blue/60">
+                                  {book?.metadata?.metadata.author || post.bookAuthor}
+                                </span>
+                              </span>
                             </div>
+                          </div>
 
-                            {!!post.chapter && !!post.chapterId && (
-                              <div className="flex-col items-start w-full cursor-pointer">
-                                <div className="flex w-full">
-                                  <div className="flex-1 w-0 truncate">
-                                    <span
-                                      className="text-black/40 hover:text-link-blue"
-                                      onClick={() => bookService.openBook({
-                                        groupId: bookService.state.current.groupId,
-                                        bookId: book.book.id,
-                                        href: post.chapterId,
-                                      })}
-                                    >
-                                      {post.chapter}
-                                    </span>
-                                  </div>
+                          {!!post.chapter && !!post.chapterId && (
+                            <div className="flex-col items-start w-full cursor-pointer">
+                              <div className="flex w-full">
+                                <div className="flex-1 w-0 truncate">
+                                  <span
+                                    className="text-black/40 hover:text-link-blue"
+                                    onClick={() => !!book && bookService.openBook({
+                                      groupId: bookService.state.current.groupId,
+                                      bookId: book.book.id,
+                                      href: post.chapterId,
+                                    })}
+                                  >
+                                    {post.chapter}
+                                  </span>
                                 </div>
                               </div>
-                            )}
-                          </div>
+                            </div>
+                          )}
                         </div>
-                      )}
+                      </div>
 
-                      {!book && (
-                        <div className="flex gap-1 items-center text-black/40">
-                          <Feedback className="text-black/20 text-16 -mb-1" />
-                          {lang.linkGroup.bookNotFound} {post.bookId}
-                        </div>
-                      )}
-
-                      {!!post.quote && !!post.quoteRange && (
+                      {!!post.quote && (
                         <div
                           className={classNames(
                             'pl-2 border-l-[3px]',
                             'text-12 text-black/40 line-clamp-3',
                             !!book && 'hover:text-link-blue cursor-pointer',
                           )}
-                          onClick={() => book && bookService.openBook({
+                          onClick={() => book && post.quoteRange && bookService.openBook({
                             groupId: bookService.state.current.groupId,
                             bookId: book.book.id,
                             href: post.quoteRange,
@@ -187,6 +184,13 @@ export const PostDetail = observer((props: InternalProps & Props) => {
                           {post.quote}
                         </div>
                       )}
+                    </div>
+                  )}
+
+                  {(!post.bookId || !post.bookName) && (
+                    <div className="flex gap-1 items-center text-black/40">
+                      <Feedback className="text-black/20 text-16 -mb-1" />
+                      {lang.linkGroup.bookNotFound} {post.bookId}
                     </div>
                   )}
 
