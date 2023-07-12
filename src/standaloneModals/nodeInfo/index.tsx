@@ -70,7 +70,7 @@ const MyNodeInfo = observer((props: Props) => {
       type: NODE_TYPE.UNKNOWN,
       internalNode: null,
       externalNode: null,
-      historyExtenralNodes: [],
+      historyExtenralNodes: nodeService.state.nodeInfoConfig?.historyExtenralNodes ?? [],
     };
 
     runInAction(() => {

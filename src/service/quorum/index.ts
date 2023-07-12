@@ -22,7 +22,9 @@ const state = observable({
 
 const ping = async (retries = 60) => {
   for (let i = 0; i < retries; i += 1) {
-    await internal.updateStatus();
+    if (state.type === NODE_TYPE.INTERNAL) {
+      await internal.updateStatus();
+    }
     if (!state.up) {
       return 'failed';
     }

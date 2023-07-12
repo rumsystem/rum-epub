@@ -529,7 +529,10 @@ export const Init = observer((props: Props) => {
               <div className="self-stretch">
                 {(nodeService.state.nodeInfoConfig?.historyExtenralNodes ?? []).map((v, i) => (
                   <div
-                    className="relative group px-3 py-2 border border-white/70 rounded cursor-pointer select-none bg-white/10"
+                    className={classNames(
+                      'relative group px-3 py-2 border border-white/60 rounded bg-white/15',
+                      'opacity-70 hover:opacity-100 cursor-pointer select-none',
+                    )}
                     key={i}
                     onClick={() => handleSelectExternalConfig(v)}
                   >
