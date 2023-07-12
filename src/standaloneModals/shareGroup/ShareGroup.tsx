@@ -54,7 +54,7 @@ export const ShareGroup = observer((props: Props & { destroy: () => unknown }) =
   };
 
   const handleCopy = () => {
-    setClipboard(JSON.stringify(state.seed, null, 2));
+    setClipboard(state.seed);
     tooltipService.show({
       content: lang.copied,
     });
