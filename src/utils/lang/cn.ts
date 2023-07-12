@@ -66,6 +66,7 @@ export const content = {
     editProfile: '编辑资料',
     noPostYet: '还没有内容，去发布第一条内容吧',
     bookNotFound: '找不到书籍',
+    bookNotExistInCurrentGroup: '书籍不在当前种子网络',
     replyTo: '回复',
     unlinkTip: '取消链接吗？（不会退出该种子网络）',
     unlinked: '已取消链接',

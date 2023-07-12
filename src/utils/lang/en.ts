@@ -66,6 +66,7 @@ export const content: Content = {
     editProfile: 'Edit Profile',
     noPostYet: 'No Post yet, go publish one',
     bookNotFound: 'Book cannot be found',
+    bookNotExistInCurrentGroup: 'Book is not at current seednet',
     replyTo: 'reply to',
     unlinkTip: 'Unlink the comment seetnet? (would not leave the seednet)',
     unlinked: 'Unlined',

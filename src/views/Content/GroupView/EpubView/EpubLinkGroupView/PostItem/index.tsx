@@ -93,7 +93,7 @@ export const PostItem = observer((props: Props) => {
                     )}
 
                     {!book && (
-                      <Tooltip title="书籍不在当前种子网络" placement="top">
+                      <Tooltip title={lang.linkGroup.bookNotExistInCurrentGroup} placement="top">
                         <div className="flex flex-center rounded-6 w-10 h-10 flex-none overflow-hidden shadow-1 bg-gray-f7">
                           <BiBook className="text-24 text-black/20" />
                         </div>

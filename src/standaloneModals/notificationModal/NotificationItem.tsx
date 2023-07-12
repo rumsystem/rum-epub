@@ -74,7 +74,6 @@ export const NotificationItem = observer((props: Props) => {
             )}
           >
             {object.content}
-            rum://seed?v=1&e=0&n=0&c=HYSeBsmhiti38I9AUd5YNOL0o3HR5e2cgKLHlgoTp_s&g=VKnkr_KgRYCLSWAPhNZfYQ&k=Audc_NN3hmnBf4IUwJkqZ8aJbZxWWDTQ4uZN28aVC-NY&s=xMprovvdsm5ijMA6eHdjYldQz-s5TeIWkqEXnHl5lLMTgRP_3FDbYNO0vRZNkEAzecYTGonHmI7ugFM6gZhf8gE&t=F2Pqx2p1OSg&a=epubtest&y=group_epub&u=
           </div>
         )}
       </div>
